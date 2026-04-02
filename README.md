@@ -11,7 +11,8 @@ A comprehensive **QR-code-driven fuel quota management platform** built with **S
 This project is a **fully functional** fuel quota management system implementing all BRD requirements:
 
 - ✅ **Backend API** - Complete Spring Boot application with security, caching, and scheduling
-- ✅ **Frontend SPA** - React/TypeScript customer and admin portals  
+- ✅ **Frontend SPA** - React/TypeScript customer and admin portals
+- ✅ **Pump Rep Web Portal** - Browser-based portal for pump representatives with QR scanning and manual lookup
 - ✅ **Database Schema** - PostgreSQL with proper relationships and indexes
 - ✅ **Business Logic** - Weekly quota management with partial dispense support
 - ✅ **Security** - JWT authentication with role-based access control
@@ -26,7 +27,7 @@ This project is a **fully functional** fuel quota management system implementing
 - ✅ **Partial Dispense Support** - Smart authorization when requested > remaining quota
 - ✅ **Automatic Weekly Reset** - Sunday 00:00 scheduled quota restoration
 - ✅ **Real-time Validation** - Instant vehicle status and quota checking
-- ✅ **Idempotent Transactions** - Prevents double-deducting from quota
+- ✅ **Idempotent Transactions** - Prevents double-deducting from quota on QR path
 - ✅ **Complete Audit Trail** - Every action logged with timestamp and user
 
 ## 🚀 Key Features
@@ -36,7 +37,7 @@ This project is a **fully functional** fuel quota management system implementing
 - **QR Code Management** - Generate, regenerate, and download fuel QR codes  
 - **Quota Dashboard** - Visual gauge showing used vs. remaining fuel allocation
 - **Transaction History** - Complete record of fuel dispensing activities
-- **Real-time Updates** - Live quota status and transaction notifications
+- **Vehicle Ownership Claims** - Submit and track ownership transfer requests
 
 ### Admin Dashboard
 - **Vehicle Management** - Approve, reject, or suspend vehicle registrations
@@ -45,11 +46,15 @@ This project is a **fully functional** fuel quota management system implementing
 - **Analytics & Reporting** - Usage charts, transaction trends, and system metrics
 - **Audit Log Viewer** - Searchable, filterable administrative action history
 
-### Pump Representative API (Core BRD Implementation)
-- **QR Code Scanning** - Validate and decode vehicle authorization tokens
-- **Authorization Engine** - Real-time eligibility, quota, and geofence checking
-- **Transaction Recording** - Dispense confirmation with quota deduction  
-- **Receipt Generation** - Transaction details with remaining quota balance
+### Pump Representative Web Portal (`/pump`)
+- **Employee ID Login** - Authenticate with employee code; station info shown after login
+- **QR Code Scanner** - Camera-based scanning via `html5-qrcode` library
+- **Manual Fallback** - Enter vehicle registration number directly when QR is unavailable
+- **Vehicle Verification Panel** - Shows registration number, BRTA status badge, owner name, vehicle make/color
+- **Quota Progress Bar** - Color-coded remaining/total quota display (green → yellow → red)
+- **On-screen Numeric Keypad** - Mobile-friendly fuel amount entry (4 digits + 2 decimals)
+- **Fuel Type Selector** - Dropdown pre-populated from vehicle's registered fuel type
+- **Transaction Receipt** - Reference number, dispensed amount, and remaining quota shown after confirmation
 
 ## 🛠️ Technology Stack
 
@@ -67,7 +72,8 @@ This project is a **fully functional** fuel quota management system implementing
 - **Tailwind CSS** for responsive styling
 - **React Router v6** for client-side routing
 - **Axios** for API communication
-- **React QR Code** for QR generation
+- **React QR Code** for QR generation (customer portal)
+- **html5-qrcode** for QR scanning (pump rep portal)
 - **Recharts** for admin analytics
 
 ### Infrastructure
@@ -126,6 +132,9 @@ spring:
 **Customer Registration**: http://localhost:8080/register
 - Register new vehicle owners through the self-service portal
 
+**Pump Representative Portal**: http://localhost:8080/pump
+- Enter the employee ID of any active pump representative (created via Admin → Pump Reps)
+
 ## 🔧 API Endpoints
 
 ### Authentication
@@ -137,24 +146,26 @@ POST /api/auth/customer/register  - Vehicle registration
 
 ### Customer API (JWT Required)
 ```
-GET  /api/customer/vehicle        - Get vehicle info
-GET  /api/customer/quota          - Get quota status  
-GET  /api/customer/qr-code        - Generate QR token
-POST /api/customer/qr-code/regenerate - Regenerate QR
-GET  /api/customer/transactions   - Transaction history
+GET  /api/customer/vehicles             - List own vehicles
+GET  /api/customer/quota                - Get quota status  
+GET  /api/customer/qr-code              - Generate QR token
+POST /api/customer/qr-code/regenerate   - Regenerate QR
+GET  /api/customer/transactions         - Transaction history
 ```
 
-### Pump Representative API (Public - Core BRD)
+### Pump Representative API (Public — Core BRD)
 ```
-POST /api/pump/authorize          - Authorize fuel dispensing ⭐
+POST /api/pump/login              - Employee ID login → session details ⭐
+POST /api/pump/authorize          - Authorize via QR token ⭐
+POST /api/pump/authorize-manual   - Authorize via registration number ⭐
 POST /api/pump/confirm            - Confirm fuel dispensed ⭐
-GET  /api/pump/health            - API health check
+GET  /api/pump/health             - API health check
 ```
 
 ### Admin API (JWT + Admin Role Required)
 ```
 GET    /api/admin/vehicles        - List vehicles (paginated)
-PUT    /api/admin/vehicles/{id}/approve - Approve vehicle
+PUT    /api/admin/vehicles/{id}/reverify - Re-verify vehicle
 GET    /api/admin/stations        - List fuel stations
 POST   /api/admin/stations        - Create station
 GET    /api/admin/stats           - Dashboard statistics
@@ -164,18 +175,24 @@ GET    /api/admin/stats           - Dashboard statistics
 
 ### 1. Vehicle Registration & Approval
 ```
-Customer Registration → Admin Review → Vehicle Approval → 
-Quota Creation → QR Code Generation → Ready for Use
+Customer Registration → Auto-VERIFIED → Quota Created → QR Code Ready
 ```
 
-### 2. Fuel Dispensing Transaction (Core BRD Flow)
+### 2. Fuel Dispensing — QR Path (Primary)
 ```
-QR Code Scan → Token Validation → Vehicle Verification → 
-Geofence Check → Quota Authorization → Fuel Dispense → 
-Transaction Recording → Quota Update
+Rep Login (employee ID) → QR Code Scan → Token Validation →
+Vehicle Verification → Geofence Check → Quota Authorization →
+Enter Amount (numeric keypad) → Confirm → Transaction Recorded → Receipt
 ```
 
-### 3. Weekly Quota Reset (Automated)
+### 3. Fuel Dispensing — Manual Path (Fallback)
+```
+Rep Login (employee ID) → Enter Registration Number → Vehicle Lookup →
+Vehicle Verification → Quota Authorization →
+Enter Amount (numeric keypad) → Confirm → Transaction Recorded → Receipt
+```
+
+### 4. Weekly Quota Reset (Automated)
 ```
 Sunday 00:00 Trigger → Reset All Quotas → Clear Cache → 
 Audit Logging → System Ready for New Week
@@ -236,25 +253,31 @@ java -jar target/automated-fuel-quota-0.0.1-SNAPSHOT.jar
 ## 📚 Project Structure
 
 ```
-AutomatedFuelQuota/
-├── src/main/java/com/reddotdigitalit/
-│   ├── config/          # Configuration classes
-│   ├── controller/      # REST API controllers
-│   ├── dto/            # Data transfer objects  
-│   ├── entity/         # JPA entities
-│   ├── exception/      # Exception handling
-│   ├── repository/     # Data access layer
-│   ├── security/       # JWT and security config
-│   └── service/        # Business logic layer
+automated-fuel-quota/
+├── src/main/java/io/github/eendroroy/fuelquota/
+│   ├── config/          # Security, Redis, OpenAPI, DataInitializer
+│   ├── controller/      # REST controllers (Auth, Customer, Admin, Pump)
+│   ├── dto/             # Request/Response DTOs
+│   ├── entity/          # JPA entities
+│   ├── enums/           # Domain enumerations
+│   ├── exception/       # Global exception handling
+│   ├── repository/      # JPA repositories (with Specification support)
+│   ├── security/        # JWT provider and filter
+│   └── service/         # Business logic layer
 ├── src/main/resources/
 │   ├── application.yaml # Application configuration
-│   └── static/         # Frontend build output
-├── frontend/           # React/TypeScript SPA
-│   ├── src/components/ # Reusable components
-│   ├── src/pages/      # Page components  
-│   ├── src/services/   # API client services
-│   └── src/types/      # TypeScript definitions
-└── documentation/      # BRD and design docs
+│   └── static/          # Frontend build output (served by Spring Boot)
+├── frontend/            # React 18 / TypeScript SPA
+│   └── src/
+│       ├── api/         # Axios API clients (axiosInstance + pumpApi)
+│       ├── components/  # Reusable UI components
+│       ├── layouts/     # PublicLayout, CustomerLayout, AdminLayout, PumpRepLayout
+│       ├── pages/
+│       │   ├── customer/    # Customer portal pages
+│       │   ├── admin/       # Admin portal pages
+│       │   └── pump/        # Pump rep portal (Login, Scan, Dispense)
+│       └── types/           # Shared TypeScript interfaces
+└── documentation/       # BRD and SRS
 ```
 
 ## 🎯 Implementation Highlights
@@ -262,26 +285,16 @@ AutomatedFuelQuota/
 This implementation fully satisfies all **Business Requirements Document (BRD)** specifications:
 
 ### Functional Requirements Implemented ✅
-- **FR-01 through FR-15** - All vehicle owner, pump representative, and backend requirements
-- **FR-16 & FR-17** - Complete database persistence and auditability  
+- **FR-01 through FR-10** — All vehicle owner portal requirements
+- **FR-11 through FR-20** — Full pump representative web portal (login, scan, manual entry, dispense, receipt)
+- **FR-21 through FR-30** — Complete admin portal
+- **FR-31 through FR-35** — Backend infrastructure (scheduler, transactions, audit, caching)
 
 ### Non-Functional Requirements Met ✅
-- **NFR-01 through NFR-13** - Security, performance, reliability, and observability
+- **NFR-01 through NFR-13** — Security, performance, reliability, and observability
 
 ### Business Rules Enforced ✅
-- **BR-1 through BR-5** - Weekly quota limits, partial dispense, automatic reset, eligibility checks
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)  
-5. Open Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- **BR-1 through BR-9** — Weekly quota limits, partial dispense, automatic reset, eligibility checks, pump rep login, manual authorization
 
 ---
 

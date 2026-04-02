@@ -2,8 +2,11 @@ package io.github.eendroroy.fuelquota.controller;
 
 import io.github.eendroroy.fuelquota.dto.request.AuthorizationRequest;
 import io.github.eendroroy.fuelquota.dto.request.DispenseConfirmationRequest;
+import io.github.eendroroy.fuelquota.dto.request.ManualAuthorizationRequest;
+import io.github.eendroroy.fuelquota.dto.request.PumpRepLoginRequest;
 import io.github.eendroroy.fuelquota.dto.response.AuthorizationResponse;
 import io.github.eendroroy.fuelquota.dto.response.DispenseConfirmationResponse;
+import io.github.eendroroy.fuelquota.dto.response.PumpRepLoginResponse;
 import io.github.eendroroy.fuelquota.service.PumpService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,7 +48,35 @@ public class PumpController {
     private final PumpService pumpService;
 
     /**
-     * Authorizes fuel dispensing based on a scanned QR token (BRD FR-04, FR-05, FR-06).
+     * Authenticates a pump representative by employee ID.
+     *
+     * @param request login request containing the employee ID
+     * @return representative session details and assigned station info
+     */
+    @PostMapping("/login")
+    @Operation(
+        summary = "Pump representative login",
+        description = "Authenticates a pump representative by employee ID and returns session details"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Login successful",
+            content = @Content(schema = @Schema(implementation = PumpRepLoginResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Employee ID not found or account not active"
+        )
+    })
+    public ResponseEntity<PumpRepLoginResponse> pumpRepLogin(@Valid @RequestBody PumpRepLoginRequest request) {
+        logger.info("Pump rep login attempt for employee ID: {}", request.getEmployeeId());
+        PumpRepLoginResponse response = pumpService.pumpRepLogin(request);
+        logger.info("Pump rep login successful: {} at station {}", response.getName(), response.getStationName());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      *
      * <p><strong>Workflow:</strong>
      * <ol>
@@ -140,7 +171,27 @@ public class PumpController {
     }
 
     /**
-     * Health check endpoint for pump app connectivity testing.
+     * Authorizes fuel dispensing by vehicle registration number (manual entry — no QR token needed).
+     *
+     * @param request manual authorization request
+     * @return authorization decision with vehicle info and authorized fuel amount
+     */
+    @PostMapping("/authorize-manual")
+    @Operation(
+        summary = "Authorize by registration number",
+        description = "Alternative to QR scan: looks up vehicle directly by registration number and returns authorization decision"
+    )
+    @ApiResponse(responseCode = "200", description = "Authorization decision returned",
+        content = @Content(schema = @Schema(implementation = AuthorizationResponse.class)))
+    public ResponseEntity<AuthorizationResponse> authorizeByRegistration(
+            @Valid @RequestBody ManualAuthorizationRequest request) {
+        logger.info("Manual authorization request for registration: {}", request.getRegistrationNumber());
+        AuthorizationResponse response = pumpService.authorizeByRegistration(request);
+        logger.info("Manual authorization decision: {} for: {}", response.getDecision(), request.getRegistrationNumber());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      *
      * @return simple status message indicating the API is operational
      */

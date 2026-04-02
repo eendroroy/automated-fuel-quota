@@ -94,25 +94,25 @@ public class QuotaService {
 
         if (vehicle.getStatus() != Vehicle.VehicleStatus.VERIFIED) {
             return new QuotaAuthorizationResult(AuthorizationDecision.DENIED, BigDecimal.ZERO,
-                    quota.getRemainingLiters(), "Vehicle is not verified");
+                    quota.getRemainingLiters(), quota.getLimitLiters(), "Vehicle is not verified");
         }
 
         if (!quota.hasAvailableQuota()) {
             return new QuotaAuthorizationResult(AuthorizationDecision.DENIED, BigDecimal.ZERO,
-                    quota.getRemainingLiters(), "No quota available");
+                    quota.getRemainingLiters(), quota.getLimitLiters(), "No quota available");
         }
 
         BigDecimal authorizedLiters = quota.getMaxDispensableAmount(requestedLiters);
 
         if (authorizedLiters.compareTo(BigDecimal.ZERO) == 0) {
             return new QuotaAuthorizationResult(AuthorizationDecision.DENIED, BigDecimal.ZERO,
-                    quota.getRemainingLiters(), "Quota exhausted");
+                    quota.getRemainingLiters(), quota.getLimitLiters(), "Quota exhausted");
         }
 
         AuthorizationDecision decision = authorizedLiters.compareTo(requestedLiters) < 0
                 ? AuthorizationDecision.PARTIAL : AuthorizationDecision.APPROVED;
 
-        return new QuotaAuthorizationResult(decision, authorizedLiters, quota.getRemainingLiters(), null);
+        return new QuotaAuthorizationResult(decision, authorizedLiters, quota.getRemainingLiters(), quota.getLimitLiters(), null);
     }
 
     /**
@@ -299,22 +299,18 @@ public class QuotaService {
         /** The vehicle's remaining quota at the time of evaluation. */
         private final BigDecimal remainingQuota;
 
+        /** The vehicle's total periodic quota limit in litres. */
+        private final BigDecimal limitLiters;
+
         /** Human-readable reason for denial ({@code null} when approved or partial). */
         private final String denyReason;
 
-        /**
-         * Constructs a quota authorization result.
-         *
-         * @param decision         the authorization decision
-         * @param authorizedLiters authorized fuel quantity
-         * @param remainingQuota   remaining quota before consumption
-         * @param denyReason       denial reason, or {@code null}
-         */
         public QuotaAuthorizationResult(AuthorizationDecision decision, BigDecimal authorizedLiters,
-                                        BigDecimal remainingQuota, String denyReason) {
+                                        BigDecimal remainingQuota, BigDecimal limitLiters, String denyReason) {
             this.decision = decision;
             this.authorizedLiters = authorizedLiters;
             this.remainingQuota = remainingQuota;
+            this.limitLiters = limitLiters;
             this.denyReason = denyReason;
         }
 

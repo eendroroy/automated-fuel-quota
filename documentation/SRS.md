@@ -1,10 +1,10 @@
 # Software Requirements Specification (SRS)
 ## Automated Fuel Quota Management System
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Date:** 2026-04-03  
 **Status:** Approved  
-**Based on:** BRD v2.0
+**Based on:** BRD v2.1
 
 ---
 
@@ -58,10 +58,10 @@ The system is a **Spring Boot 4.0.5 + React 18 monorepo** that implements a QR-c
 │                    └───────┘              └──────────────┘  │
 └─────────────────────────────────────────────────────────────┘
          ↑ REST API               ↑ Static Files
-┌─────────────────┐     ┌──────────────────────┐
-│  React 18 SPA   │     │ Pump Rep Mobile App  │
-│(Customer/Admin) │     │  (API-only client)   │
-└─────────────────┘     └──────────────────────┘
+┌─────────────────┐     ┌──────────────────────────────┐
+│  React 18 SPA   │     │   React 18 SPA (embedded)    │
+│(Customer/Admin) │     │  Pump Rep Portal (/pump/*)   │
+└─────────────────┘     └──────────────────────────────┘
 ```
 
 ### 2.2 Deployment Model
@@ -201,9 +201,59 @@ Vehicle (1) ─────────── (*) VehicleClaim (subject)
 ### 4.3 Pump Representative Endpoints (Public — Core BRD)
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/pump/authorize` | Validate QR + check eligibility + authorize litres |
-| POST | `/api/pump/confirm` | Record dispensed litres + update quota |
+| POST | `/api/pump/login` | Pump rep login by employee ID → session details |
+| POST | `/api/pump/authorize` | Validate QR token + check eligibility + authorize litres |
+| POST | `/api/pump/authorize-manual` | Authorize by registration number (no QR token needed) |
+| POST | `/api/pump/confirm` | Record dispensed litres + update quota (qrToken optional) |
 | GET | `/api/pump/health` | API health check |
+
+#### `POST /api/pump/login`
+**Request:**
+```json
+{ "employeeId": "EMP-001" }
+```
+**Response:**
+```json
+{
+  "id": "<uuid>",
+  "name": "Mohammad Rahman",
+  "employeeId": "EMP-001",
+  "stationId": "<uuid>",
+  "stationName": "Dhaka North Station",
+  "stationCode": "DHK-N-01"
+}
+```
+
+#### `POST /api/pump/authorize` and `POST /api/pump/authorize-manual`
+Both return the same `AuthorizationResponse` shape:
+```json
+{
+  "decision": "APPROVED | PARTIAL | DENIED",
+  "authorizedLiters": 10.00,
+  "remainingQuota": 14.00,
+  "totalQuota": 24.00,
+  "message": null,
+  "vehicleFound": "DHK-KA-11-1234",
+  "vehicleMake": "Toyota Corolla",
+  "vehicleColor": "White",
+  "ownerName": "John Doe",
+  "vehicleStatus": "VERIFIED",
+  "fuelType": "Petrol"
+}
+```
+
+#### `POST /api/pump/confirm`
+`qrToken` is **optional** — omit and supply `registrationNumber` for manual-path transactions:
+```json
+{
+  "qrToken": "<jwt>",           // omit on manual path
+  "registrationNumber": "...",  // omit on QR path
+  "stationId": "<uuid>",
+  "pumpRepresentativeId": "<uuid>",
+  "dispensedLiters": 8.50,
+  "fuelType": "Petrol"
+}
+```
 
 ### 4.4 Admin Endpoints (JWT: ADMIN role)
 | Method | Path | Description |
@@ -302,19 +352,41 @@ Vehicle (1) ─────────── (*) VehicleClaim (subject)
 /admin/quota-config   → AdminQuotaConfigPage
 /admin/pump-reps      → AdminPumpRepsPage
 /admin/audit-logs     → AdminAuditLogsPage
+/pump                 → PumpLoginPage     (PumpRepLayout, public)
+/pump/scan            → PumpScanPage      (PumpRepLayout, session-guarded)
+/pump/dispense        → PumpDispensePage  (PumpRepLayout, session-guarded)
 *                     → NotFoundPage
 ```
 
-### 8.2 State Management
+### 8.2 Pump Representative Portal — State & Session
+- Pump rep session stored in `localStorage` under `pumpRepSession` (JSON object with `id`, `name`, `employeeId`, `stationId`, `stationName`, `stationCode`).
+- Session helpers exported from `PumpRepLayout.tsx`: `getPumpSession`, `savePumpSession`, `clearPumpSession`.
+- Pages redirect to `/pump` if no session is found.
+- Authorization result passed between `/pump/scan` and `/pump/dispense` via React Router `location.state`.
+
+### 8.3 Pump Representative Portal — Page Components
+| Page | File | Description |
+|------|------|-------------|
+| Login | `pages/pump/PumpLoginPage.tsx` | Employee ID input → calls `/api/pump/login` → saves session |
+| Scan | `pages/pump/PumpScanPage.tsx` | Tab switcher: camera QR scanner ↔ manual reg number entry |
+| Dispense | `pages/pump/PumpDispensePage.tsx` | Vehicle info panel + quota bar + fuel selector + numeric keypad + submit |
+
+### 8.4 State Management
 - Authentication state managed by `AuthContext` (React Context + localStorage).
 - API calls via centralized Axios instance with request/response interceptors.
 - Local component state for UI data (no global state library required).
 
-### 8.3 API Client Pattern
-- Base URL: `/api` (proxied to backend in dev; same origin in production).
-- Authorization header: `Bearer <token>` added automatically by request interceptor.
-- 401 responses: auto-logout and redirect to `/login`.
-- 5xx responses: global toast error notification.
+### 8.5 API Client Pattern
+- `/api/pump/*` calls use a **separate Axios instance** (`pumpApi.ts`) with no JWT header — these are public endpoints.
+- All other API calls use the shared Axios instance with JWT header injection.
+
+### 8.6 Pump API Module (`src/api/pumpApi.ts`)
+| Function | Endpoint | Notes |
+|----------|----------|-------|
+| `pumpRepLogin` | `POST /api/pump/login` | Returns `PumpRepSession` |
+| `authorizeDispensing` | `POST /api/pump/authorize` | QR token path |
+| `authorizeByRegistration` | `POST /api/pump/authorize-manual` | Manual path |
+| `confirmDispensing` | `POST /api/pump/confirm` | `qrToken` or `registrationNumber` |
 
 ---
 
@@ -429,4 +501,3 @@ Key metrics to monitor:
 
 *Document maintained by: Engineering Team*  
 *Next review date: 2026-07-01*
-

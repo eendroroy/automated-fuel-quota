@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import PublicLayout from '@/layouts/PublicLayout'
 import CustomerLayout from '@/layouts/CustomerLayout'
 import AdminLayout from '@/layouts/AdminLayout'
+import PumpRepLayout from '@/layouts/PumpRepLayout'
 
 // Components
 import ProtectedRoute from '@/components/common/ProtectedRoute'
@@ -31,6 +32,11 @@ import AdminQuotaConfigPage from '@/pages/admin/AdminQuotaConfigPage'
 import AdminPumpRepsPage from '@/pages/admin/AdminPumpRepsPage'
 import AdminAuditLogsPage from '@/pages/admin/AdminAuditLogsPage'
 import AdminVehicleClaimsPage from '@/pages/admin/AdminVehicleClaimsPage'
+
+// Pump Rep Pages
+import PumpLoginPage from '@/pages/pump/PumpLoginPage'
+import PumpScanPage from '@/pages/pump/PumpScanPage'
+import PumpDispensePage from '@/pages/pump/PumpDispensePage'
 
 export default function App() {
   return (
@@ -67,6 +73,13 @@ export default function App() {
           <Route path="pump-reps" element={<AdminPumpRepsPage />} />
           <Route path="audit-logs" element={<AdminAuditLogsPage />} />
         </Route>
+      </Route>
+
+      {/* Pump Representative Public Routes */}
+      <Route path="/pump" element={<PumpRepLayout />}>
+        <Route index element={<PumpLoginPage />} />
+        <Route path="scan" element={<PumpScanPage />} />
+        <Route path="dispense" element={<PumpDispensePage />} />
       </Route>
 
       {/* Catch all - 404 */}

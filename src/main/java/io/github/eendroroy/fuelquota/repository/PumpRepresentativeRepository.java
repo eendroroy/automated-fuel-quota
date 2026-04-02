@@ -20,6 +20,8 @@ public interface PumpRepresentativeRepository extends JpaRepository<PumpRepresen
 
     Optional<PumpRepresentative> findByUsername(String username);
 
+    Optional<PumpRepresentative> findByEmployeeId(String employeeId);
+
     @Query("SELECT p FROM PumpRepresentative p WHERE p.station.id = :stationId")
     Page<PumpRepresentative> findByStationId(@Param("stationId") UUID stationId, Pageable pageable);
 

@@ -1,7 +1,7 @@
 # Business Requirements Document (BRD)
 ## Automated Fuel Quota Management System
 
-**Document Version:** 2.0  
+**Document Version:** 2.1  
 **Date:** 2026-04-03  
 **Status:** Approved
 
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-The Automated Fuel Quota Management System is a platform to **control, authorize, and track** fuel dispensing per vehicle based on a configurable weekly quota policy. Vehicle owners present a **QR code** at a fuel station, where a pump representative scans it using a mobile app. A backend validates eligibility (vehicle status, GPS/geofencing) and returns the authorized liters. All dispensing events are recorded and quotas reset on a configurable schedule.
+The Automated Fuel Quota Management System is a platform to **control, authorize, and track** fuel dispensing per vehicle based on a configurable weekly quota policy. Vehicle owners present a **QR code** at a fuel station, where a pump representative scans it using the **web-based Pump Representative Portal** (or manually enters the vehicle registration number as a fallback). A backend validates eligibility (vehicle status, GPS/geofencing) and returns the authorized liters. All dispensing events are recorded and quotas reset on a configurable schedule.
 
 ---
 
@@ -36,7 +36,8 @@ The Automated Fuel Quota Management System is a platform to **control, authorize
 ### 3.1 In Scope
 - **Customer (Vehicle Owner) Portal** — Registration, vehicle management, QR code generation, quota visibility, transaction history, and vehicle ownership claims.
 - **Admin Portal** — Vehicle management, fuel station management, quota configuration and adjustment, pump representative management, and audit log viewer.
-- **Pump Representative API** — QR scanning, authorization, and dispense confirmation (core BRD flow).
+- **Pump Representative Web Portal** — Browser-based portal for pump representatives: employee-code login, QR code scanning, manual vehicle number lookup, dispense entry with on-screen numeric keypad, and transaction submission.
+- **Pump Representative API** — QR scanning, manual authorization by registration number, and dispense confirmation (core BRD flow).
 - **Fuel System Backend** — Request validation, vehicle status check, GPS geofencing, quota calculation, authorization response, transaction recording, and scheduled quota reset.
 
 ### 3.2 Out of Scope (Current Release)
@@ -61,7 +62,7 @@ The Automated Fuel Quota Management System is a platform to **control, authorize
 | Role | Description |
 |------|-------------|
 | **Customer (Vehicle Owner)** | Self-registers, manages vehicles, generates QR codes for refueling |
-| **Pump Representative** | Station operator who scans QR codes and confirms dispense via mobile API |
+| **Pump Representative** | Station operator who scans QR codes (or manually enters registration numbers) and confirms fuel dispensed via the Pump Rep Web Portal |
 | **System Administrator** | Manages all system entities, configures quotas, reviews audit logs |
 
 ---
@@ -121,9 +122,9 @@ At the configured cron schedule (default: every Sunday 00:00):
 
 ### BR-5: Eligibility Checks
 Authorization requires all of the following:
-- Valid, non-expired JWT QR token.
+- Valid, non-expired JWT QR token **or** a valid vehicle registration number (manual path).
 - Vehicle status = `VERIFIED`.
-- Pump representative GPS location within configured geofence radius of the station.
+- Pump representative GPS location within configured geofence radius of the station *(GPS check is skipped when coordinates are not provided)*.
 - Remaining quota > 0 (for full approval).
 
 ### BR-6: Vehicle Ownership Transfer
@@ -135,6 +136,16 @@ Authorization requires all of the following:
 - On registration, vehicles are immediately set to `VERIFIED`.
 - Admin may trigger BRTA re-verification at any time (currently always succeeds).
 - Vehicle NID must be unique across the system.
+
+### BR-8: Pump Representative Login
+- Pump representatives authenticate to the web portal using their **employee ID** (no password required in the current demo implementation).
+- Only representatives with `ACTIVE` status may log in.
+- Successful login records `lastLoginTimestamp` on the representative record.
+
+### BR-9: Manual Vehicle Authorization
+- If a customer's QR code is unavailable (e.g. phone dead), the pump representative may enter the vehicle's registration number directly.
+- The system performs the same vehicle status and quota checks as the QR path.
+- Transactions recorded via the manual path are not subject to QR-token-based idempotency; the representative is responsible for avoiding duplicate submissions.
 
 ---
 
@@ -155,39 +166,45 @@ Authorization requires all of the following:
 | FR-09 | Customer shall submit a vehicle ownership claim with registration number, NID, and reason |
 | FR-10 | Customer shall view the status of their ownership claims |
 
-### 8.2 Pump Representative API
+### 8.2 Pump Representative Web Portal & API
 
 | ID | Requirement |
 |----|-------------|
-| FR-11 | Pump app shall send the scanned QR token and GPS coordinates to `/api/pump/authorize` |
-| FR-12 | Backend shall return vehicle identity, remaining quota, and authorized litres |
-| FR-13 | Pump app shall confirm dispensed litres to `/api/pump/confirm` |
-| FR-14 | Confirmation shall be idempotent (safe to retry without double-decrement) |
+| FR-11 | Pump representative shall log in to the web portal using their employee ID |
+| FR-12 | After login, pump representative shall see the QR code scanner and their assigned station name |
+| FR-13 | Pump app shall send the scanned QR token and station ID to `/api/pump/authorize` |
+| FR-14 | As an alternative to QR scanning, representative shall be able to enter the vehicle registration number manually via `/api/pump/authorize-manual` |
+| FR-15 | Backend shall return vehicle identity (registration number, BRTA status, make, color, owner name), remaining quota, total quota, and authorized litres |
+| FR-16 | Pump representative shall enter the dispensed fuel amount using an on-screen numeric keypad |
+| FR-17 | Pump representative shall select the fuel type dispensed from a dropdown |
+| FR-18 | Pump app shall confirm dispensed litres to `/api/pump/confirm` |
+| FR-19 | Confirmation shall be idempotent for QR-path transactions (safe to retry without double-decrement) |
+| FR-20 | After successful confirmation, portal shall display a transaction receipt with reference number and remaining quota |
 
 ### 8.3 Admin Portal
 
 | ID | Requirement |
 |----|-------------|
-| FR-15 | Admin shall view, search, and filter all registered vehicles |
-| FR-16 | Admin shall trigger BRTA re-verification for any vehicle |
-| FR-17 | Admin shall create, update, and deactivate fuel stations with GPS coordinates |
-| FR-18 | Admin shall create and manage pump representatives per station |
-| FR-19 | Admin shall view and adjust individual vehicle quotas with a reason |
-| FR-20 | Admin shall manually reset an individual vehicle quota |
-| FR-21 | Admin shall configure global quota settings (limit, period, geofence radius, cron expression) |
-| FR-22 | Admin shall review, approve, and reject vehicle ownership claims |
-| FR-23 | Admin shall view a searchable, filterable audit log of all administrative actions |
-| FR-24 | Admin shall view dashboard statistics and analytics charts |
+| FR-21 | Admin shall view, search, and filter all registered vehicles |
+| FR-22 | Admin shall trigger BRTA re-verification for any vehicle |
+| FR-23 | Admin shall create, update, and deactivate fuel stations with GPS coordinates |
+| FR-24 | Admin shall create and manage pump representatives per station |
+| FR-25 | Admin shall view and adjust individual vehicle quotas with a reason |
+| FR-26 | Admin shall manually reset an individual vehicle quota |
+| FR-27 | Admin shall configure global quota settings (limit, period, geofence radius, cron expression) |
+| FR-28 | Admin shall review, approve, and reject vehicle ownership claims |
+| FR-29 | Admin shall view a searchable, filterable audit log of all administrative actions |
+| FR-30 | Admin shall view dashboard statistics and analytics charts |
 
 ### 8.4 Backend / Infrastructure
 
 | ID | Requirement |
 |----|-------------|
-| FR-25 | System shall run a scheduled quota reset job per configured cron expression |
-| FR-26 | System shall persist all transactions with quota before/after values |
-| FR-27 | System shall log all administrative actions in an immutable audit trail |
-| FR-28 | System shall cache vehicle and quota data in Redis for performance |
-| FR-29 | System shall evict caches on any vehicle or quota status change |
+| FR-31 | System shall run a scheduled quota reset job per configured cron expression |
+| FR-32 | System shall persist all transactions with quota before/after values |
+| FR-33 | System shall log all administrative actions in an immutable audit trail |
+| FR-34 | System shall cache vehicle and quota data in Redis for performance |
+| FR-35 | System shall evict caches on any vehicle or quota status change |
 
 ---
 
@@ -221,9 +238,12 @@ Authorization requires all of the following:
 | ER-04 | GPS outside geofence | Deny authorization; return geofence failure reason |
 | ER-05 | Quota exhausted (0L remaining) | Deny authorization; return `DENIED` decision |
 | ER-06 | Partial quota | Authorize remaining litres; return `PARTIAL` decision |
-| ER-07 | Duplicate confirm request | Idempotent: return existing transaction; no double-deduction |
+| ER-07 | Duplicate QR confirm request | Idempotent: return error; no double-deduction |
 | ER-08 | NID already registered | Reject registration; return validation error |
 | ER-09 | Registration number already exists | Reject registration; return validation error |
+| ER-10 | Employee ID not found at pump login | Return 400 with descriptive message |
+| ER-11 | Representative account not ACTIVE | Return 400; deny login |
+| ER-12 | Vehicle not found on manual lookup | Return DENIED authorization with message |
 
 ---
 
@@ -231,15 +251,20 @@ Authorization requires all of the following:
 
 | ID | Scenario | Expected Outcome |
 |----|----------|-----------------|
-| ATS-01 | Full approval | remaining ≥ requested → decision `APPROVED`, authorized = requested |
-| ATS-02 | Partial approval | 0 < remaining < requested → decision `PARTIAL`, authorized = remaining |
-| ATS-03 | Quota exhausted | remaining = 0 → decision `DENIED` |
-| ATS-04 | Geofence denial | GPS > radius → decision `DENIED`, reason = geofence |
-| ATS-05 | Invalid/expired QR | decision `DENIED`, reason = invalid token |
+| ATS-01 | Full approval (QR path) | remaining ≥ requested → `APPROVED`, authorized = requested |
+| ATS-02 | Partial approval | 0 < remaining < requested → `PARTIAL`, authorized = remaining |
+| ATS-03 | Quota exhausted | remaining = 0 → `DENIED` |
+| ATS-04 | Geofence denial | GPS > radius → `DENIED`, reason = geofence |
+| ATS-05 | Invalid/expired QR | `DENIED`, reason = invalid token |
 | ATS-06 | Quota reset | After scheduled reset: used = 0, remaining = limit |
-| ATS-07 | Idempotent confirm | Second confirm with same transaction ID: no additional quota deduction |
+| ATS-07 | Idempotent confirm | Second confirm with same QR token: 400 error, no deduction |
 | ATS-08 | Vehicle claim approval | Vehicle transfers to claimant; NID, name, email updated |
 | ATS-09 | New registration | Vehicle auto-VERIFIED; quota created as ACTIVE |
+| ATS-10 | Pump rep login — valid employee ID | 200 response with rep details and station info |
+| ATS-11 | Pump rep login — invalid employee ID | 400 error |
+| ATS-12 | Manual authorization — valid reg number | Same authorization response shape as QR path |
+| ATS-13 | Manual authorization — unknown reg number | `DENIED` with `Vehicle not found` message |
+| ATS-14 | Manual confirm — no QR token | Transaction recorded; quota deducted |
 
 ---
 
@@ -252,9 +277,9 @@ Authorization requires all of the following:
 5. **Multi-tenant Support** — Multiple quota programs per vehicle class or region.
 6. **Data Retention Policy** — Define and enforce retention periods for transactions and audit logs.
 7. **Advanced Analytics** — Fuel consumption forecasting and station performance reports.
+8. **Pump Rep Password Authentication** — Replace employee-ID-only demo login with full username + password flow.
 
 ---
 
 *Document maintained by: Engineering Team*  
 *Next review date: 2026-07-01*
-

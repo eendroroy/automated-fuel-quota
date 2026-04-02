@@ -22,6 +22,12 @@ export default function PublicLayout() {
                   Vehicle Owner Login
                 </Link>
                 <Link
+                  to="/pump"
+                  className="text-sm font-medium text-gray-600 hover:text-brand-700 px-3 py-1.5 rounded-lg hover:bg-brand-50 transition-colors"
+                >
+                  Pump Rep
+                </Link>
+                <Link
                   to="/admin/login"
                   className="text-sm font-medium text-white bg-brand-600 px-3 py-1.5 rounded-lg hover:bg-brand-700 transition-colors"
                 >

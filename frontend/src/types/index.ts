@@ -287,3 +287,64 @@ export interface PagedResponse<T> {
   size: number
   number: number
 }
+
+// ─── Pump Representative Demo App ─────────────────────────────────────────────
+export interface PumpRepLoginRequest {
+  employeeId: string
+}
+
+export interface PumpRepSession {
+  id: string
+  name: string
+  employeeId: string
+  stationId: string
+  stationName: string
+  stationCode: string
+}
+
+export type AuthorizationDecision = 'APPROVED' | 'PARTIAL' | 'DENIED'
+
+export interface AuthorizationResult {
+  decision: AuthorizationDecision
+  authorizedLiters: number
+  remainingQuota: number
+  totalQuota: number
+  message: string | null
+  vehicleFound: string
+  vehicleMake: string
+  vehicleColor: string
+  ownerName: string
+  vehicleStatus: string
+  fuelType: string
+}
+
+export interface PumpAuthorizeRequest {
+  qrToken: string
+  stationId: string
+  requestedLiters?: number
+}
+
+export interface ManualAuthorizeRequest {
+  registrationNumber: string
+  stationId: string
+  requestedLiters?: number
+}
+
+export interface PumpConfirmRequest {
+  qrToken?: string           // absent on manual path
+  registrationNumber?: string // used on manual path instead of qrToken
+  stationId: string
+  pumpRepresentativeId: string
+  dispensedLiters: number
+  fuelType: string
+}
+
+export interface PumpConfirmResponse {
+  transactionId: string
+  transactionReference: string
+  dispensedLiters: number
+  remainingQuota: number
+  timestamp: string
+  message: string
+}
+

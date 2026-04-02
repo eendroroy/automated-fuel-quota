@@ -79,10 +79,10 @@ public class Transaction implements Serializable {
     @Column(name = "transaction_timestamp", nullable = false)
     private LocalDateTime transactionTimestamp;
 
-    /** The {@link User} (pump representative) who performed the dispense. */
+    /** The {@link PumpRepresentative} who performed the dispense. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pump_representative_id", nullable = false)
-    private User pumpRepresentative;
+    private PumpRepresentative pumpRepresentative;
 
     /** GPS latitude of the pump representative's device at dispense time. */
     @Column(name = "latitude", precision = 9, scale = 6)
@@ -155,7 +155,7 @@ public class Transaction implements Serializable {
      * @param remainingQuotaAfter  vehicle's remaining quota after this transaction
      */
     public Transaction(Vehicle vehicle, FuelStation station, BigDecimal amountDispensedLiters,
-                       String fuelTypeDispensed, User pumpRepresentative, BigDecimal latitude,
+                       String fuelTypeDispensed, PumpRepresentative pumpRepresentative, BigDecimal latitude,
                        BigDecimal longitude, String qrTokenUsed, BigDecimal remainingQuotaAfter) {
         this.vehicle = vehicle;
         this.station = station;
@@ -165,7 +165,7 @@ public class Transaction implements Serializable {
         this.pumpRepresentative = pumpRepresentative;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.qrTokenUsed = qrTokenUsed;
+        this.qrTokenUsed = qrTokenUsed != null ? qrTokenUsed : "NONE";
         this.remainingQuotaAfter = remainingQuotaAfter;
         this.geofenceVerified = (latitude != null && longitude != null)
                 && station.isWithinGeofence(latitude, longitude);

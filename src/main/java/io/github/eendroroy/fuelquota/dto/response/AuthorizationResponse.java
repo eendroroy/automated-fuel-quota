@@ -73,5 +73,17 @@ public class AuthorizationResponse {
     /** Full name of the vehicle owner. */
     @Schema(description = "Vehicle owner's full name", example = "John Doe")
     private String ownerName;
+
+    /** BRTA verification status of the vehicle (VERIFIED / UNVERIFIED / DEREGISTERED). */
+    @Schema(description = "Vehicle verification status", example = "VERIFIED")
+    private String vehicleStatus;
+
+    /** Fuel type registered for the vehicle (e.g. Petrol, Diesel). */
+    @Schema(description = "Fuel type of the vehicle", example = "Petrol")
+    private String fuelType;
+
+    /** Total periodic quota limit for this vehicle in litres. */
+    @Schema(description = "Total periodic quota limit in litres", example = "24.00")
+    private BigDecimal totalQuota;
 }
 

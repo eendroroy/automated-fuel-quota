@@ -37,11 +37,17 @@ public class DispenseConfirmationRequest {
 
     /**
      * The same JWT QR token that was used in the preceding authorize call.
-     * Re-validated to prevent replay/duplicate transactions.
+     * Optional when the pump representative authorized manually by registration number.
+     * Re-validated to prevent replay/duplicate transactions when present.
      */
-    @NotBlank(message = "QR token is required")
-    @Schema(description = "JWT QR token from customer's mobile app (same as used in authorize)", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "JWT QR token from customer's mobile app (omit for manual registration-number authorizations)")
     private String qrToken;
+
+    /**
+     * Vehicle registration number — required when {@code qrToken} is absent (manual authorization path).
+     */
+    @Schema(description = "Vehicle registration number (required when qrToken is not provided)", example = "DHK-KA-11-1234")
+    private String registrationNumber;
 
     /** UUID of the fuel station where dispensing occurred. */
     @NotNull(message = "Station ID is required")

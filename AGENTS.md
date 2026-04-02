@@ -54,8 +54,23 @@ DEREGISTERED → soft-deleted; history preserved
 1. Customer generates QR token (JWT with 1-hour expiration).
 2. Pump rep scans QR → calls `/api/pump/authorize`.
 3. System validates: JWT → Vehicle status → GPS geofence → Quota availability.
-4. Returns authorization decision with vehicle info and authorized liters.
+4. Returns authorization decision with vehicle info, authorized liters, vehicle status, fuel type, and total quota.
 5. After dispensing → `/api/pump/confirm` updates quota and records transaction.
+
+### Manual Authorization Flow (Fallback)
+1. Pump rep switches to "Enter Manually" tab on the scan page.
+2. Rep types the vehicle registration number → calls `/api/pump/authorize-manual`.
+3. System validates: Vehicle exists → Vehicle status → Quota availability (same checks as QR path, no JWT or geofence).
+4. Returns same `AuthorizationResponse` shape.
+5. After dispensing → `/api/pump/confirm` with `registrationNumber` instead of `qrToken` (idempotency check skipped).
+
+### Pump Representative Portal Flow
+1. Rep navigates to `/pump`, enters their **employee ID** → `POST /api/pump/login`.
+2. Session saved to `localStorage` (`pumpRepSession` key) via helpers in `PumpRepLayout.tsx`.
+3. Rep is shown scan page; tab switcher selects between camera QR scanner and manual entry.
+4. After authorization → navigates to `/pump/dispense` with `AuthorizationResult` in router state.
+5. Dispense page shows vehicle info panel + color-coded quota bar + fuel type dropdown + on-screen numeric keypad.
+6. Rep confirms → `POST /api/pump/confirm` → receipt shown with transaction reference.
 
 ## Field Naming Conventions
 
@@ -90,17 +105,53 @@ Cache keys: Vehicle and quota data are cached by ID and registration number. Alw
 - **JWT with dual expiration**: 24h for app tokens, 1h for QR tokens
 - **Role-based routing**: Customer/Admin layouts with `ProtectedRoute` components
 - **Request attribute pattern**: JWT filter adds `userId`, `userEmail`, `userRole` to request for easy access in controllers
+- **Pump rep portal**: No JWT — uses `localStorage` session object; pages self-redirect to `/pump` if session is absent
 
 ### API Design Conventions
-- `/api/pump/*` - **Public endpoints** for pump representative mobile apps (core BRD)
+- `/api/pump/*` - **Public endpoints** for pump representative portal (core BRD)
+  - `POST /api/pump/login` — employee-ID login (no password in demo)
+  - `POST /api/pump/authorize` — QR token authorization
+  - `POST /api/pump/authorize-manual` — registration-number authorization (no QR)
+  - `POST /api/pump/confirm` — dispense confirmation (`qrToken` optional; use `registrationNumber` for manual path)
 - `/api/customer/*` - **CUSTOMER role required** (JWT protected)
 - `/api/admin/*` - **ADMIN role required** (JWT protected)
 - `/api/public/*` - **Public reference data** (registration codes, BRTA offices)
 
 ### Frontend Architecture
-- **Layout-based routing**: `PublicLayout`, `CustomerLayout`, `AdminLayout` with nested routes
-- **API client pattern**: Centralized axios instance with interceptors for auth/errors
+- **Layout-based routing**: `PublicLayout`, `CustomerLayout`, `AdminLayout`, `PumpRepLayout` with nested routes
+- **API client pattern**: Centralized axios instance with interceptors for auth/errors; **separate** `pumpAxios` instance (no JWT) in `api/pumpApi.ts`
 - **Type definitions**: Shared TypeScript interfaces in `frontend/src/types/index.ts`
+- **Pump portal pages**: `pages/pump/PumpLoginPage.tsx`, `PumpScanPage.tsx`, `PumpDispensePage.tsx`
+
+### `AuthorizationResponse` Shape (Updated)
+The `AuthorizationResponse` DTO now includes:
+```java
+AuthorizationDecision decision     // APPROVED | PARTIAL | DENIED
+BigDecimal authorizedLiters
+BigDecimal remainingQuota
+BigDecimal totalQuota              // NEW: periodic limit in litres
+String message                     // deny reason or null
+String vehicleFound                // registration number
+String vehicleMake
+String vehicleColor
+String ownerName
+String vehicleStatus               // NEW: VERIFIED | UNVERIFIED | DEREGISTERED
+String fuelType                    // NEW: vehicle's registered fuel type
+```
+
+### `QuotaAuthorizationResult` (Updated)
+Added `limitLiters` field to carry total quota to `PumpService`:
+```java
+public QuotaAuthorizationResult(decision, authorizedLiters, remainingQuota, limitLiters, denyReason)
+```
+
+### `DispenseConfirmationRequest` (Updated)
+- `qrToken` is now **optional** (removed `@NotBlank`) — absent on manual authorization path.
+- Added optional `registrationNumber` field — used on manual path to resolve the vehicle.
+- Service logic: resolves vehicle from QR token when present, otherwise from `registrationNumber`; skips idempotency check when `qrToken` is blank.
+
+### Frontend npm Dependencies Added
+- **`html5-qrcode`** — Camera-based QR code scanning in the browser (`PumpScanPage.tsx`)
 
 ## Database & Entity Relationships
 
@@ -148,8 +199,11 @@ app.quota.geofence-radius-meters: 100
 - **Quota authorization logic**: Partial dispense, geofencing, vehicle status checks
 - **Periodic reset job**: Verify quota calculations and cache eviction
 - **Security**: JWT validation, role-based access, QR token expiration
-- **Idempotency**: Duplicate transaction prevention in `/api/pump/confirm`
+- **Idempotency**: Duplicate transaction prevention in `/api/pump/confirm` (QR path only)
 - **NID uniqueness**: Vehicle registration rejects duplicate `ownerNid`
+- **Pump rep login**: Valid employee ID → 200 with session; invalid ID → 400
+- **Manual authorization**: Valid reg number → same response shape as QR path; unknown → DENIED
+- **Manual confirm**: No `qrToken` provided; `registrationNumber` used to resolve vehicle
 
 ### Error Handling Patterns
 - Global exception handler returns structured JSON responses

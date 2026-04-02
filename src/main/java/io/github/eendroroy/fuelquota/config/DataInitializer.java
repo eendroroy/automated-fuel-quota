@@ -112,12 +112,10 @@ public class DataInitializer {
 
             // ── 7. Sample transactions ─────────────────────────────────────────
             if (transactionRepository.count() == 0) {
-                List<User> repUsers = userRepository.findAll().stream()
-                    .filter(u -> u.getRole() == User.UserRole.PUMP_REPRESENTATIVE)
-                    .toList();
-                if (!repUsers.isEmpty()) {
+                List<PumpRepresentative> reps = pumpRepRepository.findAll();
+                if (!reps.isEmpty()) {
                     createSampleTransactions(transactionRepository, stationRepository.findAll(),
-                        repUsers, vehicleRepository.findAll());
+                        reps, vehicleRepository.findAll());
                     logger.info("Created sample transactions");
                 }
             }
@@ -455,17 +453,17 @@ public class DataInitializer {
 
     private void createSampleTransactions(TransactionRepository txRepo,
                                            List<FuelStation> stations,
-                                           List<User> repUsers,
+                                           List<PumpRepresentative> reps,
                                            List<Vehicle> vehicles) {
         FuelStation s1 = findStation(stations, "ABC-DH-001");
         FuelStation s2 = findStation(stations, "XYZ-GL-002");
         FuelStation s3 = findStation(stations, "PC-CTG-003");
         FuelStation s4 = findStation(stations, "GV-SYL-004");
 
-        User rep1 = findRepUser(repUsers, "ahmed.ali@abcfuel.com");
-        User rep2 = findRepUser(repUsers, "salma.khatun@xyzpetrol.com");
-        User rep3 = findRepUser(repUsers, "iqbal.hassan@portcityfuel.com");
-        User rep4 = findRepUser(repUsers, "sumaiya.akter@greenvalley.com");
+        PumpRepresentative rep1 = findRep(reps, "ahmed.ali@abcfuel.com");
+        PumpRepresentative rep2 = findRep(reps, "salma.khatun@xyzpetrol.com");
+        PumpRepresentative rep3 = findRep(reps, "iqbal.hassan@portcityfuel.com");
+        PumpRepresentative rep4 = findRep(reps, "sumaiya.akter@greenvalley.com");
 
         // John Doe – 2 fill-ups → 5 + 3 = 8 L used
         findVehicle(vehicles, "DHAKA METRO GA 10-1001").ifPresent(v -> {
@@ -505,7 +503,7 @@ public class DataInitializer {
     }
 
     private void tx(TransactionRepository txRepo, Vehicle vehicle, FuelStation station,
-                     String amountStr, User rep, BigDecimal lat, BigDecimal lon,
+                     String amountStr, PumpRepresentative rep, BigDecimal lat, BigDecimal lon,
                      String pumpId, String remainingAfterStr, LocalDateTime timestamp) {
         BigDecimal amount = new BigDecimal(amountStr);
         if (amount.compareTo(BigDecimal.ZERO) == 0) return;
@@ -527,6 +525,11 @@ public class DataInitializer {
 
     private Optional<Vehicle> findVehicle(List<Vehicle> vehicles, String regNumber) {
         return vehicles.stream().filter(v -> regNumber.equals(v.getRegistrationNumber())).findFirst();
+    }
+
+    private PumpRepresentative findRep(List<PumpRepresentative> reps, String email) {
+        return reps.stream().filter(r -> email.equals(r.getEmail()))
+            .findFirst().orElse(reps.getFirst());
     }
 
     private User findRepUser(List<User> users, String email) {
