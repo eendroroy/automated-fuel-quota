@@ -1,0 +1,22 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Explicitly declare text files
+*.java text
+*.md text
+*.xml text
+*.yml text
+*.properties text
+*.gitignore text
+*.gitattributes text
+
+# Treat PDF and images as binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+
+# Documentation
+*.md text
+

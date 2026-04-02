@@ -1,0 +1,92 @@
+import { useEffect, useState } from 'react'
+import { Car, MapPin, Droplets, Users, Activity, Clock } from 'lucide-react'
+import { getAdminStats } from '@/api/adminStatsApi'
+import StatsCard from '@/components/common/StatsCard'
+import LoadingSpinner from '@/components/common/LoadingSpinner'
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Legend,
+} from 'recharts'
+import type { AdminStats } from '@/types'
+
+export default function AdminDashboardPage() {
+  const [stats, setStats] = useState<AdminStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getAdminStats()
+      .then(setStats)
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" /></div>
+
+  // Fallback demo data if API not available yet
+  const dailyTx = stats?.dailyTransactions ?? [
+    { date: 'Mon', count: 1200 }, { date: 'Tue', count: 1450 }, { date: 'Wed', count: 980 },
+    { date: 'Thu', count: 1600 }, { date: 'Fri', count: 2100 }, { date: 'Sat', count: 1850 }, { date: 'Sun', count: 900 },
+  ]
+  const quotaByClass = stats?.quotaUsageByVehicleClass ?? [
+    { vehicleClass: 'Private Car', avgUsed: 18.2 }, { vehicleClass: 'Motorcycle', avgUsed: 8.5 },
+    { vehicleClass: 'Bus', avgUsed: 22.1 }, { vehicleClass: 'Truck', avgUsed: 20.8 }, { vehicleClass: 'Three-Wheeler', avgUsed: 12.3 },
+  ]
+
+  const cards = [
+    { title: 'Total Vehicles', value: (stats?.totalVehicles ?? 24_850).toLocaleString(), icon: Car, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
+    { title: 'Unverified Vehicles', value: stats?.unverifiedVehicles ?? 0, icon: Clock, iconBg: 'bg-yellow-50', iconColor: 'text-yellow-600' },
+    { title: 'Transactions Today', value: (stats?.transactionsToday ?? 2_134).toLocaleString(), icon: Activity, iconBg: 'bg-green-50', iconColor: 'text-green-600' },
+    { title: 'Active Stations', value: stats?.activeStations ?? 428, icon: MapPin, iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
+    { title: 'Avg. Quota Used', value: `${stats?.averageQuotaUsedPercent?.toFixed(1) ?? '64.3'}%`, icon: Droplets, iconBg: 'bg-orange-50', iconColor: 'text-orange-600' },
+    { title: 'Transactions This Week', value: (stats?.totalTransactionsThisWeek ?? 14_820).toLocaleString(), icon: Users, iconBg: 'bg-pink-50', iconColor: 'text-pink-600' },
+  ]
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p className="text-gray-500 text-sm mt-0.5">System overview and analytics</p>
+      </div>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        {cards.map((c) => (
+          <StatsCard key={c.title} title={c.title} value={c.value} icon={c.icon} iconBg={c.iconBg} iconColor={c.iconColor} />
+        ))}
+      </div>
+
+      {/* Charts */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Daily transactions */}
+        <div className="card">
+          <h3 className="font-semibold text-gray-900 mb-5">Daily Transactions (Last 7 Days)</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={dailyTx} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+              <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} />
+              <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
+              <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '13px', border: '1px solid #e5e7eb' }} />
+              <Line type="monotone" dataKey="count" name="Transactions" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Quota usage by class */}
+        <div className="card">
+          <h3 className="font-semibold text-gray-900 mb-5">Avg. Quota Used by Vehicle Class (L)</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={quotaByClass} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+              <XAxis dataKey="vehicleClass" tick={{ fontSize: 10, fill: '#6b7280' }} />
+              <YAxis domain={[0, 24]} tick={{ fontSize: 12, fill: '#6b7280' }} />
+              <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '13px', border: '1px solid #e5e7eb' }} />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
+              <Bar dataKey="avgUsed" name="Avg Used (L)" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={48} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  )
+}
+

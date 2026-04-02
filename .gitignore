@@ -1,0 +1,36 @@
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+/target/
+/logs/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+/.idea/
+*.iml
+*.ipr
+*.iws
+*.sw?
+.DS_Store
+
+# OS
+Thumbs.db
+
+# Misc
+*.log
+*.tmp
+*.bak
+
+# Documentation artifacts
+pdf_content.txt
+
+# Others
+node_modules/
+.env
+/frontend/node_modules/
+/frontend/dist/
+/src/main/resources/static/
