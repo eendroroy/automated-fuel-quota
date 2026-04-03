@@ -1,6 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom'
 import { Fuel, LogOut, User } from 'lucide-react'
 import type { PumpRepSession } from '@/types'
+import ThemeToggle from '@/components/common/ThemeToggle'
 
 const PUMP_SESSION_KEY = 'pumpRepSession'
 
@@ -33,21 +34,22 @@ export default function PumpRepLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40 shadow-sm">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-brand-700 text-base">
+          <div className="flex items-center gap-2 font-bold text-brand-700 dark:text-brand-400 text-base">
             <Fuel className="h-5 w-5 text-brand-600" />
             <span>Pump Rep Portal</span>
           </div>
           {session && (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-sm text-gray-600">
+              <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline">{session.name}</span>
               </div>
+              <ThemeToggle />
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                className="flex items-center gap-1 text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Logout</span>

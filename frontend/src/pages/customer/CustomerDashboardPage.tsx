@@ -214,7 +214,7 @@ export default function CustomerDashboardPage() {
   const load = useCallback(() => {
     setLoading(true)
     Promise.all([
-      getMyVehicles().catch(() => [] as Vehicle[]),
+      getMyVehicles({ page: 0, size: 100 }).then((r) => r.content).catch(() => [] as Vehicle[]),
       getMyTransactions({ page: 0, size: 6 }).catch(() => ({ content: [] as Transaction[] })),
     ])
       .then(([v, t]) => {

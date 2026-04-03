@@ -53,7 +53,7 @@ public class CustomerService {
     // ── Multi-vehicle listing ──────────────────────────────────────────────────
 
     /**
-     * Returns all vehicles belonging to the authenticated customer.
+     * Returns all vehicles belonging to the authenticated customer (non-paginated).
      */
     public List<VehicleResponse> getVehiclesByUserId(UUID userId) {
         List<Vehicle> vehicles = vehicleRepository.findByUserId(userId);
@@ -61,6 +61,14 @@ public class CustomerService {
             throw new ResourceNotFoundException("No vehicles found for user");
         }
         return vehicles.stream().map(vehicleMapper::toResponse).toList();
+    }
+
+    /**
+     * Returns paginated vehicles belonging to the authenticated customer.
+     */
+    public Page<VehicleResponse> getVehiclesByUserId(UUID userId, Pageable pageable) {
+        Page<Vehicle> vehicles = vehicleRepository.findPageByUserId(userId, pageable);
+        return vehicles.map(vehicleMapper::toResponse);
     }
 
     /**

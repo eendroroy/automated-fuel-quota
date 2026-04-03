@@ -24,8 +24,8 @@ export default function CustomerTransactionsPage() {
 
   // Load vehicle list for filter picker
   useEffect(() => {
-    getMyVehicles()
-      .then(setVehicles)
+    getMyVehicles({ page: 0, size: 100 }) // Fetch a large page for filter dropdown
+      .then((response) => setVehicles(response.content))
       .catch(() => {})
   }, [])
 

@@ -12,12 +12,9 @@ import { downloadQrAsPng } from '@/utils/qrHelpers'
 import { formatDate, formatDateTime, formatLitres } from '@/utils/formatters'
 import toast from 'react-hot-toast'
 import QRCode from 'react-qr-code'
-import type { Vehicle, Quota, AddVehicleRequest } from '@/types'
+import type { Vehicle, Quota, AddVehicleRequest, PagedResponse } from '@/types'
 import { FUEL_TYPES } from '@/config/constants'
-
-const VEHICLES_PER_PAGE = 9
-const DEREGISTERED_PER_PAGE = 6
-
+const VEHICLES_PER_PAGE = 20
 const emptyForm: AddVehicleRequest = {
   brtaOfficeCode: '',
   vehicleRegistrationCode: '',
@@ -29,32 +26,26 @@ const emptyForm: AddVehicleRequest = {
   engineDisplacement: undefined,
   registrationDate: '',
 }
-
 // ── Quota bar (reusable) ─────────────────────────────────────────────────────
 function VehicleQuotaSection({ vehicleId }: { vehicleId: string }) {
   const [quota, setQuota] = useState<Quota | null>(null)
   const [loading, setLoading] = useState(true)
-
   useEffect(() => {
     getVehicleQuota(vehicleId)
       .then(setQuota)
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [vehicleId])
-
   if (loading)
     return (
       <div className="flex items-center gap-2 text-xs text-gray-400 py-1">
         <LoadingSpinner size="sm" /> Loading quota…
       </div>
     )
-
   if (!quota) return null
-
   const pct = Math.min((quota.usedLiters / quota.limitLiters) * 100, 100)
   const barColor = pct >= 90 ? 'bg-red-500' : pct >= 60 ? 'bg-amber-400' : 'bg-emerald-500'
   const periodLabel = quota.period.charAt(0) + quota.period.slice(1).toLowerCase()
-
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs text-gray-500">
@@ -146,7 +137,7 @@ function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () =>
 }
 
 export default function CustomerVehiclesPage() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [vehiclesData, setVehiclesData] = useState<PagedResponse<Vehicle> | null>(null)
   const [loading, setLoading] = useState(true)
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<Vehicle | null>(null)
@@ -154,18 +145,20 @@ export default function CustomerVehiclesPage() {
   const [form, setForm] = useState<AddVehicleRequest>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
   const [removing, setRemoving] = useState(false)
-  const [activePage, setActivePage] = useState(0)
-  const [deregPage, setDeregPage] = useState(0)
+  const [page, setPage] = useState(0)
 
-  const load = useCallback(() => {
+  const load = useCallback((pageNum: number = 0) => {
     setLoading(true)
-    getMyVehicles()
-      .then((v) => { setVehicles(v); setActivePage(0); setDeregPage(0) })
+    getMyVehicles({ page: pageNum, size: VEHICLES_PER_PAGE })
+      .then((data) => {
+        setVehiclesData(data)
+        setPage(pageNum)
+      })
       .catch(() => toast.error('Failed to load vehicles'))
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load(0) }, [load])
 
   const set = (k: keyof AddVehicleRequest) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -187,7 +180,7 @@ export default function CustomerVehiclesPage() {
       toast.success('Vehicle added! Your fuel quota is now active.')
       setAddModalOpen(false)
       setForm(emptyForm)
-      load()
+      load(0)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       toast.error(msg ?? 'Failed to add vehicle')
@@ -203,7 +196,7 @@ export default function CustomerVehiclesPage() {
       await removeMyVehicle(removeTarget.id)
       toast.success(`${removeTarget.registrationNumber} removed from your account`)
       setRemoveTarget(null)
-      load()
+      load(page)
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       toast.error(msg ?? 'Failed to remove vehicle')
@@ -215,14 +208,11 @@ export default function CustomerVehiclesPage() {
   if (loading)
     return <div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" /></div>
 
+  const vehicles = vehiclesData?.content || []
+  const totalElements = vehiclesData?.totalElements || 0
+  const totalPages = vehiclesData?.totalPages || 0
   const active = vehicles.filter((v) => v.status !== 'DEREGISTERED')
   const deregistered = vehicles.filter((v) => v.status === 'DEREGISTERED')
-
-  // Pagination slices (client-side — backend returns full array)
-  const activeTotalPages = Math.ceil(active.length / VEHICLES_PER_PAGE)
-  const deregTotalPages = Math.ceil(deregistered.length / DEREGISTERED_PER_PAGE)
-  const activeSlice = active.slice(activePage * VEHICLES_PER_PAGE, (activePage + 1) * VEHICLES_PER_PAGE)
-  const deregSlice = deregistered.slice(deregPage * DEREGISTERED_PER_PAGE, (deregPage + 1) * DEREGISTERED_PER_PAGE)
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -231,7 +221,7 @@ export default function CustomerVehiclesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Vehicles</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {active.length} active · {deregistered.length} deregistered · {vehicles.length} total
+            {totalElements} {totalElements === 1 ? 'vehicle' : 'vehicles'} registered
           </p>
         </div>
         <button onClick={() => { setForm(emptyForm); setAddModalOpen(true) }} className="btn-primary gap-2">
@@ -240,7 +230,7 @@ export default function CustomerVehiclesPage() {
       </div>
 
       {/* Empty state */}
-      {vehicles.length === 0 && (
+      {totalElements === 0 && (
         <div className="card text-center py-16 border border-dashed border-gray-300 bg-gray-50">
           <Car className="h-12 w-12 mx-auto mb-3 text-gray-300" />
           <p className="font-semibold text-gray-600 text-lg">No vehicles registered yet</p>
@@ -254,15 +244,15 @@ export default function CustomerVehiclesPage() {
       {/* Active / Unverified vehicles */}
       {active.length > 0 && (
         <div className="space-y-4">
-          {activeTotalPages > 1 && (
+          {totalPages > 1 && (
             <div className="flex items-center justify-between text-sm text-gray-500">
               <span>
-                Showing {activePage * VEHICLES_PER_PAGE + 1}–{Math.min((activePage + 1) * VEHICLES_PER_PAGE, active.length)} of {active.length} vehicles
+                Showing {page * VEHICLES_PER_PAGE + 1}–{Math.min((page + 1) * VEHICLES_PER_PAGE, totalElements)} of {totalElements} vehicles
               </span>
             </div>
           )}
           <div className="grid sm:grid-cols-2 gap-4">
-            {activeSlice.map((v) => (
+            {active.map((v) => (
             <div key={v.id} className={`card border flex flex-col gap-4 transition-shadow hover:shadow-md ${
               v.status === 'UNVERIFIED' ? 'border-red-200' : 'border-gray-200'
             }`}>
@@ -336,22 +326,24 @@ export default function CustomerVehiclesPage() {
             </div>
           ))}
           </div>
-          <Pagination
-            page={activePage}
-            totalPages={activeTotalPages}
-            onPageChange={(p) => { setActivePage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-          />
+          {totalPages > 1 && (
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={(p) => { load(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            />
+          )}
         </div>
       )}
 
-      {/* Deregistered vehicles (collapsed appearance) */}
+      {/* Deregistered vehicles */}
       {deregistered.length > 0 && (
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
             Deregistered ({deregistered.length})
           </p>
           <div className="grid sm:grid-cols-2 gap-3">
-            {deregSlice.map((v) => (
+            {deregistered.map((v) => (
               <div key={v.id} className="card border border-gray-200 opacity-60 flex items-center gap-3 py-3">
                 <div className="h-9 w-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Car className="h-4 w-4 text-gray-400" />
@@ -369,11 +361,6 @@ export default function CustomerVehiclesPage() {
               </div>
             ))}
           </div>
-          <Pagination
-            page={deregPage}
-            totalPages={deregTotalPages}
-            onPageChange={setDeregPage}
-          />
         </div>
       )}
 

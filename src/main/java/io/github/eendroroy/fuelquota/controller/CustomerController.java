@@ -381,18 +381,22 @@ public class CustomerController {
     }
 
     /**
-     * Returns all ownership claims submitted by the authenticated customer.
+     * Returns paginated ownership claims submitted by the authenticated customer.
      *
-     * @param request HTTP request containing the authenticated user's details
-     * @return list of the customer's claim records
+     * @param request  HTTP request containing the authenticated user's details
+     * @param pageable pagination parameters (page, size, sort)
+     * @return paginated list of the customer's claim records
      */
     @GetMapping("/vehicles/claims")
     @Operation(
         summary = "Get my vehicle ownership claims",
-        description = "Returns all ownership claims submitted by the authenticated customer"
+        description = "Returns paginated ownership claims submitted by the authenticated customer"
     )
-    public ResponseEntity<List<VehicleClaimResponse>> getMyClaims(HttpServletRequest request) {
+    @ApiResponse(responseCode = "200", description = "Claims retrieved successfully",
+            content = @Content(schema = @Schema(implementation = Page.class)))
+    public ResponseEntity<Page<VehicleClaimResponse>> getMyClaims(
+            HttpServletRequest request, Pageable pageable) {
         UUID userId = (UUID) request.getAttribute("userId");
-        return ResponseEntity.ok(vehicleClaimService.getMyClaims(userId));
+        return ResponseEntity.ok(vehicleClaimService.getMyClaims(userId, pageable));
     }
 }

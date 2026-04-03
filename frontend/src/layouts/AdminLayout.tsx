@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import toast from 'react-hot-toast'
+import ThemeToggle from '@/components/common/ThemeToggle'
 
 const navItems = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -88,6 +89,9 @@ export default function AdminLayout() {
             <p className="text-gray-400 text-xs truncate">{user?.email}</p>
           </div>
         </div>
+        <div className="px-3 py-2">
+          <ThemeToggle />
+        </div>
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-red-600/20 hover:text-red-400 transition-colors"
@@ -119,7 +123,7 @@ export default function AdminLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-200 h-14 flex items-center px-4 sm:px-6 gap-3 flex-shrink-0">
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-14 flex items-center px-4 sm:px-6 gap-3 flex-shrink-0">
           <button
             className="lg:hidden text-gray-500 hover:text-gray-700"
             onClick={() => setSidebarOpen(true)}

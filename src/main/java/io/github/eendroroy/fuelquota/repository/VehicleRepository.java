@@ -32,6 +32,9 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID>,
     @Query("SELECT v FROM Vehicle v WHERE v.user.id = :userId ORDER BY v.createdAt DESC")
     List<Vehicle> findByUserId(@Param("userId") UUID userId);
 
+    @Query("SELECT v FROM Vehicle v WHERE v.user.id = :userId")
+    Page<Vehicle> findPageByUserId(@Param("userId") UUID userId, Pageable pageable);
+
     @Query("SELECT COUNT(v) FROM Vehicle v WHERE v.status = :status")
     long countByStatus(@Param("status") Vehicle.VehicleStatus status);
 

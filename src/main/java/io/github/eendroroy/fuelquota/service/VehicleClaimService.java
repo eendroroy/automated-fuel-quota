@@ -96,7 +96,7 @@ public class VehicleClaimService {
     }
 
     /**
-     * Returns all claims submitted by the authenticated customer.
+     * Returns all claims submitted by the authenticated customer (non-paginated).
      *
      * @param userId UUID of the authenticated customer
      * @return list of the customer's claims
@@ -106,6 +106,22 @@ public class VehicleClaimService {
         return claimRepository.findByClaimantId(userId).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    /**
+     * Returns paginated claims submitted by the authenticated customer.
+     *
+     * @param userId   UUID of the authenticated customer
+     * @param pageable pagination parameters
+     * @return paginated list of the customer's claims
+     */
+    @Transactional(readOnly = true)
+    public Page<VehicleClaimResponse> getMyClaims(UUID userId, Pageable pageable) {
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                    Sort.by(Sort.Direction.DESC, "createdAt"));
+        }
+        return claimRepository.findPageByClaimantId(userId, pageable).map(this::toResponse);
     }
 
     // ── Admin operations ──────────────────────────────────────────────────────

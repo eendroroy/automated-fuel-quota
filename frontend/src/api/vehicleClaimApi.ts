@@ -7,9 +7,9 @@ import type { VehicleClaim, ClaimVehicleRequest, PagedResponse } from '@/types'
 export const claimVehicle = (data: ClaimVehicleRequest) =>
   axiosInstance.post<VehicleClaim>('/customer/vehicles/claim', data).then((r) => r.data)
 
-/** Returns all claims submitted by the authenticated customer. */
-export const getMyClaims = () =>
-  axiosInstance.get<VehicleClaim[]>('/customer/vehicles/claims').then((r) => r.data)
+/** Returns paginated claims submitted by the authenticated customer. */
+export const getMyClaims = (params?: { page?: number; size?: number }) =>
+  axiosInstance.get<PagedResponse<VehicleClaim>>('/customer/vehicles/claims', { params }).then((r) => r.data)
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 

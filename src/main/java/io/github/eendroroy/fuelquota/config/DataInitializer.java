@@ -49,6 +49,7 @@ public class DataInitializer {
                                   FuelStationRepository stationRepository,
                                   PumpRepresentativeRepository pumpRepRepository,
                                   TransactionRepository transactionRepository,
+                                  io.github.eendroroy.fuelquota.repository.AuditLogRepository auditLogRepository,
                                   PasswordEncoder passwordEncoder) {
         return args -> {
 
@@ -117,6 +118,19 @@ public class DataInitializer {
                     createSampleTransactions(transactionRepository, stationRepository.findAll(),
                         reps, vehicleRepository.findAll());
                     logger.info("Created sample transactions");
+                }
+            }
+
+            // ── 8. Audit logs ──────────────────────────────────────────────────
+            if (auditLogRepository.count() == 0) {
+                Optional<User> admin = userRepository.findByEmail("admin@fuelquota.gov");
+                if (admin.isPresent()) {
+                    createSampleAuditLogs(auditLogRepository, admin.get(),
+                        vehicleRepository.findAll(),
+                        quotaRepository.findAll(),
+                        stationRepository.findAll(),
+                        pumpRepRepository.findAll());
+                    logger.info("Created sample audit logs");
                 }
             }
         };
@@ -271,6 +285,41 @@ public class DataInitializer {
             "Old Town Fuel Point", "OT-KHU-005",
             "22.8456", "89.5403", "+8801755-555555",
             "Bashir Miah", "bashir@oldtownfuel.com", "Khulna", FuelStation.StationStatus.INACTIVE));
+
+        stationRepository.save(station(
+            "Rajshahi Central Fuel", "RC-RAJ-006",
+            "24.3745", "88.6042", "+8801766-666666",
+            "Abdul Hakim", "hakim@rajcentral.com", "Rajshahi", FuelStation.StationStatus.ACTIVE));
+
+        stationRepository.save(station(
+            "Barishal Bay Petrol", "BB-BAR-007",
+            "22.7010", "90.3535", "+8801777-777777",
+            "Selina Akter", "selina@baybay.com", "Barishal", FuelStation.StationStatus.ACTIVE));
+
+        stationRepository.save(station(
+            "Mymensingh Motors Fuel", "MM-MYM-008",
+            "24.7471", "90.4203", "+8801788-888888",
+            "Jamal Khan", "jamal@mymotors.com", "Mymensingh", FuelStation.StationStatus.ACTIVE));
+
+        stationRepository.save(station(
+            "Cumilla City Petroleum", "CC-CUM-009",
+            "23.4607", "91.1809", "+8801799-999999",
+            "Shahida Begum", "shahida@cumcity.com", "Cumilla", FuelStation.StationStatus.ACTIVE));
+
+        stationRepository.save(station(
+            "Uttara Express Fuel", "UE-DH-010",
+            "23.8759", "90.3795", "+8801700-101010",
+            "Monir Hossain", "monir@uttarafuel.com", "Dhaka", FuelStation.StationStatus.ACTIVE));
+
+        stationRepository.save(station(
+            "Mirpur Highway Petrol", "MH-DH-011",
+            "23.8223", "90.3654", "+8801711-111010",
+            "Razia Sultana", "razia@mirpurpetrol.com", "Dhaka", FuelStation.StationStatus.ACTIVE));
+
+        stationRepository.save(station(
+            "Agrabad Business Fuel", "AB-CTG-012",
+            "22.3309", "91.8119", "+8801722-121212",
+            "Ibrahim Khalil", "ibrahim@agrabadfu el.com", "Chittagong", FuelStation.StationStatus.ACTIVE));
     }
 
     private FuelStation station(String name, String code, String lat, String lon,
@@ -289,56 +338,70 @@ public class DataInitializer {
         final BigDecimal limit = BigDecimal.valueOf(24.00);
         final String pass = pw.encode("customer123");
 
-        // VERIFIED customers with varying quota consumption
-        customer(userRepo, vehicleRepo, quotaRepo, pass,
-            "John Doe",        "john.doe@example.com",
-            "DHAKA METRO", "GA", "10", "1001",
-            "John Doe",        "NID-BD-1001001", "+8801711-001001", "john.doe@example.com",
-            "Toyota", "White", "Private Cars (1301 to 2000 cc)", "Petrol",
-            LocalDate.of(2020, 3, 15), Vehicle.VehicleStatus.VERIFIED, limit, "8.00", true);
+        // Create 30+ customers to test pagination (page size = 20)
+        String[] names = {"John Doe", "Fatima Begum", "Mohammed Karim", "Priya Sharma", "Tariq Rahman",
+            "Sadia Islam", "Rahul Ahmed", "Nusrat Jahan", "Arif Hossain", "Ayesha Siddiqui",
+            "Imran Khan", "Rupa Das", "Kamal Uddin", "Meher Afroz", "Shakil Ahmed",
+            "Tasnim Akter", "Rafiq Islam", "Halima Khatun", "Jamal Hossain", "Sabina Yasmin",
+            "Farhan Ali", "Sultana Begum", "Rahim Miah", "Nasrin Akter", "Kabir Hassan",
+            "Roksana Parvin", "Sadiq Rahman", "Taslima Begum", "Wahid Khan", "Zainab Sultana",
+            "Aziz Uddin", "Farzana Haque"};
 
-        customer(userRepo, vehicleRepo, quotaRepo, pass,
-            "Fatima Begum",    "fatima.begum@example.com",
-            "DHAKA METRO", "HA", "20", "2001",
-            "Fatima Begum",    "NID-BD-2001002", "+8801722-002002", "fatima.begum@example.com",
-            "Honda", "Red", "Motorcycles (101 to 125 cc)", "Petrol",
-            LocalDate.of(2021, 6, 20), Vehicle.VehicleStatus.VERIFIED, limit, "20.00", true);
+        String[] cities = {"DHAKA METRO", "CHATTOGRAM METRO", "SYLHET METRO", "RAJSHAHI METRO", "KHULNA METRO"};
+        String[] codes = {"GA", "HA", "KA", "CHA", "A", "BHA", "KHA"};
+        String[] makes = {"Toyota", "Honda", "Suzuki", "Hyundai", "Mitsubishi", "Nissan", "Yamaha"};
+        String[] colors = {"White", "Red", "Silver", "Blue", "Black", "Grey", "Green"};
+        String[] fuelTypes = {"Petrol", "Diesel", "Octane", "CNG"};
 
-        customer(userRepo, vehicleRepo, quotaRepo, pass,
-            "Mohammed Karim",  "mohammed.karim@example.com",
-            "CHATTOGRAM METRO", "CHA", "30", "3001",
-            "Mohammed Karim",  "NID-BD-3001003", "+8801733-003003", "mohammed.karim@example.com",
-            "Toyota", "Silver", "Microbuses and MPVs", "Diesel",
-            LocalDate.of(2019, 11, 8), Vehicle.VehicleStatus.VERIFIED, limit, "4.50", true);
+        for (int i = 0; i < names.length; i++) {
+            String email = names[i].toLowerCase().replace(" ", ".") + "@example.com";
+            String nidBase = String.format("%04d%03d", i + 1001, i + 1);
+            String phoneBase = String.format("+8801%d-%06d", 711 + (i % 89), i + 1001);
+            String serial1 = String.format("%02d", (i + 10) % 100);
+            String serial2 = String.format("%d", 1000 + i + 1);
 
-        customer(userRepo, vehicleRepo, quotaRepo, pass,
-            "Priya Sharma",    "priya.sharma@example.com",
-            "DHAKA METRO", "KA", "40", "4001",
-            "Priya Sharma",    "NID-BD-4001004", "+8801744-004004", "priya.sharma@example.com",
-            "Suzuki", "Blue", "Private Cars (Up to 1000 cc) / Small Taxis", "Petrol",
-            LocalDate.of(2022, 1, 10), Vehicle.VehicleStatus.VERIFIED, limit, "24.00", true);
+            String city = cities[i % cities.length];
+            String code = codes[i % codes.length];
+            String make = makes[i % makes.length];
+            String color = colors[i % colors.length];
+            String fuelType = fuelTypes[i % fuelTypes.length];
+            String vehicleClass = getVehicleClass(code);
 
-        customer(userRepo, vehicleRepo, quotaRepo, pass,
-            "Tariq Rahman",    "tariq.rahman@example.com",
-            "DHAKA METRO", "A", "50", "5001",
-            "Tariq Rahman",    "NID-BD-5001005", "+8801755-005005", "tariq.rahman@example.com",
-            "Yamaha", "Black", "Motorcycles (Up to 100 cc)", "Octane",
-            LocalDate.of(2023, 2, 28), Vehicle.VehicleStatus.VERIFIED, limit, "0.00", true);
+            // Vary quota usage
+            String usedLiters = switch (i % 5) {
+                case 0 -> "0.00";
+                case 1 -> "8.00";
+                case 2 -> "16.00";
+                case 3 -> "20.00";
+                default -> "24.00";
+            };
 
-        customer(userRepo, vehicleRepo, quotaRepo, pass,
-            "Sadia Islam",     "sadia.islam@example.com",
-            "CHATTOGRAM METRO", "GA", "50", "5002",
-            "Sadia Islam",     "NID-BD-5002006", "+8801766-006001", "sadia.islam@example.com",
-            "Hyundai", "Grey", "Private Cars (1301 to 2000 cc)", "Petrol",
-            LocalDate.of(2022, 7, 14), Vehicle.VehicleStatus.VERIFIED, limit, "12.00", true);
+            // Make last 3 UNVERIFIED
+            Vehicle.VehicleStatus status = (i >= names.length - 3) ?
+                Vehicle.VehicleStatus.UNVERIFIED : Vehicle.VehicleStatus.VERIFIED;
 
-        // UNVERIFIED customer (BRTA check failed)
-        customer(userRepo, vehicleRepo, quotaRepo, pass,
-            "Rahul Ahmed",     "rahul.ahmed@example.com",
-            "SYLHET", "GA", "60", "6001",
-            "Rahul Ahmed",     "NID-BD-6001007", "+8801777-007001", "rahul.ahmed@example.com",
-            "Hyundai", "Black", "Private Cars (1301 to 2000 cc)", "Petrol",
-            LocalDate.of(2023, 4, 22), Vehicle.VehicleStatus.UNVERIFIED, limit, "0.00", true);
+            LocalDate regDate = LocalDate.of(2020 + (i % 6), ((i % 12) + 1), ((i % 28) + 1));
+
+            customer(userRepo, vehicleRepo, quotaRepo, pass,
+                names[i], email,
+                city, code, serial1, serial2,
+                names[i], "NID-BD-" + nidBase, phoneBase, email,
+                make, color, vehicleClass, fuelType,
+                regDate, status, limit, usedLiters, true);
+        }
+    }
+
+    private String getVehicleClass(String code) {
+        return switch (code) {
+            case "A" -> "Motorcycles (Up to 100 cc)";
+            case "HA" -> "Motorcycles (101 to 125 cc)";
+            case "KA" -> "Private Cars (Up to 1000 cc) / Small Taxis";
+            case "KHA" -> "Private Cars (1001 to 1300 cc)";
+            case "GA" -> "Private Cars (1301 to 2000 cc)";
+            case "BHA" -> "Luxury Private Cars (Above 2000 cc)";
+            case "CHA" -> "Microbuses and MPVs";
+            default -> "Private Cars (1301 to 2000 cc)";
+        };
     }
 
     private void customer(UserRepository userRepo, VehicleRepository vehicleRepo,
@@ -414,6 +477,7 @@ public class DataInitializer {
         if (stations.isEmpty()) return;
         final String pass = pw.encode("pump123");
 
+        // Create 25+ pump reps across stations (2-3 per station)
         pumpRep(userRepo, repRepo, findStation(stations, "ABC-DH-001"), pass,
             "Ahmed Ali",      "+8801811-001001", "ahmed.ali@abcfuel.com",        "EMP-001", "ahmed.ali");
         pumpRep(userRepo, repRepo, findStation(stations, "ABC-DH-001"), pass,
@@ -424,8 +488,46 @@ public class DataInitializer {
             "Jahir Uddin",    "+8801822-004004", "jahir.uddin@xyzpetrol.com",     "EMP-004", "jahir.uddin");
         pumpRep(userRepo, repRepo, findStation(stations, "PC-CTG-003"), pass,
             "Iqbal Hassan",   "+8801833-005005", "iqbal.hassan@portcityfuel.com", "EMP-005", "iqbal.hassan");
+        pumpRep(userRepo, repRepo, findStation(stations, "PC-CTG-003"), pass,
+            "Nazma Begum",    "+8801833-006006", "nazma.begum@portcityfuel.com",  "EMP-006", "nazma.begum");
         pumpRep(userRepo, repRepo, findStation(stations, "GV-SYL-004"), pass,
-            "Sumaiya Akter",  "+8801844-006006", "sumaiya.akter@greenvalley.com", "EMP-006", "sumaiya.akter");
+            "Sumaiya Akter",  "+8801844-007007", "sumaiya.akter@greenvalley.com", "EMP-007", "sumaiya.akter");
+        pumpRep(userRepo, repRepo, findStation(stations, "GV-SYL-004"), pass,
+            "Hamid Miah",     "+8801844-008008", "hamid.miah@greenvalley.com",    "EMP-008", "hamid.miah");
+        pumpRep(userRepo, repRepo, findStation(stations, "RC-RAJ-006"), pass,
+            "Aslam Khan",     "+8801866-009009", "aslam.khan@rajcentral.com",     "EMP-009", "aslam.khan");
+        pumpRep(userRepo, repRepo, findStation(stations, "RC-RAJ-006"), pass,
+            "Shapla Akter",   "+8801866-010010", "shapla.akter@rajcentral.com",   "EMP-010", "shapla.akter");
+        pumpRep(userRepo, repRepo, findStation(stations, "BB-BAR-007"), pass,
+            "Rafiq Ahmed",    "+8801877-011011", "rafiq.ahmed@baybay.com",        "EMP-011", "rafiq.ahmed");
+        pumpRep(userRepo, repRepo, findStation(stations, "BB-BAR-007"), pass,
+            "Parveen Sultana","+8801877-012012", "parveen.sultana@baybay.com",    "EMP-012", "parveen.sultana");
+        pumpRep(userRepo, repRepo, findStation(stations, "MM-MYM-008"), pass,
+            "Kamal Hossain",  "+8801888-013013", "kamal.hossain@mymotors.com",    "EMP-013", "kamal.hossain");
+        pumpRep(userRepo, repRepo, findStation(stations, "MM-MYM-008"), pass,
+            "Rehana Begum",   "+8801888-014014", "rehana.begum@mymotors.com",     "EMP-014", "rehana.begum");
+        pumpRep(userRepo, repRepo, findStation(stations, "CC-CUM-009"), pass,
+            "Sadiq Rahman",   "+8801899-015015", "sadiq.rahman@cumcity.com",      "EMP-015", "sadiq.rahman");
+        pumpRep(userRepo, repRepo, findStation(stations, "CC-CUM-009"), pass,
+            "Nasima Khatun",  "+8801899-016016", "nasima.khatun@cumcity.com",     "EMP-016", "nasima.khatun");
+        pumpRep(userRepo, repRepo, findStation(stations, "UE-DH-010"), pass,
+            "Shahin Alam",    "+8801800-017017", "shahin.alam@uttarafuel.com",    "EMP-017", "shahin.alam");
+        pumpRep(userRepo, repRepo, findStation(stations, "UE-DH-010"), pass,
+            "Roksana Parvin", "+8801800-018018", "roksana.parvin@uttarafuel.com", "EMP-018", "roksana.parvin");
+        pumpRep(userRepo, repRepo, findStation(stations, "MH-DH-011"), pass,
+            "Habib Ullah",    "+8801811-019019", "habib.ullah@mirpurpetrol.com",  "EMP-019", "habib.ullah");
+        pumpRep(userRepo, repRepo, findStation(stations, "MH-DH-011"), pass,
+            "Laila Begum",    "+8801811-020020", "laila.begum@mirpurpetrol.com",  "EMP-020", "laila.begum");
+        pumpRep(userRepo, repRepo, findStation(stations, "AB-CTG-012"), pass,
+            "Mosharraf Khan", "+8801822-021021", "mosharraf.khan@agrabadfu el.com","EMP-021", "mosharraf.khan");
+        pumpRep(userRepo, repRepo, findStation(stations, "AB-CTG-012"), pass,
+            "Tahmina Akter",  "+8801822-022022", "tahmina.akter@agrabadfu el.com", "EMP-022", "tahmina.akter");
+        pumpRep(userRepo, repRepo, findStation(stations, "ABC-DH-001"), pass,
+            "Shakil Miah",    "+8801811-023023", "shakil.miah@abcfuel.com",       "EMP-023", "shakil.miah");
+        pumpRep(userRepo, repRepo, findStation(stations, "XYZ-GL-002"), pass,
+            "Mahmuda Khatun", "+8801822-024024", "mahmuda.khatun@xyzpetrol.com",  "EMP-024", "mahmuda.khatun");
+        pumpRep(userRepo, repRepo, findStation(stations, "PC-CTG-003"), pass,
+            "Saiful Islam",   "+8801833-025025", "saiful.islam@portcityfuel.com", "EMP-025", "saiful.islam");
     }
 
     private void pumpRep(UserRepository userRepo, PumpRepresentativeRepository repRepo,
@@ -514,6 +616,127 @@ public class DataInitializer {
         t.setTransactionTimestamp(timestamp);
         t.setStatus(Transaction.TransactionStatus.COMPLETED);
         txRepo.save(t);
+    }
+
+    // ── Audit Logs ─────────────────────────────────────────────────────────────
+
+    private void createSampleAuditLogs(io.github.eendroroy.fuelquota.repository.AuditLogRepository auditRepo,
+                                        User admin,
+                                        List<Vehicle> vehicles,
+                                        List<Quota> quotas,
+                                        List<FuelStation> stations,
+                                        List<PumpRepresentative> reps) {
+        UUID adminId = admin.getId();
+        String adminName = admin.getName();
+
+        // Create 30+ audit logs for pagination testing (page size = 20)
+        LocalDateTime baseTime = LocalDateTime.now().minusDays(60);
+
+        // Quota adjustments
+        for (int i = 0; i < 10 && i < quotas.size(); i++) {
+            Quota q = quotas.get(i);
+            io.github.eendroroy.fuelquota.entity.AuditLog log = new io.github.eendroroy.fuelquota.entity.AuditLog(
+                adminId, adminName,
+                io.github.eendroroy.fuelquota.entity.AuditLog.AuditAction.QUOTA_ADJUSTMENT,
+                "Quota", q.getId().toString(),
+                "{\"limitLitres\":20.00,\"usedLitres\":" + q.getUsedLiters() + "}",
+                "{\"limitLitres\":24.00,\"usedLitres\":" + q.getUsedLiters() + "}",
+                "Increased weekly limit from 20L to 24L as per new policy"
+            );
+            log.setActionTimestamp(baseTime.plusDays(i).plusHours(9));
+            auditRepo.save(log);
+        }
+
+        // Quota resets
+        for (int i = 0; i < 5 && i < quotas.size(); i++) {
+            Quota q = quotas.get(i);
+            io.github.eendroroy.fuelquota.entity.AuditLog log = new io.github.eendroroy.fuelquota.entity.AuditLog(
+                adminId, adminName,
+                io.github.eendroroy.fuelquota.entity.AuditLog.AuditAction.QUOTA_RESET,
+                "Quota", q.getId().toString(),
+                "{\"usedLitres\":" + q.getUsedLiters() + ",\"remainingLitres\":" + q.getRemainingLiters() + "}",
+                "{\"usedLitres\":0.00,\"remainingLitres\":24.00}",
+                "Weekly quota reset - scheduled job"
+            );
+            log.setActionTimestamp(baseTime.plusDays(i * 7).withHour(0).withMinute(0));
+            auditRepo.save(log);
+        }
+
+        // Vehicle reverifications
+        for (int i = 0; i < 8 && i < vehicles.size(); i++) {
+            Vehicle v = vehicles.get(i);
+            if (v.getStatus() == Vehicle.VehicleStatus.VERIFIED) {
+                io.github.eendroroy.fuelquota.entity.AuditLog log = new io.github.eendroroy.fuelquota.entity.AuditLog(
+                    adminId, adminName,
+                    io.github.eendroroy.fuelquota.entity.AuditLog.AuditAction.VEHICLE_REVERIFIED,
+                    "Vehicle", v.getId().toString(),
+                    "{\"status\":\"VERIFIED\",\"registrationNumber\":\"" + v.getRegistrationNumber() + "\"}",
+                    "{\"status\":\"VERIFIED\",\"registrationNumber\":\"" + v.getRegistrationNumber() + "\",\"lastVerified\":\"" + LocalDateTime.now() + "\"}",
+                    "Manual BRTA re-verification requested by owner"
+                );
+                log.setActionTimestamp(baseTime.plusDays(10 + i * 3).plusHours(10));
+                auditRepo.save(log);
+            }
+        }
+
+        // Station operations
+        for (int i = 0; i < 5 && i < stations.size(); i++) {
+            FuelStation s = stations.get(i);
+            io.github.eendroroy.fuelquota.entity.AuditLog log = new io.github.eendroroy.fuelquota.entity.AuditLog(
+                adminId, adminName,
+                io.github.eendroroy.fuelquota.entity.AuditLog.AuditAction.STATION_UPDATED,
+                "FuelStation", s.getId().toString(),
+                "{\"managerName\":\"" + s.getManagerName() + "\",\"status\":\"" + s.getStatus() + "\"}",
+                "{\"managerName\":\"" + s.getManagerName() + "\",\"status\":\"" + s.getStatus() + "\",\"phone\":\"" + s.getPhoneNumber() + "\"}",
+                "Updated station contact information"
+            );
+            log.setActionTimestamp(baseTime.plusDays(20 + i * 2).plusHours(14));
+            auditRepo.save(log);
+        }
+
+        // Station creations
+        for (int i = 5; i < 8 && i < stations.size(); i++) {
+            FuelStation s = stations.get(i);
+            io.github.eendroroy.fuelquota.entity.AuditLog log = new io.github.eendroroy.fuelquota.entity.AuditLog(
+                adminId, adminName,
+                io.github.eendroroy.fuelquota.entity.AuditLog.AuditAction.STATION_CREATED,
+                "FuelStation", s.getId().toString(),
+                null,
+                "{\"stationName\":\"" + s.getStationName() + "\",\"stationCode\":\"" + s.getStationCode() + "\",\"status\":\"ACTIVE\"}",
+                "New fuel station registered in " + s.getDistrict()
+            );
+            log.setActionTimestamp(baseTime.plusDays(30 + i).plusHours(11));
+            auditRepo.save(log);
+        }
+
+        // Pump rep operations
+        for (int i = 0; i < 6 && i < reps.size(); i++) {
+            PumpRepresentative rep = reps.get(i);
+            io.github.eendroroy.fuelquota.entity.AuditLog log = new io.github.eendroroy.fuelquota.entity.AuditLog(
+                adminId, adminName,
+                io.github.eendroroy.fuelquota.entity.AuditLog.AuditAction.REP_CREATED,
+                "PumpRepresentative", rep.getId().toString(),
+                null,
+                "{\"name\":\"" + rep.getName() + "\",\"employeeId\":\"" + rep.getEmployeeId() + "\",\"status\":\"ACTIVE\"}",
+                "New pump representative registered"
+            );
+            log.setActionTimestamp(baseTime.plusDays(40 + i * 2).plusHours(13));
+            auditRepo.save(log);
+        }
+
+        for (int i = 6; i < 10 && i < reps.size(); i++) {
+            PumpRepresentative rep = reps.get(i);
+            io.github.eendroroy.fuelquota.entity.AuditLog log = new io.github.eendroroy.fuelquota.entity.AuditLog(
+                adminId, adminName,
+                io.github.eendroroy.fuelquota.entity.AuditLog.AuditAction.REP_UPDATED,
+                "PumpRepresentative", rep.getId().toString(),
+                "{\"name\":\"" + rep.getName() + "\",\"mobileNumber\":\"" + rep.getMobileNumber() + "\"}",
+                "{\"name\":\"" + rep.getName() + "\",\"mobileNumber\":\"" + rep.getMobileNumber() + "\",\"email\":\"" + rep.getEmail() + "\"}",
+                "Updated contact information"
+            );
+            log.setActionTimestamp(baseTime.plusDays(50 + i).plusHours(15));
+            auditRepo.save(log);
+        }
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

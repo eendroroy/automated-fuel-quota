@@ -12,8 +12,8 @@ export const regenerateQrToken = () =>
   axiosInstance.post<{ token: string }>('/customer/qr-code/regenerate').then((r) => r.data)
 
 // ── Customer: multi-vehicle management ───────────────────────────────────────
-export const getMyVehicles = () =>
-  axiosInstance.get<Vehicle[]>('/customer/vehicles').then((r) => r.data)
+export const getMyVehicles = (params?: { page?: number; size?: number }) =>
+  axiosInstance.get<PagedResponse<Vehicle>>('/customer/vehicles', { params }).then((r) => r.data)
 
 export const addMyVehicle = (data: AddVehicleRequest) =>
   axiosInstance.post<Vehicle>('/customer/vehicles', data).then((r) => r.data)
