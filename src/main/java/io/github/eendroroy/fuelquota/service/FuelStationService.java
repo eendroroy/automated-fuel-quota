@@ -11,8 +11,6 @@ import io.github.eendroroy.fuelquota.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -68,7 +66,7 @@ public class FuelStationService {
      * @return {@link StationResponse} containing station details
      * @throws ResourceNotFoundException if the station is not found
      */
-    @Cacheable(value = "station", key = "#id")
+    // ...existing code...
     @Transactional(readOnly = true)
     public StationResponse getStationById(UUID id) {
         FuelStation station = stationRepository.findById(id)
@@ -83,7 +81,7 @@ public class FuelStationService {
      * @return {@link StationResponse} of the created station
      * @throws BadRequestException if the station code already exists
      */
-    @CacheEvict(value = "station", allEntries = true)
+    // ...existing code...
     public StationResponse createStation(StationRequest request) {
         // Validate unique station code
         if (stationRepository.existsByStationCode(request.getStationCode())) {
@@ -106,7 +104,7 @@ public class FuelStationService {
      * @throws ResourceNotFoundException if the station is not found
      * @throws BadRequestException       if the station code conflicts with another station
      */
-    @CacheEvict(value = "station", key = "#id")
+    // ...existing code...
     public StationResponse updateStation(UUID id, StationRequest request) {
         FuelStation station = stationRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Fuel station not found"));
@@ -130,7 +128,7 @@ public class FuelStationService {
      * @param id UUID of the station to delete
      * @throws ResourceNotFoundException if the station is not found
      */
-    @CacheEvict(value = "station", key = "#id")
+    // ...existing code...
     public void deleteStation(UUID id) {
         FuelStation station = stationRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Fuel station not found"));

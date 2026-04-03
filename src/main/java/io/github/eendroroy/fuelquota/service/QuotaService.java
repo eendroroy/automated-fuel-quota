@@ -13,10 +13,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +23,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Core service for weekly fuel quota management.
@@ -53,26 +51,24 @@ public class QuotaService {
     private final QuotaConfigService quotaConfigService;
 
     /**
-     * Retrieves the quota for a vehicle by its UUID, with Redis caching.
+     * Retrieves the quota for a vehicle by its UUID.
      *
      * @param vehicleId UUID of the vehicle
      * @return the associated {@link Quota}
      * @throws ResourceNotFoundException if no quota exists for the vehicle
      */
-    @Cacheable(value = "quota", key = "#vehicleId")
     public Quota getQuotaByVehicleId(UUID vehicleId) {
         return quotaRepository.findByVehicleId(vehicleId)
             .orElseThrow(() -> new ResourceNotFoundException("Quota not found for vehicle"));
     }
 
     /**
-     * Retrieves the quota for a vehicle by its registration number, with Redis caching.
+     * Retrieves the quota for a vehicle by its registration number.
      *
      * @param registrationNumber unique registration plate number
      * @return the associated {@link Quota}
      * @throws ResourceNotFoundException if no quota exists for the given registration number
      */
-    @Cacheable(value = "quota", key = "#registrationNumber")
     public Quota getQuotaByRegistrationNumber(String registrationNumber) {
         return quotaRepository.findByVehicleRegistrationNumber(registrationNumber)
             .orElseThrow(() -> new ResourceNotFoundException("Quota not found for vehicle: " + registrationNumber));
@@ -117,14 +113,12 @@ public class QuotaService {
 
     /**
      * Consumes the specified amount of quota for a vehicle (BRD FR-13).
-     * Evicts the quota cache entry for the vehicle.
      *
      * @param vehicleId       UUID of the vehicle
      * @param litersDispensed actual fuel dispensed (must be positive and within available quota)
      * @return the updated {@link Quota}
      * @throws BadRequestException if the dispensed amount exceeds available quota
      */
-    @CacheEvict(value = "quota", key = "#vehicleId")
     public Quota consumeQuota(UUID vehicleId, BigDecimal litersDispensed) {
         Quota quota = quotaRepository.findByVehicleId(vehicleId)
             .orElseThrow(() -> new ResourceNotFoundException("Quota not found"));
@@ -143,7 +137,6 @@ public class QuotaService {
      * is computed based on {@code app.quota.period}.
      */
     @Scheduled(cron = "${app.quota.reset-cron-expression}")
-    @CacheEvict(value = "quota", allEntries = true)
     public void resetWeeklyQuotas() {
         logger.info("Starting periodic quota reset job...");
         try {
@@ -160,12 +153,10 @@ public class QuotaService {
 
     /**
      * Manually resets a single vehicle's quota (admin emergency function).
-     * Evicts the quota cache entry for the vehicle.
      *
      * @param vehicleId UUID of the vehicle whose quota should be reset
      * @throws ResourceNotFoundException if no quota exists for the vehicle
      */
-    @CacheEvict(value = "quota", key = "#vehicleId")
     public void manualResetQuota(UUID vehicleId) {
         Quota quota = quotaRepository.findByVehicleId(vehicleId)
             .orElseThrow(() -> new ResourceNotFoundException("Quota not found"));
@@ -176,7 +167,6 @@ public class QuotaService {
 
     /**
      * Adjusts the weekly fuel quota limit for a specific vehicle (admin function).
-     * Evicts the quota cache entry for the vehicle.
      *
      * @param vehicleId       UUID of the vehicle
      * @param newLimitLiters  new weekly limit in litres (must be positive)
@@ -185,7 +175,6 @@ public class QuotaService {
      * @throws BadRequestException       if {@code newLimitLiters} is not positive
      * @throws ResourceNotFoundException if no quota exists for the vehicle
      */
-    @CacheEvict(value = "quota", key = "#vehicleId")
     public Quota adjustQuotaLimit(UUID vehicleId, BigDecimal newLimitLiters, String reason) {
         if (newLimitLiters.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Quota limit must be positive");
@@ -226,21 +215,11 @@ public class QuotaService {
     }
 
     /**
-     * Evicts all quota cache entries. Called when global cache invalidation is needed.
-     */
-    @CacheEvict(value = "quota", allEntries = true)
-    public void clearQuotaCache() {
-        logger.debug("Quota cache cleared");
-    }
-
-    /**
      * Activates a vehicle's quota after the vehicle is approved by an admin.
-     * Evicts the quota cache entry for the vehicle.
      *
      * @param vehicleId UUID of the approved vehicle
      * @throws ResourceNotFoundException if no quota exists for the vehicle
      */
-    @CacheEvict(value = "quota", key = "#vehicleId")
     public void activateQuota(UUID vehicleId) {
         Quota quota = quotaRepository.findByVehicleId(vehicleId)
             .orElseThrow(() -> new ResourceNotFoundException("Quota not found for vehicle"));
@@ -251,12 +230,10 @@ public class QuotaService {
 
     /**
      * Suspends a vehicle's quota when the vehicle is suspended by an admin.
-     * Evicts the quota cache entry for the vehicle.
      *
      * @param vehicleId UUID of the suspended vehicle
      * @throws ResourceNotFoundException if no quota exists for the vehicle
      */
-    @CacheEvict(value = "quota", key = "#vehicleId")
     public void suspendQuota(UUID vehicleId) {
         Quota quota = quotaRepository.findByVehicleId(vehicleId)
             .orElseThrow(() -> new ResourceNotFoundException("Quota not found for vehicle"));

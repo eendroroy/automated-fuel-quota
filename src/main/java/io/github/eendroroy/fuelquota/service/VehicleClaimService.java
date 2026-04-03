@@ -14,7 +14,6 @@ import io.github.eendroroy.fuelquota.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -152,7 +151,7 @@ public class VehicleClaimService {
      * @param adminNotes optional notes from the approving admin
      * @return the updated {@link VehicleClaimResponse}
      */
-    @CacheEvict(value = {"vehicle", "quota"}, allEntries = true)
+    // ...existing code...
     public VehicleClaimResponse approveClaim(UUID claimId, String adminNotes) {
         VehicleClaim claim = claimRepository.findById(claimId)
                 .orElseThrow(() -> new ResourceNotFoundException("Claim not found"));

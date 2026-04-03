@@ -11,7 +11,6 @@ import io.github.eendroroy.fuelquota.entity.FuelStation;
 import io.github.eendroroy.fuelquota.config.AppProperties;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,7 +54,7 @@ public class AdminStatsService {
      *
      * @return {@link AdminStatsResponse} containing all dashboard metrics
      */
-    @Cacheable(value = "adminStats", key = "'dashboard'")
+    // ...existing code...
     public DashboardStatsResponse getDashboardStats() {
         // Vehicle statistics
         long totalVehicles = vehicleRepository.count();

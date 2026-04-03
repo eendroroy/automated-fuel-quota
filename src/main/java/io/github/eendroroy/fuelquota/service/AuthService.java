@@ -18,7 +18,6 @@ import io.github.eendroroy.fuelquota.exception.ResourceNotFoundException;
 
 import io.github.eendroroy.fuelquota.entity.RegistrationCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -191,7 +190,7 @@ public class AuthService {
      * @return the {@link User} entity
      * @throws ResourceNotFoundException if the user is not found
      */
-    @Cacheable(value = "user", key = "#id")
+    // ...existing code...
     public User findUserById(UUID id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -204,7 +203,7 @@ public class AuthService {
      * @return the {@link User} entity
      * @throws ResourceNotFoundException if the user is not found
      */
-    @Cacheable(value = "user", key = "#email")
+    // ...existing code...
     public User findUserByEmail(String email) {
         return userRepository.findByEmail(email)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));

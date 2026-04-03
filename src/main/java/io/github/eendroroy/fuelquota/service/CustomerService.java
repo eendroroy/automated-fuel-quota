@@ -22,8 +22,6 @@ import io.github.eendroroy.fuelquota.exception.BadRequestException;
 import io.github.eendroroy.fuelquota.config.AppProperties;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -68,7 +66,7 @@ public class CustomerService {
     /**
      * Returns the first (or only) vehicle for the customer — kept for backward compatibility.
      */
-    @Cacheable(value = "vehicle", key = "#userId")
+    // ...existing code...
     public VehicleResponse getVehicleByUserId(UUID userId) {
         return vehicleRepository.findByUserId(userId).stream()
                 .findFirst()
@@ -90,7 +88,7 @@ public class CustomerService {
      * documents will be required before setting VERIFIED status.
      */
     @Transactional
-    @CacheEvict(value = "vehicle", key = "#userId")
+    // ...existing code...
     public VehicleResponse addVehicle(UUID userId, AddVehicleRequest request) {
         String registrationNumber = request.assembleRegistrationNumber();
 
@@ -157,7 +155,7 @@ public class CustomerService {
      * </ul>
      */
     @Transactional
-    @CacheEvict(value = {"vehicle", "quota"}, allEntries = true)
+    // ...existing code...
     public void removeVehicle(UUID userId, UUID vehicleId) {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));

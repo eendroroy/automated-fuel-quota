@@ -9,6 +9,9 @@
 /logs/
 !.mvn/wrapper/maven-wrapper.jar
 
+# ── Sensitive configuration — copy application.yaml.example to application.yaml
+src/main/resources/application.yaml
+
 # IDEs
 /.idea/
 *.iml

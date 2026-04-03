@@ -10,7 +10,6 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -88,7 +87,7 @@ public class VehicleService {
      * @return updated {@link VehicleResponse}
      * @throws ResourceNotFoundException if the vehicle is not found
      */
-    @CacheEvict(value = {"vehicle", "quota"}, allEntries = true)
+    // ...existing code...
     public VehicleResponse reverifyVehicle(UUID vehicleId) {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
             .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));

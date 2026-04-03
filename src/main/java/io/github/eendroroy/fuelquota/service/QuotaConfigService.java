@@ -10,8 +10,6 @@ import io.github.eendroroy.fuelquota.repository.QuotaConfigRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +44,7 @@ public class QuotaConfigService {
      * @return the active {@link QuotaConfig}
      */
     @Transactional(readOnly = true)
-    @Cacheable(value = "quotaConfig", key = "'default'")
+    // ...existing code...
     public QuotaConfig getDefaultConfig() {
         return quotaConfigRepository.findByConfigKey(QuotaConfig.DEFAULT_KEY)
                 .orElseGet(this::createDefaultFromProperties);
@@ -85,7 +83,7 @@ public class QuotaConfigService {
      * @param request new configuration values
      * @return the saved configuration as a response DTO
      */
-    @CacheEvict(value = "quotaConfig", allEntries = true)
+    // ...existing code...
     public QuotaConfigResponse updateConfig(QuotaConfigRequest request) {
         QuotaConfig config = quotaConfigRepository
                 .findByConfigKey(QuotaConfig.DEFAULT_KEY)
