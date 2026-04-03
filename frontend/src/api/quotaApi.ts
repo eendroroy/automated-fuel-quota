@@ -4,6 +4,9 @@ import type { Quota, QuotaAdjustRequest, PagedResponse } from '@/types'
 export const getMyQuota = () =>
   axiosInstance.get<Quota>('/customer/quota').then((r) => r.data)
 
+export const getVehicleQuota = (vehicleId: string) =>
+  axiosInstance.get<Quota>(`/customer/vehicles/${vehicleId}/quota`).then((r) => r.data)
+
 export const getAllQuotas = (params: { page?: number; size?: number; search?: string }) =>
   axiosInstance.get<PagedResponse<Quota>>('/admin/quotas', { params }).then((r) => r.data)
 

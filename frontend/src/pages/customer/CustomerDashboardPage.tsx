@@ -1,167 +1,394 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Droplets, QrCode, History, ArrowRight, AlertCircle } from 'lucide-react'
-import { getMyQuota } from '@/api/quotaApi'
+import {
+  Plus, Car, Droplets, QrCode, History, AlertCircle,
+  Fuel, RefreshCw, Download, CheckCircle2, Clock, ArrowRight,
+} from 'lucide-react'
+import { getMyVehicles, getQrTokenForVehicle, regenerateQrTokenForVehicle } from '@/api/vehicleApi'
+import { getVehicleQuota } from '@/api/quotaApi'
 import { getMyTransactions } from '@/api/transactionApi'
-import { getQrToken } from '@/api/vehicleApi'
 import { useAuth } from '@/context/AuthContext'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import StatusBadge from '@/components/common/StatusBadge'
+import Modal from '@/components/common/Modal'
 import { formatDateTime, formatLitres } from '@/utils/formatters'
+import { downloadQrAsPng } from '@/utils/qrHelpers'
 import QRCode from 'react-qr-code'
-import type { Quota, Transaction } from '@/types'
+import toast from 'react-hot-toast'
+import type { Vehicle, Quota, Transaction } from '@/types'
 
-// Quota arc gauge
-function QuotaGauge({ used, total }: { used: number; total: number }) {
-  const pct = Math.min((used / total) * 100, 100)
-  const radius = 60
-  const circ = 2 * Math.PI * radius
-  const dash = (pct / 100) * circ
-  const color = pct >= 90 ? '#dc2626' : pct >= 60 ? '#f59e0b' : '#16a34a'
-
+// ── Quota bar ────────────────────────────────────────────────────────────────
+function QuotaBar({ quota }: { quota: Quota }) {
+  const pct = Math.min((quota.usedLiters / quota.limitLiters) * 100, 100)
+  const barColor =
+    pct >= 90 ? 'bg-red-500' : pct >= 60 ? 'bg-amber-400' : 'bg-emerald-500'
+  const periodLabel =
+    quota.period.charAt(0) + quota.period.slice(1).toLowerCase()
   return (
-    <div className="flex flex-col items-center">
-      <svg width="160" height="100" viewBox="0 0 160 100">
-        {/* Background arc */}
-        <circle cx="80" cy="80" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="12"
-          strokeDasharray={`${circ * 0.75} ${circ * 0.25}`}
-          strokeDashoffset={circ * 0.375}
-          strokeLinecap="round" transform="rotate(180 80 80)" />
-        {/* Filled arc */}
-        <circle cx="80" cy="80" r={radius} fill="none" stroke={color} strokeWidth="12"
-          strokeDasharray={`${dash * 0.75} ${circ - dash * 0.75}`}
-          strokeDashoffset={circ * 0.375}
-          strokeLinecap="round" transform="rotate(180 80 80)"
-          style={{ transition: 'stroke-dasharray 0.6s ease' }} />
-      </svg>
-      <div className="-mt-8 text-center">
-        <p className="text-3xl font-bold text-gray-900">{formatLitres(total - used)}</p>
-        <p className="text-xs text-gray-500">remaining of {total}L</p>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <span>{periodLabel} Quota</span>
+        <span className={pct >= 90 ? 'text-red-600 font-semibold' : ''}>{Math.round(pct)}% used</span>
+      </div>
+      <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-bold text-gray-900">
+          {formatLitres(quota.remainingLiters)}{' '}
+          <span className="font-normal text-gray-400">remaining</span>
+        </span>
+        <span className="text-xs text-gray-400">of {quota.limitLiters}L</span>
+      </div>
+      <div className="flex items-center gap-1 text-xs text-gray-400">
+        <Clock className="h-3 w-3" />
+        Resets {formatDateTime(quota.resetTimestamp)}
       </div>
     </div>
   )
 }
 
-export default function CustomerDashboardPage() {
-  const { user } = useAuth()
-  const [quota, setQuota] = useState<Quota | null>(null)
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [qrToken, setQrToken] = useState<string | null>(null)
+// ── Inline QR Modal ───────────────────────────────────────────────────────────
+function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => void }) {
+  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [regenerating, setRegenerating] = useState(false)
 
   useEffect(() => {
-    Promise.all([getMyQuota(), getMyTransactions({ page: 0, size: 5 }), getQrToken()])
-      .then(([q, t, qr]) => {
-        setQuota(q)
-        setTransactions(t.content)
-        setQrToken(qr.token)
-      })
-      .catch(() => {})
+    setLoading(true)
+    getQrTokenForVehicle(vehicle.id)
+      .then((r) => setToken(r.token))
+      .catch(() => toast.error('Could not load QR code'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [vehicle.id])
 
-  if (loading) return <div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" /></div>
+  const handleRegenerate = async () => {
+    setRegenerating(true)
+    try {
+      const r = await regenerateQrTokenForVehicle(vehicle.id)
+      setToken(r.token)
+      toast.success('QR code regenerated')
+    } catch {
+      toast.error('Could not regenerate QR code')
+    } finally {
+      setRegenerating(false)
+    }
+  }
 
-  const limit = quota?.limitLiters ?? 24
-  const used = quota?.usedLiters ?? 0
-  const pct = Math.round((used / limit) * 100)
-  const periodLabel = quota?.period
-    ? quota.period.charAt(0) + quota.period.slice(1).toLowerCase()
-    : 'Weekly'
+  const handleDownload = () => {
+    const svg = document.querySelector<SVGSVGElement>(`#qr-modal-${vehicle.id} svg`)
+    if (!svg) return toast.error('QR not ready')
+    downloadQrAsPng(svg, `fuel-quota-${vehicle.registrationNumber}.png`)
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Welcome */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Welcome, {user?.name?.split(' ')[0]}!</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Here's your fuel quota status for this {periodLabel.toLowerCase()} period.</p>
+    <Modal isOpen onClose={onClose} title="Fuel Quota QR Code">
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+          <div className="h-9 w-9 bg-brand-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Car className="h-4 w-4 text-brand-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-gray-900 font-mono">{vehicle.registrationNumber}</p>
+            <p className="text-xs text-gray-500">{vehicle.vehicleMake} · {vehicle.vehicleColor} · {vehicle.fuelType}</p>
+          </div>
+          <StatusBadge status={vehicle.status} />
+        </div>
+
+        <div className="flex flex-col items-center">
+          {loading ? (
+            <div className="h-56 flex items-center justify-center"><LoadingSpinner size="lg" /></div>
+          ) : token ? (
+            <div id={`qr-modal-${vehicle.id}`} className="p-5 bg-white border-2 border-gray-200 rounded-2xl shadow-inner">
+              <QRCode value={token} size={200} />
+            </div>
+          ) : (
+            <div className="h-56 flex items-center justify-center text-gray-400">QR code unavailable</div>
+          )}
+        </div>
+
+        <p className="text-center text-xs text-gray-400">
+          Show this to the pump representative. Valid for 1 hour.
+        </p>
+
+        <div className="flex gap-3">
+          <button onClick={handleDownload} disabled={!token || loading}
+            className="btn-secondary flex-1 gap-2 text-sm py-2.5">
+            <Download className="h-4 w-4" /> Download
+          </button>
+          <button onClick={handleRegenerate} disabled={regenerating || !token || loading}
+            className="btn-primary flex-1 gap-2 text-sm py-2.5">
+            {regenerating ? <LoadingSpinner size="sm" /> : <RefreshCw className="h-4 w-4" />}
+            Regenerate
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+// ── Vehicle Fleet Card ─────────────────────────────────────────────────────────
+function VehicleFleetCard({ vehicle, onShowQr }: {
+  vehicle: Vehicle
+  onShowQr: (v: Vehicle) => void
+}) {
+  const [quota, setQuota] = useState<Quota | null>(null)
+  const [quotaLoading, setQuotaLoading] = useState(vehicle.status === 'VERIFIED')
+
+  useEffect(() => {
+    if (vehicle.status !== 'VERIFIED') return
+    getVehicleQuota(vehicle.id)
+      .then(setQuota)
+      .catch(() => {})
+      .finally(() => setQuotaLoading(false))
+  }, [vehicle.id, vehicle.status])
+
+  const isDeregistered = vehicle.status === 'DEREGISTERED'
+  const quotaAlmost = quota && (quota.usedLiters / quota.limitLiters) >= 0.9
+  const borderColor = isDeregistered
+    ? 'border-gray-200 opacity-60'
+    : vehicle.status === 'UNVERIFIED'
+    ? 'border-red-200'
+    : quotaAlmost
+    ? 'border-amber-300'
+    : 'border-gray-200'
+
+  return (
+    <div className={`card border ${borderColor} flex flex-col gap-4 transition-shadow hover:shadow-md`}>
+      {/* Header */}
+      <div className="flex items-start gap-3">
+        <div className={`h-11 w-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
+          isDeregistered ? 'bg-gray-100' : 'bg-brand-50'
+        }`}>
+          <Car className={`h-5 w-5 ${isDeregistered ? 'text-gray-400' : 'text-brand-600'}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-gray-900 font-mono text-base leading-tight truncate">
+            {vehicle.registrationNumber}
+          </p>
+          <p className="text-sm text-gray-500 truncate">{vehicle.vehicleMake} · {vehicle.vehicleColor}</p>
+        </div>
+        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <StatusBadge status={vehicle.status} />
+          <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-full px-2 py-0.5">
+            {vehicle.fuelType}
+          </span>
+        </div>
       </div>
 
-      {/* Status warning */}
-      {pct >= 90 && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-          <AlertCircle className="h-5 w-5 flex-shrink-0" />
-          You've used {pct}% of your {periodLabel.toLowerCase()} quota. Only {formatLitres(limit - used)} remaining.
+      {/* Quota */}
+      {vehicle.status === 'VERIFIED' && (
+        <div className="border-t border-gray-50 pt-3">
+          {quotaLoading ? (
+            <div className="flex items-center gap-2 text-xs text-gray-400">
+              <LoadingSpinner size="sm" /> Loading quota…
+            </div>
+          ) : quota ? (
+            <QuotaBar quota={quota} />
+          ) : (
+            <p className="text-xs text-gray-400">Quota data unavailable</p>
+          )}
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Quota gauge */}
-        <div className="md:col-span-1 card flex flex-col items-center">
-          <div className="flex items-center gap-2 mb-4 self-start">
-            <Droplets className="h-5 w-5 text-brand-600" />
-            <h2 className="font-semibold text-gray-900">{periodLabel} Quota</h2>
-          </div>
-          <QuotaGauge used={used} total={limit} />
-          <div className="w-full mt-4 grid grid-cols-2 gap-3 text-center">
-            <div className="bg-green-50 rounded-lg py-2">
-              <p className="text-lg font-bold text-green-700">{formatLitres(limit - used)}</p>
-              <p className="text-xs text-gray-500">Remaining</p>
-            </div>
-            <div className="bg-orange-50 rounded-lg py-2">
-              <p className="text-lg font-bold text-orange-700">{formatLitres(used)}</p>
-              <p className="text-xs text-gray-500">Used</p>
-            </div>
-          </div>
-          {quota && (
-            <p className="text-xs text-gray-400 mt-3">
-              Resets: {formatDateTime(quota.resetTimestamp)}
-            </p>
-          )}
-          {quota && <StatusBadge status={quota.status} className="mt-2" />}
+      {vehicle.status === 'DEREGISTERED' && (
+        <div className="border-t border-gray-50 pt-3">
+          <p className="text-xs text-gray-400 italic">Deregistered · Quota suspended</p>
         </div>
+      )}
 
-        {/* QR Code preview */}
-        <div className="md:col-span-1 card flex flex-col items-center">
-          <div className="flex items-center gap-2 mb-4 self-start">
-            <QrCode className="h-5 w-5 text-brand-600" />
-            <h2 className="font-semibold text-gray-900">Your QR Code</h2>
+      {vehicle.status === 'UNVERIFIED' && (
+        <div className="border-t border-gray-50 pt-3">
+          <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 rounded-lg px-3 py-2">
+            <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+            BRTA verification pending. Contact support.
           </div>
-          {qrToken ? (
-            <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-inner">
-              <QRCode value={qrToken} size={130} />
-            </div>
-          ) : (
-            <div className="h-40 flex items-center justify-center text-gray-400 text-sm">
-              QR code not available
-            </div>
-          )}
-          <Link to="/qr-code" className="mt-4 btn-secondary w-full text-center text-sm py-2 gap-2">
-            <QrCode className="h-4 w-4" /> View Full QR Code
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-2 border-t border-gray-50 pt-3 mt-auto">
+        {vehicle.status === 'VERIFIED' && (
+          <button onClick={() => onShowQr(vehicle)} className="btn-primary flex-1 text-sm py-2 gap-1.5">
+            <QrCode className="h-4 w-4" /> Get QR Code
+          </button>
+        )}
+        <Link
+          to={`/transactions?vehicleId=${vehicle.id}`}
+          className={`btn-secondary text-sm py-2 gap-1.5 ${vehicle.status === 'VERIFIED' ? 'px-3' : 'flex-1'}`}
+        >
+          <History className="h-4 w-4" />
+          {vehicle.status !== 'VERIFIED' && <span>Transactions</span>}
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+export default function CustomerDashboardPage() {
+  const { user } = useAuth()
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [qrVehicle, setQrVehicle] = useState<Vehicle | null>(null)
+
+  const load = useCallback(() => {
+    setLoading(true)
+    Promise.all([
+      getMyVehicles().catch(() => [] as Vehicle[]),
+      getMyTransactions({ page: 0, size: 6 }).catch(() => ({ content: [] as Transaction[] })),
+    ])
+      .then(([v, t]) => {
+        setVehicles(v)
+        setTransactions(t.content)
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  if (loading)
+    return <div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" /></div>
+
+  const activeVehicles = vehicles.filter((v) => v.status === 'VERIFIED')
+
+  return (
+    <div className="space-y-8">
+      {/* Welcome */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome back, {user?.name?.split(' ')[0]}!
+          </h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Manage your vehicles and fuel quotas.
+          </p>
+        </div>
+        <Link to="/vehicles" className="btn-primary gap-2 text-sm flex-shrink-0">
+          <Plus className="h-4 w-4" /> Add Vehicle
+        </Link>
+      </div>
+
+      {/* Summary pills */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="h-9 w-9 bg-brand-50 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Car className="h-5 w-5 text-brand-600" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-gray-900">{vehicles.length}</p>
+            <p className="text-xs text-gray-500">Total Vehicles</p>
+          </div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="h-9 w-9 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-gray-900">{activeVehicles.length}</p>
+            <p className="text-xs text-gray-500">Active Quotas</p>
+          </div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3 col-span-2 sm:col-span-1">
+          <div className="h-9 w-9 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Fuel className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-gray-900">{transactions.length}</p>
+            <p className="text-xs text-gray-500">Recent Transactions</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Fleet */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Droplets className="h-5 w-5 text-brand-600" />
+            <h2 className="font-semibold text-gray-900 text-lg">My Fleet</h2>
+          </div>
+          <Link to="/vehicles" className="text-sm text-brand-600 hover:underline flex items-center gap-1">
+            Manage <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
-        {/* Recent transactions */}
-        <div className="md:col-span-1 card">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <History className="h-5 w-5 text-brand-600" />
-              <h2 className="font-semibold text-gray-900">Recent Activity</h2>
-            </div>
-            <Link to="/transactions" className="text-xs text-brand-600 hover:underline flex items-center gap-1">
-              All <ArrowRight className="h-3 w-3" />
+        {vehicles.length === 0 ? (
+          <div className="card text-center py-16 border border-dashed border-gray-300 bg-gray-50">
+            <Car className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+            <p className="font-semibold text-gray-600 text-lg">No vehicles yet</p>
+            <p className="text-sm text-gray-400 mt-1 mb-5">Register your first vehicle to start tracking your fuel quota.</p>
+            <Link to="/vehicles" className="btn-primary gap-2 inline-flex">
+              <Plus className="h-4 w-4" /> Register Vehicle
             </Link>
           </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {vehicles.map((v) => (
+              <VehicleFleetCard key={v.id} vehicle={v} onShowQr={setQrVehicle} />            ))}
+            <Link
+              to="/vehicles"
+              className="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-2 py-10 text-gray-400 hover:border-brand-300 hover:text-brand-500 transition-colors min-h-[180px]"
+            >
+              <Plus className="h-7 w-7" />
+              <span className="text-sm font-medium">Add Another Vehicle</span>
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* Recent Activity */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <History className="h-5 w-5 text-brand-600" />
+            <h2 className="font-semibold text-gray-900 text-lg">Recent Activity</h2>
+          </div>
+          <Link to="/transactions" className="text-sm text-brand-600 hover:underline flex items-center gap-1">
+            All transactions <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        <div className="card p-0 overflow-hidden">
           {transactions.length === 0 ? (
-            <p className="text-center text-gray-400 text-sm py-6">No transactions yet</p>
+            <div className="text-center py-12 text-gray-400">
+              <History className="h-10 w-10 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No transactions yet.</p>
+            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-gray-50">
               {transactions.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{tx.stationName}</p>
-                    <p className="text-xs text-gray-400">{formatDateTime(tx.transactionTimestamp)}</p>
+                <div key={tx.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors">
+                  <div className="h-9 w-9 bg-brand-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Fuel className="h-4 w-4 text-brand-600" />
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-brand-700">−{formatLitres(tx.amountDispensedLiters)}</p>
-                    <StatusBadge status={tx.status} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm truncate">{tx.stationName}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="text-xs text-gray-400">{formatDateTime(tx.transactionTimestamp)}</span>
+                      {tx.registrationNumber && (
+                        <span className="text-xs font-mono bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">
+                          {tx.registrationNumber}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-bold text-gray-900 text-sm">−{formatLitres(tx.amountDispensedLiters)}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{formatLitres(tx.remainingQuotaAfter)} left</p>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-      </div>
+      </section>
+
+      {/* QR Modal */}
+      {qrVehicle && <VehicleQrModal vehicle={qrVehicle} onClose={() => setQrVehicle(null)} />}
     </div>
   )
 }

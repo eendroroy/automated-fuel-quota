@@ -1,23 +1,52 @@
 import { useEffect, useState } from 'react'
-import { History, MapPin, Fuel } from 'lucide-react'
-import { getMyTransactions } from '@/api/transactionApi'
+import { useSearchParams, Link } from 'react-router-dom'
+import { History, MapPin, Fuel, Car, X } from 'lucide-react'
+import { getMyTransactions, getVehicleTransactions } from '@/api/transactionApi'
+import { getMyVehicles } from '@/api/vehicleApi'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import StatusBadge from '@/components/common/StatusBadge'
 import Pagination from '@/components/common/Pagination'
 import { formatDateTime, formatLitres } from '@/utils/formatters'
-import type { Transaction } from '@/types'
+import type { Transaction, Vehicle } from '@/types'
 import { DEFAULT_PAGE_SIZE } from '@/config/constants'
 
 export default function CustomerTransactionsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const vehicleIdParam = searchParams.get('vehicleId')
+
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
 
+  // Load vehicle list for filter picker
+  useEffect(() => {
+    getMyVehicles()
+      .then(setVehicles)
+      .catch(() => {})
+  }, [])
+
+  // Sync selectedVehicle from URL param + vehicle list
+  useEffect(() => {
+    if (!vehicleIdParam) {
+      setSelectedVehicle(null)
+      return
+    }
+    const v = vehicles.find((v) => v.id === vehicleIdParam) ?? null
+    setSelectedVehicle(v)
+  }, [vehicleIdParam, vehicles])
+
+  // Load transactions
   useEffect(() => {
     setLoading(true)
-    getMyTransactions({ page, size: DEFAULT_PAGE_SIZE })
+    const fetch = vehicleIdParam
+      ? getVehicleTransactions(vehicleIdParam, { page, size: DEFAULT_PAGE_SIZE })
+      : getMyTransactions({ page, size: DEFAULT_PAGE_SIZE })
+
+    fetch
       .then((data) => {
         setTransactions(data.content)
         setTotalPages(data.totalPages)
@@ -25,16 +54,65 @@ export default function CustomerTransactionsPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [page])
+  }, [page, vehicleIdParam])
 
-  const totalLitres = transactions.reduce((s, t) => s + (t.status === 'COMPLETED' ? t.amountDispensedLiters : 0), 0)
+  const clearFilter = () => {
+    setSearchParams({})
+    setPage(0)
+  }
+
+  const totalLitres = transactions.reduce(
+    (s, t) => s + (t.status === 'COMPLETED' ? t.amountDispensedLiters : 0), 0
+  )
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Transaction History</h1>
-        <p className="text-gray-500 text-sm mt-0.5">All your fuel dispensing records.</p>
+        <p className="text-gray-500 text-sm mt-0.5">All your fuel dispensing records across all vehicles.</p>
       </div>
+
+      {/* Vehicle filter bar */}
+      {vehicles.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500 font-medium">Filter by vehicle:</span>
+          <button
+            onClick={clearFilter}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              !vehicleIdParam
+                ? 'bg-brand-600 text-white border-brand-600'
+                : 'border-gray-200 text-gray-600 hover:border-brand-400 hover:text-brand-600'
+            }`}
+          >
+            All Vehicles
+          </button>
+          {vehicles.map((v) => (
+            <button
+              key={v.id}
+              onClick={() => { setSearchParams({ vehicleId: v.id }); setPage(0) }}
+              className={`text-xs px-3 py-1.5 rounded-full border font-mono transition-colors ${
+                vehicleIdParam === v.id
+                  ? 'bg-brand-600 text-white border-brand-600'
+                  : 'border-gray-200 text-gray-600 hover:border-brand-400 hover:text-brand-600'
+              }`}
+            >
+              {v.registrationNumber}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Active filter pill */}
+      {selectedVehicle && (
+        <div className="flex items-center gap-2 bg-brand-50 border border-brand-200 rounded-xl px-4 py-2.5 text-sm">
+          <Car className="h-4 w-4 text-brand-600" />
+          <span className="font-mono font-semibold text-brand-800">{selectedVehicle.registrationNumber}</span>
+          <span className="text-brand-600">— {selectedVehicle.vehicleMake} · {selectedVehicle.vehicleColor}</span>
+          <button onClick={clearFilter} className="ml-auto text-brand-500 hover:text-brand-700">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -52,7 +130,9 @@ export default function CustomerTransactionsPage() {
       <div className="card p-0 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
           <History className="h-5 w-5 text-brand-600" />
-          <h2 className="font-semibold text-gray-900">All Transactions</h2>
+          <h2 className="font-semibold text-gray-900">
+            {selectedVehicle ? `${selectedVehicle.registrationNumber} Transactions` : 'All Transactions'}
+          </h2>
         </div>
 
         {loading ? (
@@ -61,6 +141,11 @@ export default function CustomerTransactionsPage() {
           <div className="text-center py-12 text-gray-400">
             <History className="h-10 w-10 mx-auto mb-2 opacity-40" />
             <p>No transactions found</p>
+            {vehicleIdParam && (
+              <button onClick={clearFilter} className="mt-3 text-sm text-brand-600 hover:underline">
+                Clear filter to see all transactions
+              </button>
+            )}
           </div>
         ) : (
           <>
@@ -72,9 +157,20 @@ export default function CustomerTransactionsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 truncate">{tx.stationName}</p>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
-                      <MapPin className="h-3 w-3" />
-                      {formatDateTime(tx.transactionTimestamp)}
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="flex items-center gap-1 text-xs text-gray-400">
+                        <MapPin className="h-3 w-3" />
+                        {formatDateTime(tx.transactionTimestamp)}
+                      </span>
+                      {/* Show vehicle tag only in "all" view */}
+                      {!vehicleIdParam && tx.registrationNumber && (
+                        <Link
+                          to={`/transactions?vehicleId=${tx.vehicleId}`}
+                          className="text-xs font-mono bg-gray-100 text-gray-600 rounded px-1.5 py-0.5 hover:bg-brand-50 hover:text-brand-700 transition-colors"
+                        >
+                          {tx.registrationNumber}
+                        </Link>
+                      )}
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
@@ -91,7 +187,7 @@ export default function CustomerTransactionsPage() {
               ))}
             </div>
             <div className="px-6 pb-4">
-              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+              <Pagination page={page} totalPages={totalPages} onPageChange={(p) => { setPage(p) }} />
             </div>
           </>
         )}
@@ -99,4 +195,3 @@ export default function CustomerTransactionsPage() {
     </div>
   )
 }
-

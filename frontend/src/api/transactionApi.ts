@@ -6,6 +6,11 @@ export const getMyTransactions = (params: { page?: number; size?: number }) =>
     .get<PagedResponse<Transaction>>('/customer/transactions', { params })
     .then((r) => r.data)
 
+export const getVehicleTransactions = (vehicleId: string, params: { page?: number; size?: number }) =>
+  axiosInstance
+    .get<PagedResponse<Transaction>>(`/customer/vehicles/${vehicleId}/transactions`, { params })
+    .then((r) => r.data)
+
 export const getAllTransactions = (params: {
   page?: number
   size?: number
