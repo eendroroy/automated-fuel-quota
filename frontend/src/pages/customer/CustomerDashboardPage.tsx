@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   Plus, Car, Droplets, QrCode, History, AlertCircle,
   Fuel, RefreshCw, Download, CheckCircle2, Clock, ArrowRight,
+  ChevronRight,
 } from 'lucide-react'
 import { getMyVehicles, getQrTokenForVehicle, regenerateQrTokenForVehicle } from '@/api/vehicleApi'
 import { getVehicleQuota } from '@/api/quotaApi'
@@ -17,13 +18,14 @@ import QRCode from 'react-qr-code'
 import toast from 'react-hot-toast'
 import type { Vehicle, Quota, Transaction } from '@/types'
 
-// ── Quota bar ────────────────────────────────────────────────────────────────
+const DASHBOARD_VEHICLE_LIMIT = 3
+
+// ── Quota bar ─────────────────────────────────────────────────────────────────
 function QuotaBar({ quota }: { quota: Quota }) {
   const pct = Math.min((quota.usedLiters / quota.limitLiters) * 100, 100)
   const barColor =
     pct >= 90 ? 'bg-red-500' : pct >= 60 ? 'bg-amber-400' : 'bg-emerald-500'
-  const periodLabel =
-    quota.period.charAt(0) + quota.period.slice(1).toLowerCase()
+  const periodLabel = quota.period.charAt(0) + quota.period.slice(1).toLowerCase()
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs text-gray-500">
@@ -31,10 +33,7 @@ function QuotaBar({ quota }: { quota: Quota }) {
         <span className={pct >= 90 ? 'text-red-600 font-semibold' : ''}>{Math.round(pct)}% used</span>
       </div>
       <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-          style={{ width: `${pct}%` }}
-        />
+        <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-gray-900">
@@ -97,7 +96,6 @@ function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () =>
           </div>
           <StatusBadge status={vehicle.status} />
         </div>
-
         <div className="flex flex-col items-center">
           {loading ? (
             <div className="h-56 flex items-center justify-center"><LoadingSpinner size="lg" /></div>
@@ -109,11 +107,7 @@ function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () =>
             <div className="h-56 flex items-center justify-center text-gray-400">QR code unavailable</div>
           )}
         </div>
-
-        <p className="text-center text-xs text-gray-400">
-          Show this to the pump representative. Valid for 1 hour.
-        </p>
-
+        <p className="text-center text-xs text-gray-400">Show this to the pump representative. Valid for 1 hour.</p>
         <div className="flex gap-3">
           <button onClick={handleDownload} disabled={!token || loading}
             className="btn-secondary flex-1 gap-2 text-sm py-2.5">
@@ -130,8 +124,8 @@ function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () =>
   )
 }
 
-// ── Vehicle Fleet Card ─────────────────────────────────────────────────────────
-function VehicleFleetCard({ vehicle, onShowQr }: {
+// ── Vehicle Spotlight Card (compact dashboard version) ────────────────────────
+function VehicleSpotlightCard({ vehicle, onShowQr }: {
   vehicle: Vehicle
   onShowQr: (v: Vehicle) => void
 }) {
@@ -146,24 +140,17 @@ function VehicleFleetCard({ vehicle, onShowQr }: {
       .finally(() => setQuotaLoading(false))
   }, [vehicle.id, vehicle.status])
 
-  const isDeregistered = vehicle.status === 'DEREGISTERED'
   const quotaAlmost = quota && (quota.usedLiters / quota.limitLiters) >= 0.9
-  const borderColor = isDeregistered
-    ? 'border-gray-200 opacity-60'
-    : vehicle.status === 'UNVERIFIED'
-    ? 'border-red-200'
-    : quotaAlmost
-    ? 'border-amber-300'
-    : 'border-gray-200'
+  const borderColor =
+    vehicle.status === 'UNVERIFIED' ? 'border-red-200' :
+    quotaAlmost ? 'border-amber-300' : 'border-gray-200'
 
   return (
     <div className={`card border ${borderColor} flex flex-col gap-4 transition-shadow hover:shadow-md`}>
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className={`h-11 w-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-          isDeregistered ? 'bg-gray-100' : 'bg-brand-50'
-        }`}>
-          <Car className={`h-5 w-5 ${isDeregistered ? 'text-gray-400' : 'text-brand-600'}`} />
+        <div className="h-11 w-11 bg-brand-50 rounded-xl flex items-center justify-center flex-shrink-0">
+          <Car className="h-5 w-5 text-brand-600" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900 font-mono text-base leading-tight truncate">
@@ -182,21 +169,9 @@ function VehicleFleetCard({ vehicle, onShowQr }: {
       {/* Quota */}
       {vehicle.status === 'VERIFIED' && (
         <div className="border-t border-gray-50 pt-3">
-          {quotaLoading ? (
-            <div className="flex items-center gap-2 text-xs text-gray-400">
-              <LoadingSpinner size="sm" /> Loading quota…
-            </div>
-          ) : quota ? (
-            <QuotaBar quota={quota} />
-          ) : (
-            <p className="text-xs text-gray-400">Quota data unavailable</p>
-          )}
-        </div>
-      )}
-
-      {vehicle.status === 'DEREGISTERED' && (
-        <div className="border-t border-gray-50 pt-3">
-          <p className="text-xs text-gray-400 italic">Deregistered · Quota suspended</p>
+          {quotaLoading
+            ? <div className="flex items-center gap-2 text-xs text-gray-400"><LoadingSpinner size="sm" /> Loading quota…</div>
+            : quota ? <QuotaBar quota={quota} /> : <p className="text-xs text-gray-400">Quota data unavailable</p>}
         </div>
       )}
 
@@ -213,7 +188,7 @@ function VehicleFleetCard({ vehicle, onShowQr }: {
       <div className="flex gap-2 border-t border-gray-50 pt-3 mt-auto">
         {vehicle.status === 'VERIFIED' && (
           <button onClick={() => onShowQr(vehicle)} className="btn-primary flex-1 text-sm py-2 gap-1.5">
-            <QrCode className="h-4 w-4" /> Get QR Code
+            <QrCode className="h-4 w-4" /> Get QR
           </button>
         )}
         <Link
@@ -254,7 +229,16 @@ export default function CustomerDashboardPage() {
   if (loading)
     return <div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" /></div>
 
-  const activeVehicles = vehicles.filter((v) => v.status === 'VERIFIED')
+  const activeVehicles = vehicles.filter((v) => v.status !== 'DEREGISTERED')
+  const verifiedVehicles = vehicles.filter((v) => v.status === 'VERIFIED')
+
+  // Show VERIFIED first, then UNVERIFIED — capped at DASHBOARD_VEHICLE_LIMIT
+  const prioritisedVehicles = [
+    ...vehicles.filter((v) => v.status === 'VERIFIED'),
+    ...vehicles.filter((v) => v.status === 'UNVERIFIED'),
+  ].slice(0, DASHBOARD_VEHICLE_LIMIT)
+
+  const hiddenCount = activeVehicles.length - prioritisedVehicles.length
 
   return (
     <div className="space-y-8">
@@ -289,7 +273,7 @@ export default function CustomerDashboardPage() {
             <CheckCircle2 className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
-            <p className="text-xl font-bold text-gray-900">{activeVehicles.length}</p>
+            <p className="text-xl font-bold text-gray-900">{verifiedVehicles.length}</p>
             <p className="text-xs text-gray-500">Active Quotas</p>
           </div>
         </div>
@@ -304,15 +288,22 @@ export default function CustomerDashboardPage() {
         </div>
       </div>
 
-      {/* Fleet */}
+      {/* Fleet Spotlight */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Droplets className="h-5 w-5 text-brand-600" />
-            <h2 className="font-semibold text-gray-900 text-lg">My Fleet</h2>
+            <h2 className="font-semibold text-gray-900 text-lg">
+              Fleet Spotlight
+              {vehicles.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-gray-400">
+                  ({activeVehicles.length} active)
+                </span>
+              )}
+            </h2>
           </div>
           <Link to="/vehicles" className="text-sm text-brand-600 hover:underline flex items-center gap-1">
-            Manage <ArrowRight className="h-3.5 w-3.5" />
+            Manage all <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
@@ -326,17 +317,38 @@ export default function CustomerDashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {vehicles.map((v) => (
-              <VehicleFleetCard key={v.id} vehicle={v} onShowQr={setQrVehicle} />            ))}
-            <Link
-              to="/vehicles"
-              className="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-2 py-10 text-gray-400 hover:border-brand-300 hover:text-brand-500 transition-colors min-h-[180px]"
-            >
-              <Plus className="h-7 w-7" />
-              <span className="text-sm font-medium">Add Another Vehicle</span>
-            </Link>
-          </div>
+          <>
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {prioritisedVehicles.map((v) => (
+                <VehicleSpotlightCard key={v.id} vehicle={v} onShowQr={setQrVehicle} />
+              ))}
+            </div>
+
+            {/* "View all" row — shown when there are hidden vehicles or deregistered ones */}
+            {(hiddenCount > 0 || vehicles.filter((v) => v.status === 'DEREGISTERED').length > 0) && (
+              <Link
+                to="/vehicles"
+                className="mt-4 flex items-center justify-between w-full bg-gray-50 hover:bg-brand-50 border border-gray-200 hover:border-brand-200 rounded-xl px-5 py-3.5 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 bg-white border border-gray-200 rounded-lg flex items-center justify-center group-hover:border-brand-200">
+                    <Car className="h-4 w-4 text-gray-400 group-hover:text-brand-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700 group-hover:text-brand-700">
+                      {hiddenCount > 0
+                        ? `${hiddenCount} more vehicle${hiddenCount !== 1 ? 's' : ''} not shown`
+                        : 'View full fleet'}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {vehicles.length} total · {verifiedVehicles.length} with active quotas
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-brand-500" />
+              </Link>
+            )}
+          </>
         )}
       </section>
 

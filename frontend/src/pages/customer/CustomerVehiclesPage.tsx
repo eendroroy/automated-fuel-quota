@@ -6,6 +6,7 @@ import { getVehicleQuota } from '@/api/quotaApi'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import StatusBadge from '@/components/common/StatusBadge'
 import Modal from '@/components/common/Modal'
+import Pagination from '@/components/common/Pagination'
 import RegistrationNumberInput from '@/components/common/RegistrationNumberInput'
 import { downloadQrAsPng } from '@/utils/qrHelpers'
 import { formatDate, formatDateTime, formatLitres } from '@/utils/formatters'
@@ -13,6 +14,9 @@ import toast from 'react-hot-toast'
 import QRCode from 'react-qr-code'
 import type { Vehicle, Quota, AddVehicleRequest } from '@/types'
 import { FUEL_TYPES } from '@/config/constants'
+
+const VEHICLES_PER_PAGE = 9
+const DEREGISTERED_PER_PAGE = 6
 
 const emptyForm: AddVehicleRequest = {
   brtaOfficeCode: '',
@@ -150,11 +154,13 @@ export default function CustomerVehiclesPage() {
   const [form, setForm] = useState<AddVehicleRequest>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
   const [removing, setRemoving] = useState(false)
+  const [activePage, setActivePage] = useState(0)
+  const [deregPage, setDeregPage] = useState(0)
 
   const load = useCallback(() => {
     setLoading(true)
     getMyVehicles()
-      .then(setVehicles)
+      .then((v) => { setVehicles(v); setActivePage(0); setDeregPage(0) })
       .catch(() => toast.error('Failed to load vehicles'))
       .finally(() => setLoading(false))
   }, [])
@@ -212,6 +218,12 @@ export default function CustomerVehiclesPage() {
   const active = vehicles.filter((v) => v.status !== 'DEREGISTERED')
   const deregistered = vehicles.filter((v) => v.status === 'DEREGISTERED')
 
+  // Pagination slices (client-side — backend returns full array)
+  const activeTotalPages = Math.ceil(active.length / VEHICLES_PER_PAGE)
+  const deregTotalPages = Math.ceil(deregistered.length / DEREGISTERED_PER_PAGE)
+  const activeSlice = active.slice(activePage * VEHICLES_PER_PAGE, (activePage + 1) * VEHICLES_PER_PAGE)
+  const deregSlice = deregistered.slice(deregPage * DEREGISTERED_PER_PAGE, (deregPage + 1) * DEREGISTERED_PER_PAGE)
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
@@ -219,7 +231,7 @@ export default function CustomerVehiclesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Vehicles</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {active.length} active · {deregistered.length} deregistered
+            {active.length} active · {deregistered.length} deregistered · {vehicles.length} total
           </p>
         </div>
         <button onClick={() => { setForm(emptyForm); setAddModalOpen(true) }} className="btn-primary gap-2">
@@ -241,8 +253,16 @@ export default function CustomerVehiclesPage() {
 
       {/* Active / Unverified vehicles */}
       {active.length > 0 && (
-        <div className="grid sm:grid-cols-2 gap-4">
-          {active.map((v) => (
+        <div className="space-y-4">
+          {activeTotalPages > 1 && (
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>
+                Showing {activePage * VEHICLES_PER_PAGE + 1}–{Math.min((activePage + 1) * VEHICLES_PER_PAGE, active.length)} of {active.length} vehicles
+              </span>
+            </div>
+          )}
+          <div className="grid sm:grid-cols-2 gap-4">
+            {activeSlice.map((v) => (
             <div key={v.id} className={`card border flex flex-col gap-4 transition-shadow hover:shadow-md ${
               v.status === 'UNVERIFIED' ? 'border-red-200' : 'border-gray-200'
             }`}>
@@ -315,15 +335,23 @@ export default function CustomerVehiclesPage() {
               </div>
             </div>
           ))}
+          </div>
+          <Pagination
+            page={activePage}
+            totalPages={activeTotalPages}
+            onPageChange={(p) => { setActivePage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+          />
         </div>
       )}
 
       {/* Deregistered vehicles (collapsed appearance) */}
       {deregistered.length > 0 && (
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Deregistered</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+            Deregistered ({deregistered.length})
+          </p>
           <div className="grid sm:grid-cols-2 gap-3">
-            {deregistered.map((v) => (
+            {deregSlice.map((v) => (
               <div key={v.id} className="card border border-gray-200 opacity-60 flex items-center gap-3 py-3">
                 <div className="h-9 w-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Car className="h-4 w-4 text-gray-400" />
@@ -341,6 +369,11 @@ export default function CustomerVehiclesPage() {
               </div>
             ))}
           </div>
+          <Pagination
+            page={deregPage}
+            totalPages={deregTotalPages}
+            onPageChange={setDeregPage}
+          />
         </div>
       )}
 

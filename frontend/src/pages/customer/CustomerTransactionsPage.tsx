@@ -72,34 +72,62 @@ export default function CustomerTransactionsPage() {
         <p className="text-gray-500 text-sm mt-0.5">All your fuel dispensing records across all vehicles.</p>
       </div>
 
-      {/* Vehicle filter bar */}
+      {/* Vehicle filter — dropdown for large fleets, pills for small ones */}
       {vehicles.length > 1 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-gray-500 font-medium">Filter by vehicle:</span>
-          <button
-            onClick={clearFilter}
-            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-              !vehicleIdParam
-                ? 'bg-brand-600 text-white border-brand-600'
-                : 'border-gray-200 text-gray-600 hover:border-brand-400 hover:text-brand-600'
-            }`}
-          >
-            All Vehicles
-          </button>
-          {vehicles.map((v) => (
+        vehicles.length > 6 ? (
+          <div className="flex items-center gap-3">
+            <label htmlFor="vehicle-filter" className="text-sm text-gray-500 font-medium whitespace-nowrap">
+              Filter by vehicle:
+            </label>
+            <select
+              id="vehicle-filter"
+              value={vehicleIdParam ?? ''}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setSearchParams({ vehicleId: e.target.value })
+                } else {
+                  clearFilter()
+                }
+                setPage(0)
+              }}
+              className="input-field py-1.5 text-sm max-w-xs"
+            >
+              <option value="">All Vehicles ({vehicles.length})</option>
+              {vehicles.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.registrationNumber} — {v.vehicleMake} {v.vehicleColor}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-gray-500 font-medium">Filter by vehicle:</span>
             <button
-              key={v.id}
-              onClick={() => { setSearchParams({ vehicleId: v.id }); setPage(0) }}
-              className={`text-xs px-3 py-1.5 rounded-full border font-mono transition-colors ${
-                vehicleIdParam === v.id
+              onClick={clearFilter}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                !vehicleIdParam
                   ? 'bg-brand-600 text-white border-brand-600'
                   : 'border-gray-200 text-gray-600 hover:border-brand-400 hover:text-brand-600'
               }`}
             >
-              {v.registrationNumber}
+              All Vehicles
             </button>
-          ))}
-        </div>
+            {vehicles.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => { setSearchParams({ vehicleId: v.id }); setPage(0) }}
+                className={`text-xs px-3 py-1.5 rounded-full border font-mono transition-colors ${
+                  vehicleIdParam === v.id
+                    ? 'bg-brand-600 text-white border-brand-600'
+                    : 'border-gray-200 text-gray-600 hover:border-brand-400 hover:text-brand-600'
+                }`}
+              >
+                {v.registrationNumber}
+              </button>
+            ))}
+          </div>
+        )
       )}
 
       {/* Active filter pill */}
