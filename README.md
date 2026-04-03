@@ -2,21 +2,58 @@
 
 A comprehensive **QR-code-driven fuel quota management platform** built with **Spring Boot 4.0.5** and **React 18** that ensures fair, transparent fuel distribution based on a configurable weekly quota policy.
 
-> **📄 Documentation:** [`documentation/BRD.md`](documentation/BRD.md) (requirements) | [`documentation/SRS.md`](documentation/SRS.md) (technical spec)
+> **📄 Documentation:**
+> [`documentation/BRD.md`](documentation/BRD.md) (requirements) |
+> [`documentation/SRS.md`](documentation/SRS.md) (technical spec) |
+> [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md) (user journeys) |
+> [`documentation/diagrams/`](documentation/diagrams/README.md) (all diagrams)
+
+---
 
 ## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    subgraph Users
+        C["🧑 Customer<br/>(Vehicle Owner)"]
+        A["👤 Admin"]
+        P["🔧 Pump Rep"]
+    end
+
+    subgraph SpringBoot["Spring Boot 4.0.5 — :8080"]
+        API["REST API<br/>/api/**"]
+        SPA["React 18 SPA<br/>(embedded static files)"]
+        SEC["JWT Security<br/>+ RBAC"]
+        SCHED["Quota Reset<br/>Scheduler"]
+    end
+
+    subgraph Data
+        PG[("PostgreSQL 15+")]
+    end
+
+    C -->"JWT — /api/customer/*" SEC
+    A -->"JWT — /api/admin/*" SEC
+    P -->"Public — /api/pump/*" API
+    SEC --> API
+    API --> PG
+    SCHED --> PG
+
+    style SpringBoot fill:#1b5e20,color:#fff
+    style Data fill:#37474f,color:#fff
+```
+
+> 📐 See [`documentation/diagrams/01-architecture.md`](documentation/diagrams/01-architecture.md) for full system context, container, and component diagrams.
 
 ### Complete Implementation Status ✅
 
 This project is a **fully functional** fuel quota management system implementing all BRD requirements:
 
-- ✅ **Backend API** - Complete Spring Boot application with security, caching, and scheduling
+- ✅ **Backend API** - Complete Spring Boot application with security and scheduling
 - ✅ **Frontend SPA** - React/TypeScript customer and admin portals
 - ✅ **Pump Rep Web Portal** - Browser-based portal for pump representatives with QR scanning and manual lookup
 - ✅ **Database Schema** - PostgreSQL with proper relationships and indexes
 - ✅ **Business Logic** - Weekly quota management with partial dispense support
 - ✅ **Security** - JWT authentication with role-based access control
-- ✅ **Caching** - Redis integration for performance optimization
 - ✅ **Scheduled Jobs** - Automatic weekly quota reset (Sunday 00:00)
 
 ### Core Business Logic (Per BRD Requirements)
@@ -62,7 +99,6 @@ This project is a **fully functional** fuel quota management system implementing
 - **Spring Boot 4.0.5** with Java 25
 - **Spring Security** with JWT authentication
 - **Spring Data JPA** with PostgreSQL
-- **Spring Cache** with Redis
 - **Spring Scheduler** for quota reset jobs
 - **Bean Validation** for request validation
 
@@ -78,17 +114,17 @@ This project is a **fully functional** fuel quota management system implementing
 
 ### Infrastructure
 - **PostgreSQL 15+** - Primary database
-- **Redis 7+** - Caching layer
 - **Maven** - Java dependency management
 - **npm** - Node.js package management
 
 ## 📋 Quick Start
 
+> For complete user journey maps, see [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md).
+
 ### Prerequisites
 - Java 25 (or compatible JDK)
 - Node.js 20+ and npm
 - PostgreSQL 15+
-- Redis 7+ (optional but recommended)
 - Maven 3.9+
 
 ### 1. Database Setup
@@ -194,7 +230,7 @@ Enter Amount (numeric keypad) → Confirm → Transaction Recorded → Receipt
 
 ### 4. Weekly Quota Reset (Automated)
 ```
-Sunday 00:00 Trigger → Reset All Quotas → Clear Cache → 
+Sunday 00:00 Trigger → Reset All Quotas →
 Audit Logging → System Ready for New Week
 ```
 
@@ -219,7 +255,6 @@ Audit Logging → System Ready for New Week
 ### Monitoring & Observability
 - **Spring Boot Actuator** - Health checks and metrics
 - **Centralized Logging** - Structured application logs  
-- **Cache Monitoring** - Redis performance metrics
 - **Database Monitoring** - Connection pool and query performance
 
 ## 🧪 Testing
@@ -254,8 +289,24 @@ java -jar target/automated-fuel-quota-0.0.1-SNAPSHOT.jar
 
 ```
 automated-fuel-quota/
+├── documentation/
+│   ├── BRD.md                    # Business Requirements Document
+│   ├── SRS.md                    # Software Requirements Specification
+│   ├── USER_JOURNEY.md           # User journey maps (all actor types)
+│   └── diagrams/
+│       ├── README.md             # Diagram index
+│       ├── 01-architecture.md    # System / container / component views
+│       ├── 02-entity-relationship.md  # Full ER diagram
+│       ├── 03-sequence-qr-authorization.md
+│       ├── 04-sequence-manual-authorization.md
+│       ├── 05-sequence-registration.md
+│       ├── 06-sequence-quota-reset.md
+│       ├── 07-state-diagrams.md  # Vehicle / Quota / Claim state machines
+│       ├── 08-component-diagram.md  # React SPA hierarchy
+│       ├── 09-use-case.md        # Actor–use case diagram
+│       └── 10-deployment.md      # Dev + prod deployment topologies
 ├── src/main/java/io/github/eendroroy/fuelquota/
-│   ├── config/          # Security, Redis, OpenAPI, DataInitializer
+│   ├── config/          # Security, OpenAPI, DataInitializer
 │   ├── controller/      # REST controllers (Auth, Customer, Admin, Pump)
 │   ├── dto/             # Request/Response DTOs
 │   ├── entity/          # JPA entities
@@ -277,7 +328,7 @@ automated-fuel-quota/
 │       │   ├── admin/       # Admin portal pages
 │       │   └── pump/        # Pump rep portal (Login, Scan, Dispense)
 │       └── types/           # Shared TypeScript interfaces
-└── documentation/       # BRD and SRS
+└── AGENTS.md            # AI coding agent guide
 ```
 
 ## 🎯 Implementation Highlights
@@ -288,7 +339,7 @@ This implementation fully satisfies all **Business Requirements Document (BRD)**
 - **FR-01 through FR-10** — All vehicle owner portal requirements
 - **FR-11 through FR-20** — Full pump representative web portal (login, scan, manual entry, dispense, receipt)
 - **FR-21 through FR-30** — Complete admin portal
-- **FR-31 through FR-35** — Backend infrastructure (scheduler, transactions, audit, caching)
+- **FR-31 through FR-33** — Backend infrastructure (scheduler, transactions, audit)
 
 ### Non-Functional Requirements Met ✅
 - **NFR-01 through NFR-13** — Security, performance, reliability, and observability
@@ -299,3 +350,16 @@ This implementation fully satisfies all **Business Requirements Document (BRD)**
 ---
 
 **🎉 Ready for Production Use** - Complete fuel quota management system implementing all BRD requirements with modern technology stack and best practices.
+
+---
+
+## 📖 Documentation Index
+
+| Document | Description |
+|----------|-------------|
+| [`documentation/BRD.md`](documentation/BRD.md) | Business Requirements Document — requirements, rules, acceptance tests |
+| [`documentation/SRS.md`](documentation/SRS.md) | Software Requirements Specification — API contracts, entity schemas |
+| [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md) | Detailed user journey maps for Customer, Pump Rep, Admin, and System |
+| [`documentation/diagrams/`](documentation/diagrams/README.md) | All system diagrams (Mermaid) — architecture, ER, sequences, states |
+| [`AGENTS.md`](AGENTS.md) | AI coding agent guide — patterns, conventions, and domain model |
+

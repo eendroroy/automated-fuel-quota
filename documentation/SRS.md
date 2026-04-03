@@ -1,10 +1,30 @@
 # Software Requirements Specification (SRS)
 ## Automated Fuel Quota Management System
 
-**Document Version:** 2.1  
+**Document Version:** 2.2  
 **Date:** 2026-04-03  
 **Status:** Approved  
-**Based on:** BRD v2.1
+**Based on:** BRD v2.2
+
+---
+
+## Document Navigation
+
+| Document | Description |
+|----------|-------------|
+| [`BRD.md`](BRD.md) | Business Requirements Document — requirements and business rules |
+| **This file** — SRS | Technical specifications, API contracts, entity schemas |
+| [`USER_JOURNEY.md`](USER_JOURNEY.md) | Detailed user journey maps for all actor types |
+| [`diagrams/01-architecture.md`](diagrams/01-architecture.md) | System, container, and component architecture |
+| [`diagrams/02-entity-relationship.md`](diagrams/02-entity-relationship.md) | Full database ER diagram |
+| [`diagrams/03-sequence-qr-authorization.md`](diagrams/03-sequence-qr-authorization.md) | QR authorization sequence diagram |
+| [`diagrams/04-sequence-manual-authorization.md`](diagrams/04-sequence-manual-authorization.md) | Manual authorization sequence diagram |
+| [`diagrams/05-sequence-registration.md`](diagrams/05-sequence-registration.md) | Customer registration sequence diagram |
+| [`diagrams/06-sequence-quota-reset.md`](diagrams/06-sequence-quota-reset.md) | Quota reset sequence diagram |
+| [`diagrams/07-state-diagrams.md`](diagrams/07-state-diagrams.md) | State machines for all domain entities |
+| [`diagrams/08-component-diagram.md`](diagrams/08-component-diagram.md) | React SPA component hierarchy |
+| [`diagrams/09-use-case.md`](diagrams/09-use-case.md) | Actor–use case diagram |
+| [`diagrams/10-deployment.md`](diagrams/10-deployment.md) | Deployment architecture (dev + prod) |
 
 ---
 
@@ -18,7 +38,6 @@ The system is a **Spring Boot 4.0.5 + React 18 monorepo** that implements a QR-c
 - A **RESTful backend API** built with Spring Boot (Java 25).
 - A **single-page frontend application** built with React 18 and TypeScript.
 - A **PostgreSQL 15+** primary database.
-- A **Redis 7+** caching layer.
 
 ### 1.3 Definitions and Abbreviations
 | Term | Definition |
@@ -35,7 +54,9 @@ The system is a **Spring Boot 4.0.5 + React 18 monorepo** that implements a QR-c
 | RBAC | Role-Based Access Control |
 
 ### 1.4 References
-- `documentation/BRD.md` — Business Requirements Document v2.0
+- [`documentation/BRD.md`](BRD.md) — Business Requirements Document v2.2
+- [`documentation/USER_JOURNEY.md`](USER_JOURNEY.md) — User Journey Maps
+- [`documentation/diagrams/`](diagrams/README.md) — System Architecture and Design Diagrams
 - `src/main/resources/application.yaml` — Application configuration
 - `AGENTS.md` — AI agent coding guidelines
 
@@ -44,6 +65,9 @@ The system is a **Spring Boot 4.0.5 + React 18 monorepo** that implements a QR-c
 ## 2. System Overview
 
 ### 2.1 Architecture
+
+> See [`diagrams/01-architecture.md`](diagrams/01-architecture.md) for full system context, container, and component diagrams.
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Spring Boot Backend                       │
@@ -51,11 +75,11 @@ The system is a **Spring Boot 4.0.5 + React 18 monorepo** that implements a QR-c
 │  │ Security │  │Controllers│  │ Services │  │Repositories│  │
 │  │ (JWT)    │  │  (REST)  │  │(Business)│  │   (JPA)   │  │
 │  └──────────┘  └──────────┘  └──────────┘  └───────────┘  │
-│                        ↕                         ↕          │
-│                    ┌───────┐              ┌──────────────┐  │
-│                    │ Redis │              │  PostgreSQL   │  │
-│                    │Cache  │              │   Database    │  │
-│                    └───────┘              └──────────────┘  │
+│                                                   ↕          │
+│                                           ┌──────────────┐  │
+│                                           │  PostgreSQL   │  │
+│                                           │   Database    │  │
+│                                           └──────────────┘  │
 └─────────────────────────────────────────────────────────────┘
          ↑ REST API               ↑ Static Files
 ┌─────────────────┐     ┌──────────────────────────────┐
@@ -71,6 +95,8 @@ The system is a **Spring Boot 4.0.5 + React 18 monorepo** that implements a QR-c
 ---
 
 ## 3. System Entities
+
+> See [`diagrams/02-entity-relationship.md`](diagrams/02-entity-relationship.md) for the full ER diagram with all fields and relationships.
 
 ### 3.1 Entity Relationship
 ```
@@ -175,6 +201,12 @@ Vehicle (1) ─────────── (*) VehicleClaim (subject)
 ---
 
 ## 4. API Specification
+
+> See the sequence diagrams for full request/response flows:
+> - [QR Authorization Flow](diagrams/03-sequence-qr-authorization.md)
+> - [Manual Authorization Flow](diagrams/04-sequence-manual-authorization.md)
+> - [Customer Registration Flow](diagrams/05-sequence-registration.md)
+> - [Quota Reset Flow](diagrams/06-sequence-quota-reset.md)
 
 ### 4.1 Authentication Endpoints (Public)
 | Method | Path | Description |
@@ -307,17 +339,6 @@ Both return the same `AuthorizationResponse` shape:
 
 ---
 
-## 6. Caching Requirements
-
-### 6.1 Cache Strategy (Redis)
-| Cache Name | Cache Key | Eviction Trigger |
-|------------|-----------|-----------------|
-| `vehicle` | Vehicle ID / registration number | Vehicle status change |
-| `quota` | Vehicle ID / registration number | Quota update, quota reset |
-
-### 6.2 Cache Annotations
-- `@Cacheable` — Used on frequent vehicle and quota lookups.
-- `@CacheEvict(allEntries = true)` — Used on any status or value change.
 
 ---
 
@@ -326,12 +347,13 @@ Both return the same `AuthorizationResponse` shape:
 ### 7.1 Quota Reset Job
 - **Schedule**: Configurable cron expression (default: `0 0 0 ? * SUN` — every Sunday at midnight).
 - **Operation**: Reset `usedLiters = 0`, `remainingLiters = limitLiters` for all ACTIVE quotas.
-- **Post-reset**: Evict `vehicle` and `quota` Redis caches.
 - **Logging**: Log job start, row count processed, and completion time.
 
 ---
 
 ## 8. Frontend Architecture
+
+> See [`diagrams/08-component-diagram.md`](diagrams/08-component-diagram.md) for the full React SPA component and routing hierarchy.
 
 ### 8.1 Routing
 ```
@@ -408,10 +430,6 @@ app.jwt.qr-expiration-ms: 3600000        # 1 hour
 app.quota.weekly-limit-litres: 24.0
 app.quota.reset-cron-expression: "0 0 0 ? * SUN"
 app.quota.geofence-radius-meters: 100
-
-# Redis
-spring.data.redis.host: localhost
-spring.data.redis.port: 6379
 ```
 
 ### 9.2 Default Seed Data
@@ -423,6 +441,8 @@ On startup, `DataInitializer` creates the following if not already present:
 ---
 
 ## 10. Build & Deployment
+
+> See [`diagrams/10-deployment.md`](diagrams/10-deployment.md) for detailed deployment topology diagrams.
 
 ### 10.1 Development
 ```bash
@@ -465,7 +485,6 @@ CREATE DATABASE automated_fuel_quota;
 | QR token generation and expiry | Unit |
 | Geofence calculation | Unit |
 | Idempotent transaction confirmation | Integration |
-| Cache eviction on status change | Integration |
 | RBAC: customer cannot access admin endpoints | Integration |
 | Vehicle NID uniqueness enforcement | Integration |
 
@@ -494,10 +513,10 @@ cd frontend && npm test
 Key metrics to monitor:
 - Authorization request rate and latency.
 - Quota reset job execution (success/failure).
-- Redis cache hit/miss rates.
 - Database connection pool utilization.
 
 ---
 
 *Document maintained by: Engineering Team*  
-*Next review date: 2026-07-01*
+*Next review date: 2026-07-01*  
+*See [`USER_JOURNEY.md`](USER_JOURNEY.md) for actor-level journey maps and [`diagrams/`](diagrams/README.md) for visual system diagrams.*

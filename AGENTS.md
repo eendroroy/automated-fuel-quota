@@ -11,6 +11,23 @@ This is a **Spring Boot 4.0.5 + React 18 monorepo** implementing a fuel quota ma
 
 - [`documentation/BRD.md`](documentation/BRD.md) — Business Requirements Document (authoritative requirements reference)
 - [`documentation/SRS.md`](documentation/SRS.md) — Software Requirements Specification (API contracts, entity schemas, config reference)
+- [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md) — User journey maps for all actor types (Customer, Pump Rep, Admin, System)
+- [`documentation/diagrams/README.md`](documentation/diagrams/README.md) — Index of all system diagrams
+
+### Diagram Reference
+
+| Diagram | File | Key Info |
+|---------|------|----------|
+| System Architecture | [`diagrams/01-architecture.md`](documentation/diagrams/01-architecture.md) | Context / Container / Component views |
+| Entity Relationships | [`diagrams/02-entity-relationship.md`](documentation/diagrams/02-entity-relationship.md) | Full DB schema with all fields |
+| QR Auth Sequence | [`diagrams/03-sequence-qr-authorization.md`](documentation/diagrams/03-sequence-qr-authorization.md) | Primary fuel dispense flow |
+| Manual Auth Sequence | [`diagrams/04-sequence-manual-authorization.md`](documentation/diagrams/04-sequence-manual-authorization.md) | Fallback (no QR) dispense flow |
+| Registration Sequence | [`diagrams/05-sequence-registration.md`](documentation/diagrams/05-sequence-registration.md) | Customer onboarding flow |
+| Quota Reset Sequence | [`diagrams/06-sequence-quota-reset.md`](documentation/diagrams/06-sequence-quota-reset.md) | Scheduled reset job flow |
+| State Machines | [`diagrams/07-state-diagrams.md`](documentation/diagrams/07-state-diagrams.md) | Vehicle / Quota / Claim / Rep lifecycle |
+| Frontend Components | [`diagrams/08-component-diagram.md`](documentation/diagrams/08-component-diagram.md) | React SPA hierarchy and API clients |
+| Use Cases | [`diagrams/09-use-case.md`](documentation/diagrams/09-use-case.md) | Actor–use case relationships |
+| Deployment | [`diagrams/10-deployment.md`](documentation/diagrams/10-deployment.md) | Dev and prod deployment topologies |
 
 ## Critical Build & Development Workflows
 
@@ -93,15 +110,9 @@ DEREGISTERED → soft-deleted; history preserved
 
 ## Project-Specific Patterns
 
-### Caching Strategy (Redis)
-```java
-@Cacheable(value = "quota", key = "#registrationNumber")  // Frequent quota lookups
-@CacheEvict(value = {"vehicle", "quota"}, allEntries = true)  // On status changes
-```
+### Project-Specific Patterns
 
-Cache keys: Vehicle and quota data are cached by ID and registration number. Always evict both caches when vehicle status changes.
-
-### Security Implementation
+### API Design Conventions
 - **JWT with dual expiration**: 24h for app tokens, 1h for QR tokens
 - **Role-based routing**: Customer/Admin layouts with `ProtectedRoute` components
 - **Request attribute pattern**: JWT filter adds `userId`, `userEmail`, `userRole` to request for easy access in controllers
@@ -197,7 +208,7 @@ app.quota.geofence-radius-meters: 100
 
 ### Critical Test Scenarios
 - **Quota authorization logic**: Partial dispense, geofencing, vehicle status checks
-- **Periodic reset job**: Verify quota calculations and cache eviction
+- **Periodic reset job**: Verify quota calculations and audit logging
 - **Security**: JWT validation, role-based access, QR token expiration
 - **Idempotency**: Duplicate transaction prevention in `/api/pump/confirm` (QR path only)
 - **NID uniqueness**: Vehicle registration rejects duplicate `ownerNid`
@@ -213,11 +224,10 @@ app.quota.geofence-radius-meters: 100
 ## Deployment & Production Considerations
 
 ### Single JAR Deployment
-The application builds to a single executable JAR with embedded frontend. Set `spring.profiles.active=prod` and configure external database/Redis.
+The application builds to a single executable JAR with embedded frontend. Set `spring.profiles.active=prod` and configure external database.
 
 ### Required External Dependencies
 - **PostgreSQL 15+**: Primary database
-- **Redis 7+**: Caching layer (optional but recommended for performance)
 
 ### Monitoring Endpoints
-Spring Boot Actuator exposes `/actuator/health`, `/actuator/metrics` for monitoring. Check quota reset job execution and cache hit rates.
+Spring Boot Actuator exposes `/actuator/health`, `/actuator/metrics` for monitoring. Check quota reset job execution and database query performance.

@@ -25,7 +25,7 @@ import java.util.UUID;
  * Service for fuel station management.
  *
  * <p>Manages CRUD operations for fuel stations including geofence configuration
- * and location-based search. Station data is cached to improve performance for
+ * and location-based search.
  * frequent lookups during fuel authorization.
  */
 @Service
@@ -60,7 +60,7 @@ public class FuelStationService {
     }
 
     /**
-     * Retrieves a single fuel station by its UUID with caching.
+     * Retrieves a single fuel station by its UUID.
      *
      * @param id UUID of the fuel station
      * @return {@link StationResponse} containing station details

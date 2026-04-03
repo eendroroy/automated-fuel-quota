@@ -77,9 +77,6 @@ public class QuotaConfigService {
     /**
      * Creates or updates the default quota configuration.
      *
-     * <p>Evicts the {@code quotaConfig} cache so the next read picks up the
-     * new values.
-     *
      * @param request new configuration values
      * @return the saved configuration as a response DTO
      */

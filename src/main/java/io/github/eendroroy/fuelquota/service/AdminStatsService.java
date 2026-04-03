@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * Service for generating administrative statistics and dashboard data.
  *
- * <p>Provides cached aggregated data for the admin dashboard including:
+ * <p>Provides aggregated data for the admin dashboard including:
  * <ul>
  *   <li>Vehicle registration statistics</li>
  *   <li>Transaction volume and trends</li>
@@ -47,10 +47,7 @@ public class AdminStatsService {
     private final AppProperties appProperties;
 
     /**
-     * Retrieves comprehensive dashboard statistics with caching.
-     *
-     * <p>Results are cached for performance as statistical queries can be expensive.
-     * Cache is automatically invalidated when underlying data changes significantly.
+     * Retrieves comprehensive dashboard statistics.
      *
      * @return {@link AdminStatsResponse} containing all dashboard metrics
      */

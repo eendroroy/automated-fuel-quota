@@ -36,7 +36,7 @@ import java.util.UUID;
  * Authentication is performed via Spring Security with BCrypt password hashing and
  * JWT token generation.
  *
- * <p>User and vehicle lookups are cached to improve performance on repeated access.
+ * <p>Handles user registration, login, and JWT token generation.
  *
  * <p><strong>Future scope:</strong> OTP verification via mobile number will be added
  * to confirm the customer's phone during registration before account activation.
@@ -184,7 +184,7 @@ public class AuthService {
     }
 
     /**
-     * Retrieves a user by UUID with caching.
+     * Retrieves a user by UUID.
      *
      * @param id UUID of the user
      * @return the {@link User} entity
@@ -197,7 +197,7 @@ public class AuthService {
     }
 
     /**
-     * Retrieves a user by email address with caching.
+     * Retrieves a user by email address.
      *
      * @param email email address of the user
      * @return the {@link User} entity

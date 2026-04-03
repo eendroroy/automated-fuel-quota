@@ -31,7 +31,7 @@ import org.springframework.data.domain.Pageable;
  *
  * <p>Responsibilities:
  * <ul>
- *   <li>Quota retrieval and caching (by vehicle ID and registration number).</li>
+ *   <li>Quota retrieval (by vehicle ID and registration number).</li>
  *   <li>Authorization logic — decides whether dispensing is APPROVED, PARTIAL, or DENIED.</li>
  *   <li>Quota consumption after a confirmed dispense.</li>
  *   <li>Scheduled weekly reset every Sunday at 00:00.</li>

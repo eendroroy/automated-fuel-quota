@@ -1,9 +1,25 @@
 # Business Requirements Document (BRD)
 ## Automated Fuel Quota Management System
 
-**Document Version:** 2.1  
+**Document Version:** 2.2  
 **Date:** 2026-04-03  
 **Status:** Approved
+
+---
+
+## Document Navigation
+
+| Document | Description |
+|----------|-------------|
+| **This file** — BRD | Business requirements, rules, and acceptance criteria |
+| [`SRS.md`](SRS.md) | Software Requirements Specification — API contracts, entity schemas |
+| [`USER_JOURNEY.md`](USER_JOURNEY.md) | Step-by-step user journey maps for all actor types |
+| [`diagrams/README.md`](diagrams/README.md) | Index of all system diagrams |
+| [`diagrams/01-architecture.md`](diagrams/01-architecture.md) | System and component architecture |
+| [`diagrams/02-entity-relationship.md`](diagrams/02-entity-relationship.md) | Database entity relationships |
+| [`diagrams/03-sequence-qr-authorization.md`](diagrams/03-sequence-qr-authorization.md) | QR authorization sequence |
+| [`diagrams/07-state-diagrams.md`](diagrams/07-state-diagrams.md) | Vehicle / Quota / Claim state machines |
+| [`diagrams/09-use-case.md`](diagrams/09-use-case.md) | Use case diagram |
 
 ---
 
@@ -117,7 +133,6 @@ remaining_quota_litres = limit_litres - used_litres_this_period
 ### BR-4: Scheduled Quota Reset
 At the configured cron schedule (default: every Sunday 00:00):
 - All active quota usage counters reset.
-- Redis cache is evicted.
 - Reset is logged in the audit trail.
 
 ### BR-5: Eligibility Checks
@@ -203,8 +218,6 @@ Authorization requires all of the following:
 | FR-31 | System shall run a scheduled quota reset job per configured cron expression |
 | FR-32 | System shall persist all transactions with quota before/after values |
 | FR-33 | System shall log all administrative actions in an immutable audit trail |
-| FR-34 | System shall cache vehicle and quota data in Redis for performance |
-| FR-35 | System shall evict caches on any vehicle or quota status change |
 
 ---
 
@@ -268,7 +281,23 @@ Authorization requires all of the following:
 
 ---
 
-## 12. Open Items / Future Scope
+## 12. Traceability Matrix
+
+| Business Rule | FR IDs | Use Cases | State Diagram |
+|---------------|--------|-----------|---------------|
+| BR-1 Periodic Quota Limit | FR-01, FR-25, FR-27 | UC-25, UC-27, UC-31 | [Quota States](diagrams/07-state-diagrams.md) |
+| BR-2 Remaining Quota Calc | FR-15, FR-20 | UC-03, UC-14 | — |
+| BR-3 Partial Dispense | FR-15, FR-18 | UC-15, UC-17 | — |
+| BR-4 Scheduled Reset | FR-31 | UC-31 | [Quota States](diagrams/07-state-diagrams.md) |
+| BR-5 Eligibility Checks | FR-13, FR-14 | UC-12, UC-13 | [Vehicle States](diagrams/07-state-diagrams.md) |
+| BR-6 Ownership Transfer | FR-09, FR-28 | UC-09, UC-28 | [Claim States](diagrams/07-state-diagrams.md) |
+| BR-7 Vehicle Registration | FR-01, FR-04 | UC-01, UC-04 | [Vehicle States](diagrams/07-state-diagrams.md) |
+| BR-8 Rep Login | FR-11 | UC-11 | [Rep States](diagrams/07-state-diagrams.md) |
+| BR-9 Manual Authorization | FR-14, FR-18 | UC-13, UC-17 | — |
+
+---
+
+## 13. Open Items / Future Scope
 
 1. **BRTA API Integration** — Real-time ownership verification against national vehicle registry.
 2. **OTP Verification** — Mobile number confirmation via SMS during customer registration.
@@ -282,4 +311,5 @@ Authorization requires all of the following:
 ---
 
 *Document maintained by: Engineering Team*  
-*Next review date: 2026-07-01*
+*Next review date: 2026-07-01*  
+*See [`USER_JOURNEY.md`](USER_JOURNEY.md) for actor-level journey maps and [`diagrams/`](diagrams/README.md) for visual system diagrams.*

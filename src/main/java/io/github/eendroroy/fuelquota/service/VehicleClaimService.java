@@ -144,7 +144,7 @@ public class VehicleClaimService {
      *   <li>The vehicle's owning user is changed to the claimant.</li>
      *   <li>The vehicle status is reset to {@code PENDING} for re-verification.</li>
      *   <li>Any existing quota is suspended.</li>
-     *   <li>Vehicle and quota caches are evicted.</li>
+     *   <li>Vehicle ownership fields are updated to the claimant.</li>
      * </ul>
      *
      * @param claimId    UUID of the claim to approve
