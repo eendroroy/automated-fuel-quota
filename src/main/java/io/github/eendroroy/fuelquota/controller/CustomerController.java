@@ -204,13 +204,13 @@ public class CustomerController {
     @GetMapping("/vehicles")
     @Operation(
         summary = "List all my vehicles",
-        description = "Returns all vehicles registered to the authenticated customer"
+        description = "Returns paginated vehicles registered to the authenticated customer"
     )
     @ApiResponse(responseCode = "200", description = "Vehicles retrieved successfully",
-            content = @Content(schema = @Schema(implementation = VehicleResponse.class)))
-    public ResponseEntity<List<VehicleResponse>> getMyVehicles(HttpServletRequest request) {
+            content = @Content(schema = @Schema(implementation = Page.class)))
+    public ResponseEntity<Page<VehicleResponse>> getMyVehicles(HttpServletRequest request, Pageable pageable) {
         UUID userId = (UUID) request.getAttribute("userId");
-        return ResponseEntity.ok(customerService.getVehiclesByUserId(userId));
+        return ResponseEntity.ok(customerService.getVehiclesByUserId(userId, pageable));
     }
 
     /**

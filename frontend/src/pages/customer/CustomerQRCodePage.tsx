@@ -30,7 +30,7 @@ export default function CustomerQRCodePage() {
   useEffect(() => {
     getMyVehicles({ page: 0, size: 100 }) // Fetch a large page for dropdown
       .then((response) => {
-        const active = response.content.filter((v) => v.status === 'VERIFIED')
+        const active = (response.content ?? []).filter((v) => v.status === 'VERIFIED')
         setActiveVehicles(active)
         // If no vehicleId param, default to first active
         if (!initialVehicleId && active.length > 0) {
