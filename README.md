@@ -5,8 +5,7 @@ A comprehensive **QR-code-driven fuel quota management platform** built with **S
 > **📄 Documentation:**
 > [`documentation/BRD.md`](documentation/BRD.md) (requirements) |
 > [`documentation/SRS.md`](documentation/SRS.md) (technical spec) |
-> [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md) (user journeys) |
-> [`documentation/diagrams/`](documentation/diagrams/README.md) (all diagrams)
+> [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md) (user journeys)
 
 ---
 
@@ -42,7 +41,6 @@ graph TD
     style Data fill:#37474f,color:#fff
 ```
 
-> 📐 See [`documentation/diagrams/01-architecture.md`](documentation/diagrams/01-architecture.md) for full system context, container, and component diagrams.
 
 ### Complete Implementation Status ✅
 
@@ -308,19 +306,7 @@ automated-fuel-quota/
 ├── documentation/
 │   ├── BRD.md                    # Business Requirements Document
 │   ├── SRS.md                    # Software Requirements Specification
-│   ├── USER_JOURNEY.md           # User journey maps (all actor types)
-│   └── diagrams/
-│       ├── README.md             # Diagram index
-│       ├── 01-architecture.md    # System / container / component views
-│       ├── 02-entity-relationship.md  # Full ER diagram
-│       ├── 03-sequence-qr-authorization.md
-│       ├── 04-sequence-manual-authorization.md
-│       ├── 05-sequence-registration.md
-│       ├── 06-sequence-quota-reset.md
-│       ├── 07-state-diagrams.md  # Vehicle / Quota / Claim state machines
-│       ├── 08-component-diagram.md  # React SPA hierarchy
-│       ├── 09-use-case.md        # Actor–use case diagram
-│       └── 10-deployment.md      # Dev + prod deployment topologies
+│   └── USER_JOURNEY.md           # User journey maps (all actor types)
 ├── src/main/java/io/github/eendroroy/fuelquota/
 │   ├── config/          # Security, OpenAPI, DataInitializer
 │   ├── controller/      # REST controllers (Auth, Customer, Admin, Pump)
@@ -376,6 +362,5 @@ This implementation fully satisfies all **Business Requirements Document (BRD)**
 | [`documentation/BRD.md`](documentation/BRD.md) | Business Requirements Document — requirements, rules, acceptance tests |
 | [`documentation/SRS.md`](documentation/SRS.md) | Software Requirements Specification — API contracts, entity schemas |
 | [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md) | Detailed user journey maps for Customer, Pump Rep, Admin, and System |
-| [`documentation/diagrams/`](documentation/diagrams/README.md) | All system diagrams (Mermaid) — architecture, ER, sequences, states |
 | [`AGENTS.md`](AGENTS.md) | AI coding agent guide — patterns, conventions, and domain model |
 

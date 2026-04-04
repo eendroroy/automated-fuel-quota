@@ -14,12 +14,6 @@
 | **This file** — BRD | Business requirements, rules, and acceptance criteria |
 | [`SRS.md`](SRS.md) | Software Requirements Specification — API contracts, entity schemas |
 | [`USER_JOURNEY.md`](USER_JOURNEY.md) | Step-by-step user journey maps for all actor types |
-| [`diagrams/README.md`](diagrams/README.md) | Index of all system diagrams |
-| [`diagrams/01-architecture.md`](diagrams/01-architecture.md) | System and component architecture |
-| [`diagrams/02-entity-relationship.md`](diagrams/02-entity-relationship.md) | Database entity relationships |
-| [`diagrams/03-sequence-qr-authorization.md`](diagrams/03-sequence-qr-authorization.md) | QR authorization sequence |
-| [`diagrams/07-state-diagrams.md`](diagrams/07-state-diagrams.md) | Vehicle / Quota / Claim state machines |
-| [`diagrams/09-use-case.md`](diagrams/09-use-case.md) | Use case diagram |
 
 ---
 

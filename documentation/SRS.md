@@ -15,16 +15,6 @@
 | [`BRD.md`](BRD.md) | Business Requirements Document — requirements and business rules |
 | **This file** — SRS | Technical specifications, API contracts, entity schemas |
 | [`USER_JOURNEY.md`](USER_JOURNEY.md) | Detailed user journey maps for all actor types |
-| [`diagrams/01-architecture.md`](diagrams/01-architecture.md) | System, container, and component architecture |
-| [`diagrams/02-entity-relationship.md`](diagrams/02-entity-relationship.md) | Full database ER diagram |
-| [`diagrams/03-sequence-qr-authorization.md`](diagrams/03-sequence-qr-authorization.md) | QR authorization sequence diagram |
-| [`diagrams/04-sequence-manual-authorization.md`](diagrams/04-sequence-manual-authorization.md) | Manual authorization sequence diagram |
-| [`diagrams/05-sequence-registration.md`](diagrams/05-sequence-registration.md) | Customer registration sequence diagram |
-| [`diagrams/06-sequence-quota-reset.md`](diagrams/06-sequence-quota-reset.md) | Quota reset sequence diagram |
-| [`diagrams/07-state-diagrams.md`](diagrams/07-state-diagrams.md) | State machines for all domain entities |
-| [`diagrams/08-component-diagram.md`](diagrams/08-component-diagram.md) | React SPA component hierarchy |
-| [`diagrams/09-use-case.md`](diagrams/09-use-case.md) | Actor–use case diagram |
-| [`diagrams/10-deployment.md`](diagrams/10-deployment.md) | Deployment architecture (dev + prod) |
 
 ---
 
@@ -56,7 +46,6 @@ The system is a **Spring Boot 4.0.5 + React 18 monorepo** that implements a QR-c
 ### 1.4 References
 - [`documentation/BRD.md`](BRD.md) — Business Requirements Document v2.3
 - [`documentation/USER_JOURNEY.md`](USER_JOURNEY.md) — User Journey Maps
-- [`documentation/diagrams/`](diagrams/README.md) — System Architecture and Design Diagrams
 - `src/main/resources/application.yaml` — Application configuration
 - `AGENTS.md` — AI agent coding guidelines
 
@@ -66,7 +55,6 @@ The system is a **Spring Boot 4.0.5 + React 18 monorepo** that implements a QR-c
 
 ### 2.1 Architecture
 
-> See [`diagrams/01-architecture.md`](diagrams/01-architecture.md) for full system context, container, and component diagrams.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -96,7 +84,6 @@ The system is a **Spring Boot 4.0.5 + React 18 monorepo** that implements a QR-c
 
 ## 3. System Entities
 
-> See [`diagrams/02-entity-relationship.md`](diagrams/02-entity-relationship.md) for the full ER diagram with all fields and relationships.
 
 ### 3.1 Entity Relationship
 ```
@@ -202,11 +189,6 @@ Vehicle (1) ─────────── (*) VehicleClaim (subject)
 
 ## 4. API Specification
 
-> See the sequence diagrams for full request/response flows:
-> - [QR Authorization Flow](diagrams/03-sequence-qr-authorization.md)
-> - [Manual Authorization Flow](diagrams/04-sequence-manual-authorization.md)
-> - [Customer Registration Flow](diagrams/05-sequence-registration.md)
-> - [Quota Reset Flow](diagrams/06-sequence-quota-reset.md)
 
 ### 4.1 Authentication Endpoints (Public)
 | Method | Path | Description |
@@ -360,7 +342,6 @@ Both return the same `AuthorizationResponse` shape:
 
 ## 8. Frontend Architecture
 
-> See [`diagrams/08-component-diagram.md`](diagrams/08-component-diagram.md) for the full React SPA component and routing hierarchy.
 
 ### 8.1 Routing
 ```
@@ -449,7 +430,6 @@ On startup, `DataInitializer` creates the following if not already present:
 
 ## 10. Build & Deployment
 
-> See [`diagrams/10-deployment.md`](diagrams/10-deployment.md) for detailed deployment topology diagrams.
 
 ### 10.1 Development
 ```bash
@@ -526,4 +506,4 @@ Key metrics to monitor:
 
 *Document maintained by: Engineering Team*  
 *Next review date: 2026-07-01*  
-*See [`USER_JOURNEY.md`](USER_JOURNEY.md) for actor-level journey maps and [`diagrams/`](diagrams/README.md) for visual system diagrams.*
+*See [`USER_JOURNEY.md`](USER_JOURNEY.md) for actor-level journey maps.*
