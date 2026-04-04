@@ -60,62 +60,59 @@ public class RegisterCustomerRequest {
     @Schema(description = "Account password (min 8 characters)", example = "securePass1!", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 
-    // ── Vehicle Registration Number (structured 4-part input) ─────────────────
+    // ── Vehicle Registration Number (structured 4-part input - OPTIONAL) ──────
 
     /**
      * BRTA office / region code selected from dropdown
      * (e.g. {@code DHAKA METRO}, {@code SYLHET}).
+     * Optional - allows driver-only registration without vehicle.
      */
-    @NotBlank(message = "BRTA office code is required")
     @Size(max = 50, message = "BRTA office code cannot exceed 50 characters")
-    @Schema(description = "BRTA office code (select from available offices)", example = "DHAKA METRO", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "BRTA office code (select from available offices) - Optional for driver-only accounts", example = "DHAKA METRO", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String brtaOfficeCode;
 
     /**
      * Vehicle category registration code selected from dropdown
      * (e.g. {@code GA}, {@code KHA}).
+     * Optional - allows driver-only registration without vehicle.
      */
-    @NotBlank(message = "Vehicle registration code is required")
     @Size(max = 10, message = "Vehicle registration code cannot exceed 10 characters")
-    @Schema(description = "Vehicle category registration code (select from available codes)", example = "GA", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Vehicle category registration code (select from available codes) - Optional for driver-only accounts", example = "GA", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String vehicleRegistrationCode;
 
     /**
      * Two-digit serial number part (e.g. {@code 11}).
-     * Exactly two numeric digits are required.
+     * Exactly two numeric digits are required when provided.
+     * Optional - allows driver-only registration without vehicle.
      */
-    @NotBlank(message = "Serial part 1 (2-digit) is required")
     @Pattern(regexp = "^\\d{2}$", message = "Serial part 1 must be exactly 2 digits")
-    @Schema(description = "First serial number component (2 digits)", example = "11", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "First serial number component (2 digits) - Optional for driver-only accounts", example = "11", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String serialPart1;
 
     /**
      * Four-digit serial number part (e.g. {@code 1234}).
-     * Exactly four numeric digits are required.
+     * Exactly four numeric digits are required when provided.
+     * Optional - allows driver-only registration without vehicle.
      */
-    @NotBlank(message = "Serial part 2 (4-digit) is required")
     @Pattern(regexp = "^\\d{4}$", message = "Serial part 2 must be exactly 4 digits")
-    @Schema(description = "Second serial number component (4 digits)", example = "1234", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Second serial number component (4 digits) - Optional for driver-only accounts", example = "1234", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String serialPart2;
 
-    // ── Vehicle Information ───────────────────────────────────────────────────
+    // ── Vehicle Information (OPTIONAL) ────────────────────────────────────────
 
-    /** Manufacturer / brand of the vehicle (e.g. Toyota, Honda). */
-    @NotBlank(message = "Vehicle make is required")
+    /** Manufacturer / brand of the vehicle (e.g. Toyota, Honda). Optional for driver-only accounts. */
     @Size(max = 50, message = "Vehicle make cannot exceed 50 characters")
-    @Schema(description = "Vehicle manufacturer / make", example = "Toyota", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Vehicle manufacturer / make - Optional for driver-only accounts", example = "Toyota", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String vehicleMake;
 
-    /** Body colour of the vehicle. */
-    @NotBlank(message = "Vehicle color is required")
+    /** Body colour of the vehicle. Optional for driver-only accounts. */
     @Size(max = 30, message = "Vehicle color cannot exceed 30 characters")
-    @Schema(description = "Vehicle body colour", example = "White", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Vehicle body colour - Optional for driver-only accounts", example = "White", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String vehicleColor;
 
-    /** Fuel type the vehicle uses (e.g. Petrol, Diesel, CNG, LPG). */
-    @NotBlank(message = "Fuel type is required")
+    /** Fuel type the vehicle uses (e.g. Petrol, Diesel, CNG, LPG). Optional for driver-only accounts. */
     @Size(max = 30, message = "Fuel type cannot exceed 30 characters")
-    @Schema(description = "Type of fuel the vehicle uses", example = "Petrol", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Type of fuel the vehicle uses - Optional for driver-only accounts", example = "Petrol", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String fuelType;
 
     /** Engine displacement in cubic centimetres (optional). */
@@ -125,22 +122,44 @@ public class RegisterCustomerRequest {
     /**
      * Date the vehicle was first registered with the transport authority.
      * Format: {@code YYYY-MM-DD}.
+     * Optional for driver-only accounts.
      */
-    @NotBlank(message = "Registration date is required")
     @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "Registration date must be in YYYY-MM-DD format")
-    @Schema(description = "Vehicle registration date (YYYY-MM-DD)", example = "2020-05-15", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Vehicle registration date (YYYY-MM-DD) - Optional for driver-only accounts", example = "2020-05-15", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String registrationDate;
 
     /**
      * Assembles the four-part input into the canonical registration number string:
      * {@code {brtaOfficeCode} {vehicleRegistrationCode} {serialPart1}-{serialPart2}}.
      *
-     * @return assembled registration number, e.g. {@code DHAKA METRO GA 11-1234}
+     * @return assembled registration number, e.g. {@code DHAKA METRO GA 11-1234}, or null if vehicle fields not provided
      */
     public String assembleRegistrationNumber() {
+        if (brtaOfficeCode == null || brtaOfficeCode.isBlank() ||
+            vehicleRegistrationCode == null || vehicleRegistrationCode.isBlank() ||
+            serialPart1 == null || serialPart1.isBlank() ||
+            serialPart2 == null || serialPart2.isBlank()) {
+            return null;
+        }
         return brtaOfficeCode.toUpperCase().trim() + " "
                 + vehicleRegistrationCode.toUpperCase().trim() + " "
                 + serialPart1.trim() + "-"
                 + serialPart2.trim();
+    }
+
+    /**
+     * Checks if vehicle registration fields are provided.
+     *
+     * @return true if at least one vehicle field is provided
+     */
+    public boolean hasVehicleInfo() {
+        return (brtaOfficeCode != null && !brtaOfficeCode.isBlank()) ||
+               (vehicleRegistrationCode != null && !vehicleRegistrationCode.isBlank()) ||
+               (serialPart1 != null && !serialPart1.isBlank()) ||
+               (serialPart2 != null && !serialPart2.isBlank()) ||
+               (vehicleMake != null && !vehicleMake.isBlank()) ||
+               (vehicleColor != null && !vehicleColor.isBlank()) ||
+               (fuelType != null && !fuelType.isBlank()) ||
+               (registrationDate != null && !registrationDate.isBlank());
     }
 }

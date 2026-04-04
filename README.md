@@ -46,23 +46,27 @@ graph TD
 
 ### Complete Implementation Status ✅
 
-This project is a **fully functional** fuel quota management system implementing all BRD requirements:
+This project is a **fully functional** fuel quota management system implementing all BRD requirements plus additional features:
 
 - ✅ **Backend API** - Complete Spring Boot application with security and scheduling
 - ✅ **Frontend SPA** - React/TypeScript customer and admin portals
 - ✅ **Pump Rep Web Portal** - Browser-based portal for pump representatives with QR scanning and manual lookup
 - ✅ **Database Schema** - PostgreSQL with proper relationships and indexes
-- ✅ **Business Logic** - Weekly quota management with partial dispense support
+- ✅ **Business Logic** - Configurable quota management with partial dispense support
 - ✅ **Security** - JWT authentication with role-based access control
-- ✅ **Scheduled Jobs** - Automatic weekly quota reset (Sunday 00:00)
+- ✅ **Scheduled Jobs** - Automatic quota reset based on configurable period
+- ✅ **Driver-Only Registration** - Users can register without owning vehicles
+- ✅ **Quota by Registration Code** - Different quota limits per vehicle category
+- ✅ **Driver Assignment** - Vehicle owners can assign drivers with full authorization
 
 ### Core Business Logic (Per BRD Requirements)
 
-- ✅ **Weekly 24L Quota** - Strict fuel limit enforcement per vehicle
+- ✅ **Configurable Quota** - Flexible limit enforcement per vehicle (default 24L weekly)
+- ✅ **Registration-Code-Specific Quotas** - Different limits per vehicle category (LA = 20L DAILY, GA = 30L WEEKLY)
 - ✅ **QR Code Authentication** - Encrypted JWT tokens with 1-hour expiration
 - ✅ **GPS Geofencing** - Location-based validation for authorized stations
 - ✅ **Partial Dispense Support** - Smart authorization when requested > remaining quota
-- ✅ **Automatic Weekly Reset** - Sunday 00:00 scheduled quota restoration
+- ✅ **Configurable Period Reset** - Scheduled quota restoration (DAILY/WEEKLY/MONTHLY/QUARTERLY/YEARLY)
 - ✅ **Real-time Validation** - Instant vehicle status and quota checking
 - ✅ **Idempotent Transactions** - Prevents double-deducting from quota on QR path
 - ✅ **Complete Audit Trail** - Every action logged with timestamp and user
@@ -70,16 +74,20 @@ This project is a **fully functional** fuel quota management system implementing
 ## 🚀 Key Features
 
 ### Vehicle Owner App (Customer Portal)
-- **Multi-step Registration** - Personal info → Vehicle details → Document upload
+- **Flexible Registration** - Register as vehicle owner OR driver-only account (optional vehicle)
+- **Multi-step Registration** - Personal info → Vehicle details (optional) → Review & submit
 - **QR Code Management** - Generate, regenerate, and download fuel QR codes  
+- **Driver Management** - Assign registered drivers to vehicles; both owner and driver can generate QR codes
 - **Quota Dashboard** - Visual gauge showing used vs. remaining fuel allocation
 - **Transaction History** - Complete record of fuel dispensing activities
 - **Vehicle Ownership Claims** - Submit and track ownership transfer requests
+- **Vehicles as Driver** - View and manage vehicles where user is assigned as driver
 
 ### Admin Dashboard
 - **Vehicle Management** - Approve, reject, or suspend vehicle registrations
 - **Fuel Station Management** - CRUD operations with GPS coordinate validation
 - **Quota Administration** - Adjust limits, manual resets, and bulk operations
+- **Quota Config by Registration Code** - Set different quota limits per vehicle category (LA = 20L DAILY, GA = 30L WEEKLY, etc.)
 - **Analytics & Reporting** - Usage charts, transaction trends, and system metrics
 - **Audit Log Viewer** - Searchable, filterable administrative action history
 
@@ -182,11 +190,15 @@ POST /api/auth/customer/register  - Vehicle registration
 
 ### Customer API (JWT Required)
 ```
-GET  /api/customer/vehicles             - List own vehicles
-GET  /api/customer/quota                - Get quota status  
-GET  /api/customer/qr-code              - Generate QR token
-POST /api/customer/qr-code/regenerate   - Regenerate QR
-GET  /api/customer/transactions         - Transaction history
+GET  /api/customer/vehicles                    - List own vehicles
+POST /api/customer/vehicles                    - Add new vehicle
+GET  /api/customer/vehicles-as-driver          - List vehicles where user is driver
+POST /api/customer/vehicles/{id}/driver        - Assign driver to vehicle
+DELETE /api/customer/vehicles/{id}/driver      - Remove driver from vehicle
+GET  /api/customer/quota                       - Get quota status  
+GET  /api/customer/qr-code                     - Generate QR token
+POST /api/customer/qr-code/regenerate          - Regenerate QR
+GET  /api/customer/transactions                - Transaction history
 ```
 
 ### Pump Representative API (Public — Core BRD)
@@ -200,11 +212,15 @@ GET  /api/pump/health             - API health check
 
 ### Admin API (JWT + Admin Role Required)
 ```
-GET    /api/admin/vehicles        - List vehicles (paginated)
-PUT    /api/admin/vehicles/{id}/reverify - Re-verify vehicle
-GET    /api/admin/stations        - List fuel stations
-POST   /api/admin/stations        - Create station
-GET    /api/admin/stats           - Dashboard statistics
+GET    /api/admin/vehicles                       - List vehicles (paginated)
+PUT    /api/admin/vehicles/{id}/reverify         - Re-verify vehicle
+GET    /api/admin/stations                       - List fuel stations
+POST   /api/admin/stations                       - Create station
+GET    /api/admin/quota-config-by-code           - List quota configs by registration code
+POST   /api/admin/quota-config-by-code           - Create quota config for registration code
+PUT    /api/admin/quota-config-by-code/{id}      - Update quota config
+DELETE /api/admin/quota-config-by-code/{id}      - Delete quota config
+GET    /api/admin/stats                          - Dashboard statistics
 ```
 
 ## 🔄 Core Business Process Flow

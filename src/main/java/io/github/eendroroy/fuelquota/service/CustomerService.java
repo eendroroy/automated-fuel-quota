@@ -229,14 +229,21 @@ public class CustomerService {
     }
 
     /**
-     * Generates a QR token for a specific vehicle owned by the customer.
+     * Generates a QR token for a specific vehicle.
+     * Can be called by the vehicle owner or an assigned driver.
      */
     public QrTokenResponse generateQrTokenForVehicle(UUID userId, UUID vehicleId) {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
-        if (!vehicle.getUser().getId().equals(userId)) {
-            throw new BadRequestException("Vehicle does not belong to this user");
+
+        // Allow both owner and assigned driver to generate QR code
+        boolean isOwner = vehicle.getUser().getId().equals(userId);
+        boolean isDriver = vehicle.getDriver() != null && vehicle.getDriver().getId().equals(userId);
+
+        if (!isOwner && !isDriver) {
+            throw new BadRequestException("You are not authorized to generate QR code for this vehicle");
         }
+
         if (vehicle.getStatus() != Vehicle.VehicleStatus.VERIFIED) {
             throw new BadRequestException("Vehicle is not verified. Cannot generate QR code.");
         }
@@ -285,5 +292,81 @@ public class CustomerService {
         return transactionRepository
                 .findByVehicleOrderByTransactionTimestampDesc(vehicle, pageable)
                 .map(transactionMapper::toResponse);
+    }
+
+    // ── Driver Assignment ─────────────────────────────────────────────────────
+
+    /**
+     * Assigns a driver to a vehicle owned by the authenticated customer.
+     * The driver must have a registered customer account.
+     *
+     * @param userId    owner's user ID
+     * @param vehicleId vehicle ID
+     * @param driverEmail email of the driver to assign
+     * @return updated vehicle response
+     * @throws ResourceNotFoundException if vehicle or driver not found
+     * @throws BadRequestException if vehicle doesn't belong to user or driver is not a customer
+     */
+    @Transactional
+    public VehicleResponse assignDriver(UUID userId, UUID vehicleId, String driverEmail) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+
+        if (!vehicle.getUser().getId().equals(userId)) {
+            throw new BadRequestException("Vehicle does not belong to this user");
+        }
+
+        User driver = userRepository.findByEmail(driverEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Driver not found with email: " + driverEmail));
+
+        if (driver.getRole() != User.UserRole.CUSTOMER) {
+            throw new BadRequestException("Driver must have a customer account");
+        }
+
+        if (driver.getId().equals(userId)) {
+            throw new BadRequestException("Cannot assign yourself as driver");
+        }
+
+        vehicle.setDriver(driver);
+        vehicle = vehicleRepository.save(vehicle);
+
+        return vehicleMapper.toResponse(vehicle);
+    }
+
+    /**
+     * Removes the assigned driver from a vehicle.
+     *
+     * @param userId    owner's user ID
+     * @param vehicleId vehicle ID
+     * @return updated vehicle response
+     * @throws ResourceNotFoundException if vehicle not found
+     * @throws BadRequestException if vehicle doesn't belong to user
+     */
+    @Transactional
+    public VehicleResponse removeDriver(UUID userId, UUID vehicleId) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+
+        if (!vehicle.getUser().getId().equals(userId)) {
+            throw new BadRequestException("Vehicle does not belong to this user");
+        }
+
+        vehicle.setDriver(null);
+        vehicle = vehicleRepository.save(vehicle);
+
+        return vehicleMapper.toResponse(vehicle);
+    }
+
+    /**
+     * Returns all vehicles where the authenticated user is assigned as driver.
+     *
+     * @param userId driver's user ID
+     * @return list of vehicles where user is the driver
+     */
+    public List<VehicleResponse> getVehiclesWhereDriver(UUID userId) {
+        // This requires a new repository method
+        return vehicleRepository.findByDriverId(userId).stream()
+                .map(vehicleMapper::toResponse)
+                .toList();
     }
 }

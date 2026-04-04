@@ -399,4 +399,74 @@ public class CustomerController {
         UUID userId = (UUID) request.getAttribute("userId");
         return ResponseEntity.ok(vehicleClaimService.getMyClaims(userId, pageable));
     }
+
+    // ── Driver Assignment ─────────────────────────────────────────────────────
+
+    /**
+     * Assigns a driver to a vehicle owned by the authenticated customer.
+     *
+     * @param vehicleId vehicle ID
+     * @param req       driver assignment request (driver email)
+     * @param request   HTTP request containing the authenticated user's details
+     * @return updated vehicle details with driver information
+     */
+    @PostMapping("/vehicles/{vehicleId}/driver")
+    @Operation(
+        summary = "Assign a driver to a vehicle",
+        description = "Assigns a registered customer as driver for the specified vehicle"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Driver assigned successfully",
+                content = @Content(schema = @Schema(implementation = VehicleResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request or driver not a customer"),
+        @ApiResponse(responseCode = "404", description = "Vehicle or driver not found")
+    })
+    public ResponseEntity<VehicleResponse> assignDriver(
+            @PathVariable UUID vehicleId,
+            @Valid @RequestBody io.github.eendroroy.fuelquota.dto.request.AssignDriverRequest req,
+            HttpServletRequest request) {
+        UUID userId = (UUID) request.getAttribute("userId");
+        return ResponseEntity.ok(customerService.assignDriver(userId, vehicleId, req.getDriverEmail()));
+    }
+
+    /**
+     * Removes the assigned driver from a vehicle.
+     *
+     * @param vehicleId vehicle ID
+     * @param request   HTTP request containing the authenticated user's details
+     * @return updated vehicle details
+     */
+    @DeleteMapping("/vehicles/{vehicleId}/driver")
+    @Operation(
+        summary = "Remove driver from a vehicle",
+        description = "Removes the currently assigned driver from the specified vehicle"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Driver removed successfully",
+                content = @Content(schema = @Schema(implementation = VehicleResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vehicle not found")
+    })
+    public ResponseEntity<VehicleResponse> removeDriver(
+            @PathVariable UUID vehicleId, HttpServletRequest request) {
+        UUID userId = (UUID) request.getAttribute("userId");
+        return ResponseEntity.ok(customerService.removeDriver(userId, vehicleId));
+    }
+
+    /**
+     * Returns all vehicles where the authenticated user is assigned as driver.
+     *
+     * @param request HTTP request containing the authenticated user's details
+     * @return list of vehicles where user is the driver
+     */
+    @GetMapping("/vehicles-as-driver")
+    @Operation(
+        summary = "Get vehicles where I am the driver",
+        description = "Returns all vehicles where the authenticated user is assigned as driver"
+    )
+    @ApiResponse(responseCode = "200", description = "Vehicles retrieved successfully",
+            content = @Content(schema = @Schema(implementation = List.class)))
+    public ResponseEntity<List<VehicleResponse>> getVehiclesAsDriver(HttpServletRequest request) {
+        UUID userId = (UUID) request.getAttribute("userId");
+        return ResponseEntity.ok(customerService.getVehiclesWhereDriver(userId));
+    }
 }

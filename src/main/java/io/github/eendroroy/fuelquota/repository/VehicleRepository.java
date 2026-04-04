@@ -44,4 +44,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID>,
 
     @Query("SELECT v FROM Vehicle v WHERE v.vehicleClass = :vehicleClass")
     java.util.List<Vehicle> findByVehicleClass(@Param("vehicleClass") String vehicleClass);
+
+    @Query("SELECT v FROM Vehicle v WHERE v.driver.id = :driverId ORDER BY v.createdAt DESC")
+    List<Vehicle> findByDriverId(@Param("driverId") UUID driverId);
 }

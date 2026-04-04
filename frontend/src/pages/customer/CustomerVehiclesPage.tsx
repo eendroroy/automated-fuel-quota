@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, Trash2, QrCode, Car, X, Droplets, Clock } from 'lucide-react'
+import { Plus, Trash2, QrCode, Car, X, Droplets, Clock, UserPlus } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { getMyVehicles, addMyVehicle, removeMyVehicle, getQrTokenForVehicle, regenerateQrTokenForVehicle } from '@/api/vehicleApi'
+import { getMyVehicles, addMyVehicle, removeMyVehicle, getQrTokenForVehicle, regenerateQrTokenForVehicle, getVehiclesAsDriver } from '@/api/vehicleApi'
 import { getVehicleQuota } from '@/api/quotaApi'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import StatusBadge from '@/components/common/StatusBadge'
 import Modal from '@/components/common/Modal'
 import Pagination from '@/components/common/Pagination'
 import RegistrationNumberInput from '@/components/common/RegistrationNumberInput'
+import DriverManagementModal from '@/components/customer/DriverManagementModal'
 import { downloadQrAsPng } from '@/utils/qrHelpers'
 import { formatDate, formatDateTime, formatLitres } from '@/utils/formatters'
 import toast from 'react-hot-toast'
@@ -138,10 +139,12 @@ function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () =>
 
 export default function CustomerVehiclesPage() {
   const [vehiclesData, setVehiclesData] = useState<PagedResponse<Vehicle> | null>(null)
+  const [vehiclesAsDriver, setVehiclesAsDriver] = useState<Vehicle[]>([])
   const [loading, setLoading] = useState(true)
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<Vehicle | null>(null)
   const [qrTarget, setQrTarget] = useState<Vehicle | null>(null)
+  const [driverTarget, setDriverTarget] = useState<Vehicle | null>(null)
   const [form, setForm] = useState<AddVehicleRequest>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
   const [removing, setRemoving] = useState(false)
@@ -149,9 +152,13 @@ export default function CustomerVehiclesPage() {
 
   const load = useCallback((pageNum: number = 0) => {
     setLoading(true)
-    getMyVehicles({ page: pageNum, size: VEHICLES_PER_PAGE })
-      .then((data) => {
-        setVehiclesData(data)
+    Promise.all([
+      getMyVehicles({ page: pageNum, size: VEHICLES_PER_PAGE }),
+      getVehiclesAsDriver()
+    ])
+      .then(([vehicles, asDriver]) => {
+        setVehiclesData(vehicles)
+        setVehiclesAsDriver(asDriver)
         setPage(pageNum)
       })
       .catch(() => toast.error('Failed to load vehicles'))
@@ -288,6 +295,13 @@ export default function CustomerVehiclesPage() {
                     <p className="font-medium text-gray-700">{v.engineDisplacement} cc</p>
                   </div>
                 )}
+                {v.driverId && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-gray-400">Assigned Driver</p>
+                    <p className="font-medium text-gray-700">{v.driverName}</p>
+                    <p className="text-xs text-gray-500">{v.driverEmail}</p>
+                  </div>
+                )}
               </div>
 
               {/* Quota bar (VERIFIED only) */}
@@ -310,9 +324,14 @@ export default function CustomerVehiclesPage() {
               {/* Actions */}
               <div className="flex gap-2 border-t border-gray-50 pt-3 mt-auto">
                 {v.status === 'VERIFIED' && (
-                  <button onClick={() => setQrTarget(v)} className="btn-primary flex-1 text-sm py-2 gap-1.5">
-                    <QrCode className="h-4 w-4" /> Get QR
-                  </button>
+                  <>
+                    <button onClick={() => setQrTarget(v)} className="btn-primary flex-1 text-sm py-2 gap-1.5">
+                      <QrCode className="h-4 w-4" /> Get QR
+                    </button>
+                    <button onClick={() => setDriverTarget(v)} className="btn-secondary text-sm py-2 px-3 gap-1.5" title="Manage driver">
+                      <UserPlus className="h-4 w-4" />
+                    </button>
+                  </>
                 )}
                 <Link to={`/transactions?vehicleId=${v.id}`} className="btn-secondary text-sm py-2 px-3 gap-1.5">
                   History
@@ -442,8 +461,54 @@ export default function CustomerVehiclesPage() {
         )}
       </Modal>
 
+      {/* Driver Management Modal */}
+      {driverTarget && (
+        <DriverManagementModal
+          vehicle={driverTarget}
+          onClose={() => setDriverTarget(null)}
+          onSuccess={() => load(page)}
+        />
+      )}
+
       {/* QR Modal */}
       {qrTarget && <VehicleQrModal vehicle={qrTarget} onClose={() => setQrTarget(null)} />}
+
+      {/* Vehicles Where User is Driver */}
+      {vehiclesAsDriver.length > 0 && (
+        <div className="mt-8 pt-8 border-t border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Vehicles I Drive</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            You have been assigned as a driver for the following vehicles. You can generate QR codes for these vehicles.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {vehiclesAsDriver.map((v) => (
+              <div key={v.id} className="card border border-blue-200 bg-blue-50/30">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="h-11 w-11 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Car className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 font-mono text-base leading-tight">{v.registrationNumber}</p>
+                    <p className="text-sm text-gray-600">{v.vehicleMake} · {v.vehicleColor}</p>
+                  </div>
+                  <StatusBadge status={v.status} />
+                </div>
+                <div className="text-sm space-y-1 mb-3 bg-white rounded-lg p-3">
+                  <p className="text-xs text-gray-500">Owner</p>
+                  <p className="font-medium text-gray-900">{v.ownerName}</p>
+                  <p className="text-xs text-gray-500">{v.ownerEmail}</p>
+                </div>
+                {v.status === 'VERIFIED' && (
+                  <button onClick={() => setQrTarget(v)} className="btn-primary w-full text-sm py-2 gap-1.5">
+                    <QrCode className="h-4 w-4" /> Generate QR Code
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+

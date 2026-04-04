@@ -132,6 +132,17 @@ public class Vehicle implements Serializable {
     private User user;
 
     /**
+     * The system {@link User} account assigned as driver for this vehicle.
+     * Owner can assign a driver who can also use the vehicle for fuel quota.
+     * Driver must have a registered customer account.
+     * Excluded from JSON to prevent circular serialisation.
+     */
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "driver_id")
+    private User driver;
+
+    /**
      * The fuel {@link Quota} allocated to this vehicle.
      * Excluded from JSON to prevent circular serialisation.
      */

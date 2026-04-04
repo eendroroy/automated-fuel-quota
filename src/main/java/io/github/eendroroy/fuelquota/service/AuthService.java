@@ -104,14 +104,17 @@ public class AuthService {
     }
 
     /**
-     * Registers a new customer, creating both a {@link User} account and an associated
-     * {@link Vehicle} record in {@code VERIFIED} status with an {@code ACTIVE} {@link Quota}.
+     * Registers a new customer, creating a {@link User} account.
+     * Optionally creates an associated {@link Vehicle} record if vehicle details are provided.
      *
      * <p>The registration number is assembled from the four structured input parts:
      * {@code {brtaOfficeCode} {vehicleRegistrationCode} {serialPart1}-{serialPart2}}.
      *
      * <p>The vehicle class description is derived from the {@link RegistrationCode}
      * lookup table seeded at startup.
+     *
+     * <p>If vehicle information is not provided, only the user account is created,
+     * allowing drivers without vehicles to register.
      *
      * <p><strong>Future scope:</strong> OTP verification will be required to confirm the
      * mobile number before account activation.
@@ -120,29 +123,13 @@ public class AuthService {
      * ownership before finalising registration.
      *
      * @param request customer registration details
-     * @throws BadRequestException if email, registration number, or NID already exists
+     * @throws BadRequestException if email already exists, or if vehicle info is provided but incomplete/duplicate
      */
     public void registerCustomer(RegisterCustomerRequest request) {
-        String registrationNumber = request.assembleRegistrationNumber();
-
-        // Validation
+        // Validation - email must always be unique
         if (userRepository.existsByEmail(request.getOwnerEmail())) {
             throw new BadRequestException("Email already exists");
         }
-
-        if (vehicleRepository.existsByRegistrationNumber(registrationNumber)) {
-            throw new BadRequestException("Vehicle registration number already exists");
-        }
-
-        if (vehicleRepository.existsByOwnerNid(request.getOwnerNid())) {
-            throw new BadRequestException("NID already registered");
-        }
-
-        // Resolve vehicle class description from registration code
-        String vehicleClass = registrationCodeRepository
-                .findByCode(request.getVehicleRegistrationCode().toUpperCase().trim())
-                .map(rc -> rc.getDescription())
-                .orElse(request.getVehicleRegistrationCode());
 
         // Create user account — mobile number stored for future OTP verification
         User user = new User(
@@ -154,33 +141,71 @@ public class AuthService {
         user.setMobileNumber(request.getOwnerMobile());
         user = userRepository.save(user);
 
-        // Create vehicle record — automatically VERIFIED
-        Vehicle vehicle = new Vehicle(
-            registrationNumber,
-            request.getBrtaOfficeCode().toUpperCase().trim(),
-            request.getVehicleRegistrationCode().toUpperCase().trim(),
-            request.getOwnerName(),
-            request.getOwnerNid(),
-            request.getOwnerMobile(),
-            request.getOwnerEmail(),
-            request.getVehicleMake(),
-            request.getVehicleColor(),
-            vehicleClass,
-            request.getFuelType(),
-            LocalDate.parse(request.getRegistrationDate())
-        );
-        vehicle.setStatus(Vehicle.VehicleStatus.VERIFIED);
-        vehicle.setUser(user);
-        if (request.getEngineDisplacement() != null) {
-            vehicle.setEngineDisplacement(request.getEngineDisplacement());
-        }
-        vehicle = vehicleRepository.save(vehicle);
+        // Only create vehicle if vehicle information is provided
+        if (request.hasVehicleInfo()) {
+            String registrationNumber = request.assembleRegistrationNumber();
 
-        // Create quota immediately as ACTIVE (no admin approval required)
-        BigDecimal limit = quotaConfigService.getDefaultLimitLitres();
-        Quota quota = new Quota(vehicle, limit, quotaConfigService.getDefaultPeriod());
-        quota.setStatus(Quota.QuotaStatus.ACTIVE);
-        quotaRepository.save(quota);
+            // Validate all vehicle fields are provided if any is provided
+            if (registrationNumber == null) {
+                throw new BadRequestException("If providing vehicle information, all registration number fields are required");
+            }
+            if (request.getVehicleMake() == null || request.getVehicleMake().isBlank()) {
+                throw new BadRequestException("Vehicle make is required when registering a vehicle");
+            }
+            if (request.getVehicleColor() == null || request.getVehicleColor().isBlank()) {
+                throw new BadRequestException("Vehicle color is required when registering a vehicle");
+            }
+            if (request.getFuelType() == null || request.getFuelType().isBlank()) {
+                throw new BadRequestException("Fuel type is required when registering a vehicle");
+            }
+            if (request.getRegistrationDate() == null || request.getRegistrationDate().isBlank()) {
+                throw new BadRequestException("Registration date is required when registering a vehicle");
+            }
+
+            // Check for duplicate registration number
+            if (vehicleRepository.existsByRegistrationNumber(registrationNumber)) {
+                throw new BadRequestException("Vehicle registration number already exists");
+            }
+
+            // Check for duplicate NID
+            if (vehicleRepository.existsByOwnerNid(request.getOwnerNid())) {
+                throw new BadRequestException("NID already registered");
+            }
+
+            // Resolve vehicle class description from registration code
+            String vehicleClass = registrationCodeRepository
+                    .findByCode(request.getVehicleRegistrationCode().toUpperCase().trim())
+                    .map(rc -> rc.getDescription())
+                    .orElse(request.getVehicleRegistrationCode());
+
+            // Create vehicle record — automatically VERIFIED
+            Vehicle vehicle = new Vehicle(
+                registrationNumber,
+                request.getBrtaOfficeCode().toUpperCase().trim(),
+                request.getVehicleRegistrationCode().toUpperCase().trim(),
+                request.getOwnerName(),
+                request.getOwnerNid(),
+                request.getOwnerMobile(),
+                request.getOwnerEmail(),
+                request.getVehicleMake(),
+                request.getVehicleColor(),
+                vehicleClass,
+                request.getFuelType(),
+                LocalDate.parse(request.getRegistrationDate())
+            );
+            vehicle.setStatus(Vehicle.VehicleStatus.VERIFIED);
+            vehicle.setUser(user);
+            if (request.getEngineDisplacement() != null) {
+                vehicle.setEngineDisplacement(request.getEngineDisplacement());
+            }
+            vehicle = vehicleRepository.save(vehicle);
+
+            // Create quota immediately as ACTIVE (no admin approval required)
+            BigDecimal limit = quotaConfigService.getDefaultLimitLitres();
+            Quota quota = new Quota(vehicle, limit, quotaConfigService.getDefaultPeriod());
+            quota.setStatus(Quota.QuotaStatus.ACTIVE);
+            quotaRepository.save(quota);
+        }
     }
 
     /**

@@ -1,9 +1,9 @@
 # Business Requirements Document (BRD)
 ## Automated Fuel Quota Management System
 
-**Document Version:** 2.2  
-**Date:** 2026-04-03  
-**Status:** Approved
+**Document Version:** 2.3  
+**Date:** 2026-04-04  
+**Status:** Approved — Updated with Driver Assignment, Driver-Only Registration, and Quota by Registration Code features
 
 ---
 
@@ -25,19 +25,21 @@
 
 ## 1. Executive Summary
 
-The Automated Fuel Quota Management System is a platform to **control, authorize, and track** fuel dispensing per vehicle based on a configurable weekly quota policy. Vehicle owners present a **QR code** at a fuel station, where a pump representative scans it using the **web-based Pump Representative Portal** (or manually enters the vehicle registration number as a fallback). A backend validates eligibility (vehicle status, GPS/geofencing) and returns the authorized liters. All dispensing events are recorded and quotas reset on a configurable schedule.
+The Automated Fuel Quota Management System is a platform to **control, authorize, and track** fuel dispensing per vehicle based on a configurable quota policy. The system supports **flexible registration** (vehicle owners or driver-only accounts), **driver assignment** to vehicles, and **registration-code-specific quota configurations**. Vehicle owners or assigned drivers present a **QR code** at a fuel station, where a pump representative scans it using the **web-based Pump Representative Portal** (or manually enters the vehicle registration number as a fallback). A backend validates eligibility (vehicle status, GPS/geofencing) and returns the authorized liters based on vehicle-specific or default quota configuration. All dispensing events are recorded and quotas reset on a configurable schedule.
 
 ---
 
 ## 2. Objectives & Success Criteria
 
 ### 2.1 Objectives
-1. Enforce configurable periodic fuel quotas per vehicle.
-2. Prevent unauthorized refueling via JWT authentication, QR validation, and GPS geofencing.
-3. Provide fast, reliable authorization at the pump (< 2 seconds).
-4. Maintain a complete, auditable history of all refueling and administrative actions.
-5. Support **partial dispensing** when remaining quota is less than requested.
-6. Enable vehicle ownership transfer via a claim-and-approval workflow.
+1. Enforce configurable periodic fuel quotas per vehicle, with support for registration-code-specific limits.
+2. Enable flexible user registration: vehicle owners or driver-only accounts.
+3. Support driver assignment to vehicles, allowing both owners and drivers to authorize fuel dispensing.
+4. Prevent unauthorized refueling via JWT authentication, QR validation, and GPS geofencing.
+5. Provide fast, reliable authorization at the pump (< 2 seconds).
+6. Maintain a complete, auditable history of all refueling and administrative actions.
+7. Support **partial dispensing** when remaining quota is less than requested.
+8. Enable vehicle ownership transfer via a claim-and-approval workflow.
 
 ### 2.2 Success Criteria (KPIs)
 - Authorization response time < 2 seconds under normal load.
@@ -50,11 +52,11 @@ The Automated Fuel Quota Management System is a platform to **control, authorize
 ## 3. Scope
 
 ### 3.1 In Scope
-- **Customer (Vehicle Owner) Portal** — Registration, vehicle management, QR code generation, quota visibility, transaction history, and vehicle ownership claims.
-- **Admin Portal** — Vehicle management, fuel station management, quota configuration and adjustment, pump representative management, and audit log viewer.
+- **Customer (Vehicle Owner) Portal** — Flexible registration (with or without vehicle), vehicle management, driver assignment, QR code generation (owner and assigned drivers), quota visibility, transaction history, vehicle ownership claims, and viewing vehicles where user is assigned as driver.
+- **Admin Portal** — Vehicle management, fuel station management, quota configuration and adjustment, quota configuration by registration code (e.g., LA = 20L DAILY), pump representative management, and audit log viewer.
 - **Pump Representative Web Portal** — Browser-based portal for pump representatives: employee-code login, QR code scanning, manual vehicle number lookup, dispense entry with on-screen numeric keypad, and transaction submission.
 - **Pump Representative API** — QR scanning, manual authorization by registration number, and dispense confirmation (core BRD flow).
-- **Fuel System Backend** — Request validation, vehicle status check, GPS geofencing, quota calculation, authorization response, transaction recording, and scheduled quota reset.
+- **Fuel System Backend** — Request validation, vehicle status check, GPS geofencing, quota calculation (code-specific or default), authorization response, transaction recording, driver authorization validation, and scheduled quota reset.
 
 ### 3.2 Out of Scope (Current Release)
 - Payments, billing, or pricing.
@@ -77,9 +79,10 @@ The Automated Fuel Quota Management System is a platform to **control, authorize
 ### 4.2 User Types
 | Role | Description |
 |------|-------------|
-| **Customer (Vehicle Owner)** | Self-registers, manages vehicles, generates QR codes for refueling |
+| **Customer (Vehicle Owner)** | Self-registers with or without vehicle, manages vehicles, assigns drivers, generates QR codes for refueling |
+| **Customer (Driver)** | Self-registers without vehicle, can be assigned to vehicles by owners, generates QR codes for assigned vehicles |
 | **Pump Representative** | Station operator who scans QR codes (or manually enters registration numbers) and confirms fuel dispensed via the Pump Rep Web Portal |
-| **System Administrator** | Manages all system entities, configures quotas, reviews audit logs |
+| **System Administrator** | Manages all system entities, configures quotas (including per registration code), reviews audit logs |
 
 ---
 
@@ -91,10 +94,13 @@ The Automated Fuel Quota Management System is a platform to **control, authorize
 | **Remaining quota** | `period_limit_litres - used_litres_this_period` |
 | **Partial dispense** | When requested litres exceed remaining quota; system authorizes only the remaining quota |
 | **Geofencing** | Location-based rule: authorization only valid within a configurable radius of the fuel station |
-| **QR token** | Encrypted JWT containing vehicle identity, presented by owner for scanning; 1-hour TTL |
+| **QR token** | Encrypted JWT containing vehicle identity, presented by owner or assigned driver for scanning; 1-hour TTL |
 | **NID** | National Identity Document number of the vehicle owner |
 | **BRTA** | Bangladesh Road Transport Authority — the vehicle registration authority |
-| **Weekly reset** | Scheduled job resetting usage counters for all active quotas |
+| **Periodic reset** | Scheduled job resetting usage counters for all active quotas (DAILY/WEEKLY/MONTHLY/QUARTERLY/YEARLY) |
+| **Driver** | A registered customer assigned to a vehicle by the owner; can generate QR codes and authorize fuel dispensing |
+| **Registration Code** | BRTA vehicle category code (e.g., GA, LA, KHA) used for quota configuration |
+| **Driver-Only Account** | Customer account registered without vehicle ownership; can be assigned as driver to vehicles |
 
 ---
 

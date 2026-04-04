@@ -1,9 +1,9 @@
 # User Journey Maps
 ## Automated Fuel Quota Management System
 
-**Document Version:** 1.0  
-**Date:** 2026-04-03  
-**Status:** Approved
+**Document Version:** 1.1  
+**Date:** 2026-04-04  
+**Status:** Approved — Updated with Driver-Only Registration, Driver Assignment, and Quota by Registration Code
 
 ---
 
@@ -16,6 +16,7 @@ This document maps the end-to-end journeys for each user type in the system. Eac
 | Actor | Portal | Authentication |
 |-------|--------|---------------|
 | **Customer (Vehicle Owner)** | Customer Portal `/` | JWT (email + password) |
+| **Customer (Driver)** | Customer Portal `/` | JWT (email + password) |
 | **Pump Representative** | Pump Portal `/pump` | localStorage session (employee ID) |
 | **System Administrator** | Admin Portal `/admin` | JWT (email + password) |
 | **System (Automated)** | — | Internal scheduler |
@@ -24,7 +25,7 @@ This document maps the end-to-end journeys for each user type in the system. Eac
 
 ## Journey 1: Customer — First-Time Registration
 
-**Goal:** A new vehicle owner creates an account, registers their vehicle, and gets ready to generate a QR code for refueling.
+**Goal:** A new user creates an account, optionally registers their vehicle, and gets ready to generate a QR code for refueling (or be assigned as a driver).
 
 **Persona:** Rahima Begum, 35, owns a Petrol car in Dhaka, has received her fuel quota program information notice.
 
@@ -35,10 +36,11 @@ This document maps the end-to-end journeys for each user type in the system. Eac
 | 1 | **Discover system** | Visits `http://localhost:8080` (or production URL) | Landing page with register/login CTAs | 🟢 |
 | 2 | **Navigate to register** | Clicks "Register as Vehicle Owner" | `CustomerRegisterPage` loaded | 🟢 |
 | 3 | **Fill personal info** | Enters: Name, NID (13-digit), mobile, email, password | Form validates each field inline | 🟢 |
-| 4 | **Enter vehicle reg number** | Uses the 4-part structured input: selects BRTA Office, selects Registration Code, enters Serial Part 1 and Part 2 | Dropdown reference data loaded from `/api/public/brta-offices` and `/api/public/registration-codes` | 🟢 |
-| 5 | **Enter vehicle details** | Selects fuel type (Petrol), enters make (Toyota Corolla), color (White), engine CC (1800), registration date | — | 🟢 |
-| 6 | **Submit form** | Clicks "Register" | `POST /api/auth/customer/register` → validates uniqueness of email, NID, registration number | 🟢 |
-| 7 | **Auto-login** | — | System creates: User record, Vehicle (VERIFIED), Quota (ACTIVE, 24L), returns JWT | 🟢 |
+| 4 | **Enter vehicle reg number** | OPTIONAL: Uses the 4-part structured input: selects BRTA Office, selects Registration Code, enters Serial Part 1 and Part 2 | Dropdown reference data loaded from `/api/public/brta-offices` and `/api/public/registration-codes` | 🟢 |
+| 4a | **Skip vehicle (driver-only)** | OR clicks "Skip - Register as Driver Only" button | Proceeds to review step without vehicle info | 🟢 |
+| 5 | **Enter vehicle details** | If registering vehicle: Selects fuel type (Petrol), enters make (Toyota Corolla), color (White), engine CC (1800), registration date | — | 🟢 |
+| 6 | **Submit form** | Clicks "Register" | `POST /api/auth/customer/register` → validates uniqueness of email, NID; creates quota based on registration code config if available | 🟢 |
+| 7 | **Auto-login** | — | System creates: User record; if vehicle info provided: Vehicle (VERIFIED), Quota (ACTIVE, code-specific or default limit), returns JWT | 🟢 |
 | 8 | **Redirected** | — | Browser redirects to `/dashboard` | 🟢 |
 
 ### Validation Error Paths
@@ -52,8 +54,8 @@ This document maps the end-to-end journeys for each user type in the system. Eac
 
 ### Success Outcome
 - User account created with `CUSTOMER` role
-- Vehicle created with status `VERIFIED`
-- Quota created: `limitLiters = 24, usedLiters = 0, remainingLiters = 24, period = WEEKLY, status = ACTIVE`
+- **If vehicle registered:** Vehicle created with status `VERIFIED`, Quota created with code-specific limit (e.g., LA = 20L DAILY) or default (24L WEEKLY)
+- **If driver-only:** No vehicle or quota created; user can be assigned to vehicles later
 - Customer is logged in and can see their dashboard
 
 ---
@@ -151,6 +153,43 @@ Customer at QR page
 | 2 | Confirm deregistration | Clicks "Confirm" | `DELETE /api/customer/vehicles/{id}` |
 | 3 | Vehicle soft-deleted | — | Vehicle status → DEREGISTERED, Quota → EXPIRED |
 | 4 | Transaction history | All past transactions preserved | History still visible in `/transactions` |
+
+---
+
+## Journey 4A: Customer — Driver Assignment
+
+**Goal:** A vehicle owner assigns a driver to their vehicle, enabling the driver to generate QR codes and authorize fuel dispensing.
+
+**Persona:** Rashid Ahmed, 45, owns a vehicle and wants to allow his employee Kamal (who has a driver-only account) to refuel the vehicle.
+
+### Assign Driver Journey
+
+| # | Step | Actor Action | System Response | Status |
+|---|------|-------------|-----------------|--------|
+| 1 | **Navigate to vehicles** | Logs in, goes to `/vehicles` | Vehicle list with driver management icons displayed | 🟢 |
+| 2 | **Click driver management** | Clicks driver icon on vehicle card | Driver management modal opens | 🟢 |
+| 3 | **Enter driver email** | Types `kamal.driver@example.com` in email field | — | 🟢 |
+| 4 | **Assign driver** | Clicks "Assign Driver" | `POST /api/customer/vehicles/{id}/driver` with email | 🟢 |
+| 5 | **Success** | — | Driver assigned; vehicle card shows driver name and email | 🟢 |
+| 6 | **Driver access** | (Driver logs in separately) | Driver sees vehicle in "Vehicles I Drive" section | 🟢 |
+| 7 | **Driver generates QR** | Driver clicks "Generate QR Code" on assigned vehicle | `GET /api/customer/vehicles/{id}/qr-code` succeeds for driver | 🟢 |
+
+### Remove Driver Journey
+
+| # | Step | Actor Action | System Response |
+|---|------|-------------|-----------------|
+| 1 | Open driver management | Clicks driver icon on vehicle with assigned driver | Modal shows current driver details |
+| 2 | Remove driver | Clicks "Remove Driver" button | Confirms action in dialog |
+| 3 | Confirm removal | Clicks confirm | `DELETE /api/customer/vehicles/{id}/driver` |
+| 4 | Driver removed | — | Vehicle card no longer shows driver; driver loses QR access |
+
+### Error Paths
+
+| Scenario | System Response |
+|----------|-----------------|
+| Driver email not found | `404 — "Driver not found with email: xyz@example.com"` |
+| Driver is not a customer | `400 — "Driver must have a customer account"` |
+| Owner tries to assign self | `400 — "Cannot assign yourself as driver"` |
 
 ---
 
@@ -319,7 +358,55 @@ Customer at QR page
 
 ---
 
-## Journey 10: System Administrator — Audit Log Review
+## Journey 10A: System Administrator — Quota Configuration by Registration Code
+
+**Goal:** Admin configures different quota limits and periods for different vehicle categories based on their registration codes.
+
+**Persona:** Sarah Khan, system admin, needs to implement policy: LA vehicles get 20L daily, GA vehicles get 30L weekly.
+
+### Configure Quota by Registration Code Journey
+
+| # | Step | Actor Action | System Response | Status |
+|---|------|-------------|-----------------|--------|
+| 1 | **Navigate to config** | Goes to `/admin/quota-config-by-code` | Quota config by code page loads | 🟢 |
+| 2 | **View existing configs** | Reviews table of configurations | `GET /api/admin/quota-config-by-code` → list with registration code descriptions | 🟢 |
+| 3 | **Create LA config** | Clicks "Add Configuration" | Create form modal opens | 🟢 |
+| 4 | **Fill LA form** | Selects "LA - Light Automobiles", enters 20L, selects DAILY, adds description | Form validated | 🟢 |
+| 5 | **Save LA config** | Clicks "Save Configuration" | `POST /api/admin/quota-config-by-code` → LA config created | 🟢 |
+| 6 | **Create GA config** | Repeats for GA code | Selects "GA - Private Cars", 30L, WEEKLY | 🟢 |
+| 7 | **Save GA config** | Clicks "Save Configuration" | `POST /api/admin/quota-config-by-code` → GA config created | 🟢 |
+| 8 | **Verify configs** | Views updated table | Both LA and GA configurations displayed with code descriptions | 🟢 |
+
+### Update Configuration Journey
+
+| # | Step | Actor Action | System Response |
+|---|------|-------------|-----------------|
+| 1 | **Edit existing config** | Clicks edit icon on LA configuration row | Form switches to inline edit mode |
+| 2 | **Update values** | Changes 20L to 25L, updates description | — |
+| 3 | **Save changes** | Clicks save icon | `PUT /api/admin/quota-config-by-code/{id}` → config updated |
+| 4 | **Confirm update** | — | Table shows updated values, success message displayed |
+
+### Test New Registration Journey
+
+| # | Step | Actor Action | System Response |
+|---|------|-------------|-----------------|
+| 1 | **Customer registers LA vehicle** | New customer registers with LA-coded vehicle | Registration processed |
+| 2 | **Quota creation** | System creates quota for vehicle | Quota created with 25L daily limit (not default 24L weekly) |
+| 3 | **Verify quota** | Customer views dashboard | Shows 25L daily quota with "Daily" period |
+| 4 | **Customer registers KHA vehicle** | Different customer registers with KHA-coded vehicle | Registration processed |
+| 5 | **Default quota applied** | No KHA config exists | Quota created with default 24L weekly limit |
+
+### Error Scenarios
+
+| Scenario | System Response |
+|----------|-----------------|
+| Duplicate registration code | `400 — "Configuration already exists for registration code: LA"` |
+| Invalid registration code | `400 — "Invalid registration code: INVALID"` |
+| Delete config with existing vehicles | Config deleted; existing quotas unchanged, new vehicles use default |
+
+---
+
+## Journey 10B: System Administrator — Audit Log Review
 
 **Goal:** Admin investigates a suspected anomaly by reviewing recent audit entries.
 
@@ -334,15 +421,16 @@ Customer at QR page
 
 ## Journey 11: Automated System — Periodic Quota Reset
 
-**Goal:** Automated weekly quota reset runs without human intervention.
+**Goal:** Automated quota reset runs based on configured schedule and quota periods.
 
 | # | Step | Trigger | System Action |
 |---|------|---------|---------------|
- 1  **Cron fires**  Sunday 00:00 (or configured schedule)  `QuotaService.resetAllQuotas()` invoked by Spring Scheduler 
- 2  **Bulk DB update**  —  `UPDATE quotas SET used_liters=0, remaining_liters=limit WHERE status='ACTIVE'` 
- 3  **Audit log**  —  `QUOTA_RESET` entry written with count of reset quotas 
- 4  **Logging**  —  Application log: "Quota reset complete — N quotas reset in Xms" 
- 5  **Next morning**  —  All active vehicles show full quota in customer dashboards 
+| 1 | **Cron fires** | Configured schedule (default: Sunday 00:00) | `QuotaService.resetAllQuotas()` invoked by Spring Scheduler |
+| 2 | **Identify quotas to reset** | — | Query quotas where reset time has passed based on individual quota periods (DAILY/WEEKLY/MONTHLY/etc.) |
+| 3 | **Bulk DB update** | — | `UPDATE quotas SET used_liters=0, remaining_liters=limit WHERE id IN (...)` |
+| 4 | **Audit log** | — | `QUOTA_RESET` entry written with count of reset quotas |
+| 5 | **Logging** | — | Application log: "Quota reset complete — N quotas reset in Xms" |
+| 6 | **Next check** | — | Vehicles with different periods reset at different times (daily quotas reset daily, weekly reset weekly, etc.) |
 
 ### Monitoring
 

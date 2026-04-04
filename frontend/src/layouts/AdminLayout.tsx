@@ -26,6 +26,7 @@ const navItems = [
   { to: '/admin/stations', icon: MapPin, label: 'Fuel Stations' },
   { to: '/admin/quotas', icon: Droplets, label: 'Quota Management' },
   { to: '/admin/quota-config', icon: Settings, label: 'Quota Config' },
+  { to: '/admin/quota-config-by-code', icon: Settings, label: 'Quota by Code' },
   { to: '/admin/pump-reps', icon: Users, label: 'Pump Representatives' },
   { to: '/admin/audit-logs', icon: ClipboardList, label: 'Audit Logs' },
 ]

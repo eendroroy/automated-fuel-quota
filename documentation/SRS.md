@@ -1,10 +1,10 @@
 # Software Requirements Specification (SRS)
 ## Automated Fuel Quota Management System
 
-**Document Version:** 2.2  
-**Date:** 2026-04-03  
+**Document Version:** 2.3  
+**Date:** 2026-04-04  
 **Status:** Approved  
-**Based on:** BRD v2.2
+**Based on:** BRD v2.3 (includes Driver Assignment, Driver-Only Registration, Quota by Registration Code)
 
 ---
 
@@ -54,7 +54,7 @@ The system is a **Spring Boot 4.0.5 + React 18 monorepo** that implements a QR-c
 | RBAC | Role-Based Access Control |
 
 ### 1.4 References
-- [`documentation/BRD.md`](BRD.md) — Business Requirements Document v2.2
+- [`documentation/BRD.md`](BRD.md) — Business Requirements Document v2.3
 - [`documentation/USER_JOURNEY.md`](USER_JOURNEY.md) — User Journey Maps
 - [`documentation/diagrams/`](diagrams/README.md) — System Architecture and Design Diagrams
 - `src/main/resources/application.yaml` — Application configuration
@@ -221,7 +221,10 @@ Vehicle (1) ─────────── (*) VehicleClaim (subject)
 | GET | `/api/customer/vehicles` | List own vehicles |
 | POST | `/api/customer/vehicles` | Add a new vehicle |
 | DELETE | `/api/customer/vehicles/{id}` | Deregister a vehicle |
-| GET | `/api/customer/vehicles/{id}/qr-code` | Get QR token for specific vehicle |
+| GET | `/api/customer/vehicles-as-driver` | List vehicles where user is assigned as driver |
+| POST | `/api/customer/vehicles/{id}/driver` | Assign a driver to a vehicle by email |
+| DELETE | `/api/customer/vehicles/{id}/driver` | Remove assigned driver from a vehicle |
+| GET | `/api/customer/vehicles/{id}/qr-code` | Get QR token for specific vehicle (owner or driver) |
 | POST | `/api/customer/vehicles/{id}/qr-code/regenerate` | Regenerate QR token |
 | GET | `/api/customer/quota` | Get own quota status |
 | GET | `/api/customer/qr-code` | Get QR token (primary vehicle) |
@@ -301,6 +304,10 @@ Both return the same `AuthorizationResponse` shape:
 | POST | `/api/admin/quotas/{vehicleId}/reset` | Manual quota reset |
 | GET | `/api/admin/quota-config` | Get global quota configuration |
 | PUT | `/api/admin/quota-config` | Update global quota configuration |
+| GET | `/api/admin/quota-config-by-code` | List quota configs by registration code |
+| POST | `/api/admin/quota-config-by-code` | Create quota config for registration code |
+| PUT | `/api/admin/quota-config-by-code/{id}` | Update quota config |
+| DELETE | `/api/admin/quota-config-by-code/{id}` | Delete quota config |
 | GET | `/api/admin/pump-representatives` | List pump representatives |
 | POST | `/api/admin/pump-representatives` | Create pump representative |
 | PUT | `/api/admin/pump-representatives/{id}` | Update pump representative |

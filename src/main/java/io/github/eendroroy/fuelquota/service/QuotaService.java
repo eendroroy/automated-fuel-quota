@@ -49,6 +49,7 @@ public class QuotaService {
     private final VehicleRepository vehicleRepository;
     private final AppProperties appProperties;
     private final QuotaConfigService quotaConfigService;
+    private final io.github.eendroroy.fuelquota.repository.QuotaConfigByRegistrationCodeRepository quotaConfigByRegistrationCodeRepository;
 
     /**
      * Retrieves the quota for a vehicle by its UUID.
@@ -190,7 +191,8 @@ public class QuotaService {
 
     /**
      * Creates and persists a new quota for a vehicle that has just been approved.
-     * The weekly limit is read from {@code app.quota.weekly-limit-litres}.
+     * First checks if a registration-code-specific configuration exists; if not,
+     * falls back to the default quota configuration.
      *
      * @param vehicle the newly approved {@link Vehicle}
      * @return the newly created {@link Quota}
@@ -200,8 +202,26 @@ public class QuotaService {
         if (quotaRepository.findByVehicle(vehicle).isPresent()) {
             throw new BadRequestException("Quota already exists for this vehicle");
         }
-        BigDecimal limit = quotaConfigService.getDefaultLimitLitres();
-        QuotaPeriod period = quotaConfigService.getDefaultPeriod();
+
+        // Check for registration-code-specific quota configuration
+        BigDecimal limit;
+        QuotaPeriod period;
+
+        var regCodeConfig = quotaConfigByRegistrationCodeRepository
+                .findByRegistrationCode(vehicle.getVehicleRegistrationCode());
+
+        if (regCodeConfig.isPresent()) {
+            limit = regCodeConfig.get().getLimitLitres();
+            period = regCodeConfig.get().getQuotaPeriod();
+            logger.info("Creating quota for vehicle {} using registration-code-specific config: {} = {} L / {}",
+                    vehicle.getRegistrationNumber(), vehicle.getVehicleRegistrationCode(), limit, period);
+        } else {
+            limit = quotaConfigService.getDefaultLimitLitres();
+            period = quotaConfigService.getDefaultPeriod();
+            logger.info("Creating quota for vehicle {} using default config: {} L / {}",
+                    vehicle.getRegistrationNumber(), limit, period);
+        }
+
         return quotaRepository.save(new Quota(vehicle, limit, period));
     }
 

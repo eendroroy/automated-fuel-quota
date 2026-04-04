@@ -50,9 +50,23 @@ The **frontend-maven-plugin** automatically handles Node.js installation and Rea
 
 ### Quota System (Heart of the Application)
 - **Configurable Periodic Limit**: Default 24L per week, configurable via admin UI and `app.quota.weekly-limit-litres`
+- **Registration-Code-Specific Quotas**: Admins can set different quota limits and periods for different vehicle categories (e.g., LA = 20L DAILY, GA = 30L WEEKLY) via `QuotaConfigByRegistrationCode`
 - **Reset Schedule**: Configurable cron expression, default every Sunday 00:00 via `@Scheduled(cron = "${app.quota.reset-cron-expression}")`
 - **Remaining Calculation**: `remaining = limit - used_this_period`
 - **Partial Dispense**: When requested > remaining, authorize only available amount
+- **Quota Creation Logic**: System first checks for registration-code-specific configuration; if not found, uses default configuration
+
+### Driver-Only Registration
+- **Customers without Vehicles**: Users can register accounts without owning/registering a vehicle
+- **Driver Accounts**: Allows drivers to create accounts and be assigned to vehicles by owners
+- **Vehicle Fields Optional**: All vehicle information fields are optional during registration
+- **Backward Compatible**: Existing registration flow with vehicle information remains unchanged
+
+### Driver Assignment
+- **Vehicle-Driver Relationship**: Owners can assign registered customers as drivers for their vehicles
+- **Driver Authorization**: Both vehicle owner and assigned driver can generate QR codes for fuel authorization
+- **Multi-User Access**: A single vehicle can have one owner and one assigned driver
+- **Driver Management**: Owners can assign/remove drivers via customer portal API endpoints
 
 ### Vehicle Workflow States
 ```java
@@ -125,7 +139,16 @@ DEREGISTERED → soft-deleted; history preserved
   - `POST /api/pump/authorize-manual` — registration-number authorization (no QR)
   - `POST /api/pump/confirm` — dispense confirmation (`qrToken` optional; use `registrationNumber` for manual path)
 - `/api/customer/*` - **CUSTOMER role required** (JWT protected)
+  - Driver assignment:
+    - `POST /api/customer/vehicles/{vehicleId}/driver` — assign driver by email
+    - `DELETE /api/customer/vehicles/{vehicleId}/driver` — remove driver
+    - `GET /api/customer/vehicles-as-driver` — list vehicles where user is driver
 - `/api/admin/*` - **ADMIN role required** (JWT protected)
+  - Quota config by registration code:
+    - `GET /api/admin/quota-config-by-code` — list all configurations
+    - `POST /api/admin/quota-config-by-code` — create configuration
+    - `PUT /api/admin/quota-config-by-code/{id}` — update configuration
+    - `DELETE /api/admin/quota-config-by-code/{id}` — delete configuration
 - `/api/public/*` - **Public reference data** (registration codes, BRTA offices)
 
 ### Frontend Architecture
@@ -133,6 +156,13 @@ DEREGISTERED → soft-deleted; history preserved
 - **API client pattern**: Centralized axios instance with interceptors for auth/errors; **separate** `pumpAxios` instance (no JWT) in `api/pumpApi.ts`
 - **Type definitions**: Shared TypeScript interfaces in `frontend/src/types/index.ts`
 - **Pump portal pages**: `pages/pump/PumpLoginPage.tsx`, `PumpScanPage.tsx`, `PumpDispensePage.tsx`
+- **New admin pages**: 
+  - `pages/admin/AdminQuotaConfigByCodePage.tsx` — Manage quota configs by registration code
+- **New customer components**: 
+  - `components/customer/DriverManagementModal.tsx` — Assign/remove drivers for vehicles
+- **Updated customer pages**:
+  - `pages/customer/CustomerRegisterPage.tsx` — Now supports driver-only registration (vehicle fields optional)
+  - `pages/customer/CustomerVehiclesPage.tsx` — Shows driver info, driver management, and vehicles where user is driver
 
 ### `AuthorizationResponse` Shape (Updated)
 The `AuthorizationResponse` DTO now includes:
@@ -168,17 +198,21 @@ public QuotaAuthorizationResult(decision, authorizedLiters, remainingQuota, limi
 
 ### Key Relationships
 ```java
-User (1) -> (*) Vehicle -> (1) Quota
+User (1) -> (*) Vehicle (as owner) -> (1) Quota
+User (1) -> (*) Vehicle (as driver)
 FuelStation (1) -> (*) Transaction
 Vehicle (1) -> (*) Transaction
 Vehicle (1) -> (*) VehicleClaim
 User (1) -> (*) VehicleClaim (as claimant)
+QuotaConfigByRegistrationCode (1) -> (*) Vehicle (via registration code)
 ```
 
 ### Critical Indexes & Queries
 - Vehicle lookup by `registration_number` (unique constraint)
 - Vehicle lookup by `owner_nid` (unique constraint)
+- Vehicle lookup by `driver_id` (for finding vehicles where user is driver)
 - Quota queries by `vehicle_id` and `vehicle.registration_number`
+- Quota config lookup by `registration_code` (unique constraint)
 - Transaction history by `vehicle_id` with pagination
 - Periodic quota reset uses bulk update query in `QuotaRepository`
 

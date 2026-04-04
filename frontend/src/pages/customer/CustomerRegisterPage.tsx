@@ -11,7 +11,7 @@ import type { RegisterVehicleRequest } from '@/types'
 // ── Step indicator ────────────────────────────────────────────────────────────
 const steps = [
   { id: 1, label: 'Personal Info', icon: User },
-  { id: 2, label: 'Vehicle Details', icon: Car },
+  { id: 2, label: 'Vehicle Details (Optional)', icon: Car },
   { id: 3, label: 'Review & Submit', icon: FileText },
 ]
 
@@ -67,15 +67,26 @@ export default function CustomerRegisterPage() {
   }
 
   const validateStep2 = () => {
+    // Check if user has started entering vehicle info
+    const hasAnyVehicleInfo = form.brtaOfficeCode || form.vehicleRegistrationCode ||
+                              form.serialPart1 || form.serialPart2 ||
+                              form.vehicleMake || form.vehicleColor || form.registrationDate
+
+    // If no vehicle info at all, allow skip (driver-only registration)
+    if (!hasAnyVehicleInfo) {
+      return true
+    }
+
+    // If partial vehicle info, require all fields
     if (!form.brtaOfficeCode || !form.vehicleRegistrationCode) {
-      toast.error('Please select BRTA office and registration code')
+      toast.error('Please select BRTA office and registration code, or skip this step')
       return false
     }
-    if (!/^\d{2}$/.test(form.serialPart1)) {
+    if (!form.serialPart1 || !/^\d{2}$/.test(form.serialPart1)) {
       toast.error('Serial part 1 must be exactly 2 digits')
       return false
     }
-    if (!/^\d{4}$/.test(form.serialPart2)) {
+    if (!form.serialPart2 || !/^\d{4}$/.test(form.serialPart2)) {
       toast.error('Serial part 2 must be exactly 4 digits')
       return false
     }
@@ -86,25 +97,65 @@ export default function CustomerRegisterPage() {
     return true
   }
 
+  const hasVehicleInfo = () => {
+    return form.brtaOfficeCode && form.vehicleRegistrationCode &&
+           form.serialPart1 && form.serialPart2 &&
+           form.vehicleMake && form.vehicleColor && form.registrationDate
+  }
+
   const next = () => {
     if (step === 1 && !validateStep1()) return
     if (step === 2 && !validateStep2()) return
     setStep((s) => s + 1)
   }
 
-  const assembledRegNumber = () =>
-    `${form.brtaOfficeCode} ${form.vehicleRegistrationCode} ${form.serialPart1}-${form.serialPart2}`
+  const skipVehicle = () => {
+    if (step === 2) {
+      setStep(3)
+    }
+  }
+
+  const assembledRegNumber = () => {
+    if (!hasVehicleInfo()) return null
+    return `${form.brtaOfficeCode ?? ''} ${form.vehicleRegistrationCode ?? ''} ${form.serialPart1 ?? ''}-${form.serialPart2 ?? ''}`
+  }
 
   const handleSubmit = async () => {
     setLoading(true)
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, ...payload } = form
-      await registerCustomer({
-        ...payload,
-        engineDisplacement: payload.engineDisplacement ? Number(payload.engineDisplacement) : undefined,
-      })
-      toast.success('Registration successful! Your vehicle is now verified.')
+
+      // Only include vehicle fields if they're provided
+      const requestPayload: RegisterVehicleRequest = {
+        ownerName: payload.ownerName,
+        ownerNid: payload.ownerNid,
+        ownerMobile: payload.ownerMobile,
+        ownerEmail: payload.ownerEmail,
+        password: payload.password,
+      }
+
+      if (hasVehicleInfo()) {
+        requestPayload.brtaOfficeCode = payload.brtaOfficeCode
+        requestPayload.vehicleRegistrationCode = payload.vehicleRegistrationCode
+        requestPayload.serialPart1 = payload.serialPart1
+        requestPayload.serialPart2 = payload.serialPart2
+        requestPayload.vehicleMake = payload.vehicleMake
+        requestPayload.vehicleColor = payload.vehicleColor
+        requestPayload.fuelType = payload.fuelType
+        requestPayload.registrationDate = payload.registrationDate
+        if (payload.engineDisplacement) {
+          requestPayload.engineDisplacement = Number(payload.engineDisplacement)
+        }
+      }
+
+      await registerCustomer(requestPayload)
+
+      const successMsg = hasVehicleInfo()
+        ? 'Registration successful! Your vehicle is now verified.'
+        : 'Registration successful! You can now add vehicles or be assigned as a driver.'
+
+      toast.success(successMsg)
       navigate('/login')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
@@ -187,14 +238,19 @@ export default function CustomerRegisterPage() {
         {/* Step 2: Vehicle Details */}
         {step === 2 && (
           <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
+              <p className="text-sm text-blue-700">
+                <strong>Note:</strong> Vehicle registration is optional. You can skip this step to create a driver-only account and be assigned to vehicles later.
+              </p>
+            </div>
             <div>
-              <label className="label">Registration Number *</label>
+              <label className="label">Registration Number</label>
               <RegistrationNumberInput
                 value={{
-                  brtaOfficeCode: form.brtaOfficeCode,
-                  vehicleRegistrationCode: form.vehicleRegistrationCode,
-                  serialPart1: form.serialPart1,
-                  serialPart2: form.serialPart2,
+                  brtaOfficeCode: form.brtaOfficeCode ?? '',
+                  vehicleRegistrationCode: form.vehicleRegistrationCode ?? '',
+                  serialPart1: form.serialPart1 ?? '',
+                  serialPart2: form.serialPart2 ?? '',
                 }}
                 onChange={(val) => setForm((f) => ({ ...f, ...val }))}
               />
@@ -204,11 +260,11 @@ export default function CustomerRegisterPage() {
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="label">Vehicle Make *</label>
+                <label className="label">Vehicle Make</label>
                 <input className="input-field" placeholder="Toyota, Honda, etc." value={form.vehicleMake} onChange={set('vehicleMake')} />
               </div>
               <div>
-                <label className="label">Vehicle Color *</label>
+                <label className="label">Vehicle Color</label>
                 <input className="input-field" placeholder="Silver, Black, etc." value={form.vehicleColor} onChange={set('vehicleColor')} />
               </div>
             </div>
@@ -220,7 +276,7 @@ export default function CustomerRegisterPage() {
                 </select>
               </div>
               <div>
-                <label className="label">Registration Date *</label>
+                <label className="label">Registration Date</label>
                 <input className="input-field" type="date" value={form.registrationDate} onChange={set('registrationDate')} />
               </div>
             </div>
@@ -247,20 +303,30 @@ export default function CustomerRegisterPage() {
                 <div><dt className="text-gray-500">Email</dt><dd className="font-medium">{form.ownerEmail}</dd></div>
               </dl>
             </div>
-            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-              <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Vehicle Information</h3>
-              <dl className="grid grid-cols-2 gap-2 text-sm">
-                <div><dt className="text-gray-500">Reg. No.</dt><dd className="font-medium font-mono">{assembledRegNumber()}</dd></div>
-                <div><dt className="text-gray-500">Make</dt><dd className="font-medium">{form.vehicleMake}</dd></div>
-                <div><dt className="text-gray-500">Color</dt><dd className="font-medium">{form.vehicleColor}</dd></div>
-                <div><dt className="text-gray-500">Fuel Type</dt><dd className="font-medium">{form.fuelType}</dd></div>
-                <div><dt className="text-gray-500">Reg. Date</dt><dd className="font-medium">{form.registrationDate}</dd></div>
-                {form.engineDisplacement && <div><dt className="text-gray-500">Engine Displacement</dt><dd className="font-medium">{form.engineDisplacement} CC</dd></div>}
-              </dl>
-            </div>
-            <p className="text-xs text-gray-500 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
-              ✓ Your vehicle will be immediately verified and your fuel quota activated upon submission.
-            </p>
+            {hasVehicleInfo() ? (
+              <>
+                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                  <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Vehicle Information</h3>
+                  <dl className="grid grid-cols-2 gap-2 text-sm">
+                    <div><dt className="text-gray-500">Reg. No.</dt><dd className="font-medium font-mono">{assembledRegNumber()}</dd></div>
+                    <div><dt className="text-gray-500">Make</dt><dd className="font-medium">{form.vehicleMake}</dd></div>
+                    <div><dt className="text-gray-500">Color</dt><dd className="font-medium">{form.vehicleColor}</dd></div>
+                    <div><dt className="text-gray-500">Fuel Type</dt><dd className="font-medium">{form.fuelType}</dd></div>
+                    <div><dt className="text-gray-500">Reg. Date</dt><dd className="font-medium">{form.registrationDate}</dd></div>
+                    {form.engineDisplacement && <div><dt className="text-gray-500">Engine Displacement</dt><dd className="font-medium">{form.engineDisplacement} CC</dd></div>}
+                  </dl>
+                </div>
+                <p className="text-xs text-gray-500 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                  ✓ Your vehicle will be immediately verified and your fuel quota activated upon submission.
+                </p>
+              </>
+            ) : (
+              <div className="bg-blue-50 rounded-xl p-4">
+                <p className="text-sm text-blue-700">
+                  <strong>Driver-Only Account:</strong> No vehicle will be registered. You can add vehicles later or be assigned as a driver to other vehicles.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -271,16 +337,23 @@ export default function CustomerRegisterPage() {
           ) : (
             <Link to="/login" className="text-sm text-gray-500 hover:text-gray-700">Already have an account?</Link>
           )}
-          {step < 3 ? (
-            <button onClick={next} className="btn-primary gap-2">
-              Continue <ChevronRight className="h-4 w-4" />
-            </button>
-          ) : (
-            <button onClick={handleSubmit} disabled={loading} className="btn-primary gap-2">
-              {loading ? <LoadingSpinner size="sm" /> : <Check className="h-4 w-4" />}
-              Submit Registration
-            </button>
-          )}
+          <div className="flex gap-2">
+            {step === 2 && (
+              <button onClick={skipVehicle} className="btn-secondary">
+                Skip - Register as Driver Only
+              </button>
+            )}
+            {step < 3 ? (
+              <button onClick={next} className="btn-primary gap-2">
+                Continue <ChevronRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button onClick={handleSubmit} disabled={loading} className="btn-primary gap-2">
+                {loading ? <LoadingSpinner size="sm" /> : <Check className="h-4 w-4" />}
+                Submit Registration
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

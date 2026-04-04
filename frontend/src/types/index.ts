@@ -31,6 +31,9 @@ export interface Vehicle {
   ownerNid: string
   ownerMobile: string
   ownerEmail: string
+  driverId?: string
+  driverName?: string
+  driverEmail?: string
   vehicleMake: string
   vehicleColor: string
   vehicleClass: string
@@ -42,23 +45,23 @@ export interface Vehicle {
 }
 
 export interface RegisterVehicleRequest {
-  // Personal
+  // Personal (always required)
   ownerName: string
   ownerNid: string
   ownerMobile: string
   ownerEmail: string
   password: string
-  // Registration number (structured 4-part)
-  brtaOfficeCode: string
-  vehicleRegistrationCode: string
-  serialPart1: string
-  serialPart2: string
-  // Vehicle details
-  vehicleMake: string
-  vehicleColor: string
-  fuelType: string
+  // Registration number (optional - for driver-only registration)
+  brtaOfficeCode?: string
+  vehicleRegistrationCode?: string
+  serialPart1?: string
+  serialPart2?: string
+  // Vehicle details (optional - for driver-only registration)
+  vehicleMake?: string
+  vehicleColor?: string
+  fuelType?: string
   engineDisplacement?: number
-  registrationDate: string
+  registrationDate?: string
 }
 
 export interface AddVehicleRequest {
@@ -254,6 +257,30 @@ export interface QuotaConfigUpdateRequest {
   quotaPeriod: QuotaPeriod
   resetCronExpression: string
   description?: string
+}
+
+// ─── Quota Config by Registration Code ──────────────────────────────────────
+export interface QuotaConfigByRegistrationCode {
+  id: string
+  registrationCode: string
+  registrationCodeDescription: string | null
+  limitLitres: number
+  quotaPeriod: QuotaPeriod
+  description: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface QuotaConfigByRegistrationCodeRequest {
+  registrationCode: string
+  limitLitres: number
+  quotaPeriod: QuotaPeriod
+  description?: string
+}
+
+// ─── Driver Assignment ───────────────────────────────────────────────────────
+export interface AssignDriverRequest {
+  driverEmail: string
 }
 
 // ─── Vehicle Claims ──────────────────────────────────────────────────────────

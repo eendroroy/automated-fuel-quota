@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance'
-import type { Vehicle, PagedResponse, AddVehicleRequest, QrTokenResponse } from '@/types'
+import type { Vehicle, PagedResponse, AddVehicleRequest, QrTokenResponse, AssignDriverRequest } from '@/types'
 
 // ── Customer: single vehicle (backward-compatible) ────────────────────────────
 export const getMyVehicle = () =>
@@ -26,6 +26,16 @@ export const getQrTokenForVehicle = (vehicleId: string) =>
 
 export const regenerateQrTokenForVehicle = (vehicleId: string) =>
   axiosInstance.post<{ token: string }>(`/customer/vehicles/${vehicleId}/qr-code/regenerate`).then((r) => r.data)
+
+// ── Customer: driver assignment ───────────────────────────────────────────────
+export const assignDriver = (vehicleId: string, data: AssignDriverRequest) =>
+  axiosInstance.post<Vehicle>(`/customer/vehicles/${vehicleId}/driver`, data).then((r) => r.data)
+
+export const removeDriver = (vehicleId: string) =>
+  axiosInstance.delete<Vehicle>(`/customer/vehicles/${vehicleId}/driver`).then((r) => r.data)
+
+export const getVehiclesAsDriver = () =>
+  axiosInstance.get<Vehicle[]>('/customer/vehicles-as-driver').then((r) => r.data)
 
 // ── Admin: vehicle management ─────────────────────────────────────────────────
 export const getAllVehicles = (params: {
