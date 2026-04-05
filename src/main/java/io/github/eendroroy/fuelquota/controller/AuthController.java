@@ -2,6 +2,7 @@ package io.github.eendroroy.fuelquota.controller;
 
 import io.github.eendroroy.fuelquota.dto.request.LoginRequest;
 import io.github.eendroroy.fuelquota.dto.request.RegisterCustomerRequest;
+import io.github.eendroroy.fuelquota.dto.request.SendOtpRequest;
 import io.github.eendroroy.fuelquota.dto.response.AuthResponse;
 import io.github.eendroroy.fuelquota.service.AuthService;
 
@@ -95,18 +96,48 @@ public class AuthController {
     }
 
     /**
+     * Sends an OTP to the given mobile number for registration verification.
+     *
+     * <p>Currently uses a dummy OTP ({@code 000000}); no SMS is sent.
+     * Call this endpoint before {@code POST /api/auth/customer/register}.
+     *
+     * @param request contains the mobile number to send the OTP to
+     * @return success message
+     */
+    @PostMapping("/customer/send-otp")
+    @Operation(
+        summary = "Send OTP for mobile verification",
+        description = "Sends a 6-digit OTP to the provided mobile number. Currently a dummy OTP (000000) is used — no SMS is sent."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "OTP sent successfully",
+            content = @Content(schema = @Schema(
+                type = "object",
+                example = "{\"message\": \"OTP sent to your mobile number.\"}"
+            ))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid mobile number format"
+        )
+    })
+    public ResponseEntity<Map<String, String>> sendOtp(@Valid @RequestBody SendOtpRequest request) {
+        authService.sendOtp(request.getMobileNumber());
+        return ResponseEntity.ok(Map.of("message", "OTP sent to your mobile number."));
+    }
+
+    /**
      * Registers a new customer with optional vehicle details.
      *
      * <p>Creates a {@code User} account and {@code Vehicle} record in {@code VERIFIED} status
      * with an active quota. Login is immediately available using the mobile number.
      *
-     * <p><strong>Email is optional:</strong> Customers can register without providing an email address.
-     * If provided, the email must be unique.
+     * <p><strong>OTP required:</strong> Call {@code POST /api/auth/customer/send-otp} first,
+     * then include the received OTP in the {@code otp} field of this request.
      *
-     * <p><strong>Future scope:</strong> OTP verification and BRTA ownership check will
-     * be required before account activation.
-     *
-     * @param request customer and vehicle registration details
+     * @param request customer and vehicle registration details (including OTP)
      * @return success message
      */
     @PostMapping("/customer/register")

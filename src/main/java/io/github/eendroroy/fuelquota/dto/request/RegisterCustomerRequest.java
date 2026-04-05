@@ -41,10 +41,10 @@ public class RegisterCustomerRequest {
     @Schema(description = "National Identity Document number (unique)", example = "199012345678", requiredMode = Schema.RequiredMode.REQUIRED)
     private String ownerNid;
 
-    /** Mobile phone number in international format. */
+    /** Mobile phone number in local Bangladeshi format (01XXXXXXXXX). */
     @NotBlank(message = "Owner mobile is required")
-    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Please provide a valid mobile number")
-    @Schema(description = "Owner's mobile number in international format", example = "+8801711123456", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Pattern(regexp = "^01[3-9]\\d{8}$", message = "Please provide a valid mobile number (e.g. 01711123456)")
+    @Schema(description = "Owner's mobile number in local format (01XXXXXXXXX)", example = "01711123456", requiredMode = Schema.RequiredMode.REQUIRED)
     private String ownerMobile;
 
     /** E-mail address used for notifications (optional). Must be unique if provided. */
@@ -58,6 +58,16 @@ public class RegisterCustomerRequest {
     @Size(min = 8, message = "Password must be at least 8 characters")
     @Schema(description = "Account password (min 8 characters)", example = "securePass1!", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
+
+    /**
+     * 6-digit OTP sent to the customer's mobile number for verification.
+     * Must be requested via {@code POST /api/auth/customer/send-otp} before registration.
+     */
+    @NotBlank(message = "OTP is required")
+    @Size(min = 6, max = 6, message = "OTP must be exactly 6 digits")
+    @Pattern(regexp = "^\\d{6}$", message = "OTP must be 6 numeric digits")
+    @Schema(description = "6-digit OTP received on mobile number", example = "000000", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String otp;
 
     // ── Vehicle Registration Number (structured 4-part input - OPTIONAL) ──────
 

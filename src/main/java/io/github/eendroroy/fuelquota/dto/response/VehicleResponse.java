@@ -63,7 +63,7 @@ public class VehicleResponse implements Serializable {
     private String ownerNid;
 
     /** Owner's mobile number. */
-    @Schema(description = "Owner mobile number", example = "+8801711123456")
+    @Schema(description = "Owner mobile number", example = "01711123456")
     private String ownerMobile;
 
     /** Owner's e-mail address. */

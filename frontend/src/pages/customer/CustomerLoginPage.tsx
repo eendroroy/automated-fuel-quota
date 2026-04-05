@@ -21,6 +21,10 @@ export default function CustomerLoginPage() {
       toast.error(t('errors.fillAllFields'))
       return
     }
+    if (!/^01[3-9]\d{8}$/.test(form.mobileNumber)) {
+      toast.error(t('errors.mobileInvalid'))
+      return
+    }
     setLoading(true)
     try {
       const res = await customerLogin(form)
@@ -57,6 +61,8 @@ export default function CustomerLoginPage() {
                 value={form.mobileNumber}
                 onChange={(e) => setForm((f) => ({ ...f, mobileNumber: e.target.value }))}
                 autoComplete="tel"
+                maxLength={11}
+                inputMode="numeric"
               />
             </div>
 

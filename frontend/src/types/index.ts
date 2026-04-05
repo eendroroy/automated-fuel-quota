@@ -51,6 +51,8 @@ export interface RegisterVehicleRequest {
   ownerMobile: string
   ownerEmail: string
   password: string
+  /** 6-digit OTP received on mobile for verification */
+  otp: string
   // Registration number (optional - for driver-only registration)
   brtaOfficeCode?: string
   vehicleRegistrationCode?: string

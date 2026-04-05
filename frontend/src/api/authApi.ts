@@ -7,6 +7,9 @@ export const customerLogin = (data: LoginRequest) =>
 export const adminLogin = (data: LoginRequest) =>
   axiosInstance.post<AuthResponse>('/auth/admin/login', data).then((r) => r.data)
 
+export const sendOtp = (mobileNumber: string) =>
+  axiosInstance.post<{ message: string }>('/auth/customer/send-otp', { mobileNumber }).then((r) => r.data)
+
 export const registerCustomer = (data: RegisterVehicleRequest) =>
   axiosInstance.post<{ message: string }>('/auth/customer/register', data).then((r) => r.data)
 

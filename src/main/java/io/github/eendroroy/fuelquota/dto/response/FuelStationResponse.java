@@ -55,7 +55,7 @@ public class FuelStationResponse {
     private Integer geofenceRadiusMeters;
 
     /** Station contact telephone number. */
-    @Schema(description = "Station contact phone number", example = "+8801711111111")
+    @Schema(description = "Station contact phone number", example = "01711111111")
     private String phoneNumber;
 
     /** Full name of the station manager. */

@@ -147,7 +147,7 @@ export default function AdminStationsPage() {
               {DISTRICTS.map((d) => <option key={d}>{d}</option>)}
             </select>
           </div>
-          <div><label className="label">Phone Number</label><input className="input-field" value={form.phoneNumber} onChange={set('phoneNumber')} placeholder="+880 1XXX-XXXXXX" /></div>
+          <div><label className="label">Phone Number</label><input className="input-field" value={form.phoneNumber} onChange={set('phoneNumber')} placeholder="01711123456" /></div>
           <div><label className="label">Manager Name</label><input className="input-field" value={form.managerName} onChange={set('managerName')} /></div>
           <div className="sm:col-span-2"><label className="label">Manager Email</label><input className="input-field" type="email" value={form.managerEmail} onChange={set('managerEmail')} /></div>
           <div><label className="label">Status</label>

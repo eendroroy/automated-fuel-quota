@@ -264,62 +264,62 @@ public class DataInitializer {
     private void createSampleStations(FuelStationRepository stationRepository) {
         stationRepository.save(station(
                 "ABC Fuel Station Dhanmondi", "ABC-DH-001",
-                "23.7465", "90.3700", "+8801711-111111",
+                "23.7465", "90.3700", "01711111111",
                 "Rahman Ahmed", "rahman@abcfuel.com", "Dhaka", FuelStation.StationStatus.ACTIVE));
 
         stationRepository.save(station(
                 "XYZ Petrol Pump Gulshan", "XYZ-GL-002",
-                "23.7808", "90.4176", "+8801722-222222",
+                "23.7808", "90.4176", "01722222222",
                 "Fatima Khatun", "fatima@xyzpetrol.com", "Dhaka", FuelStation.StationStatus.ACTIVE));
 
         stationRepository.save(station(
                 "Port City Fuel Center", "PC-CTG-003",
-                "22.3475", "91.8123", "+8801733-333333",
+                "22.3475", "91.8123", "01733333333",
                 "Karim Uddin", "karim@portcityfuel.com", "Chittagong", FuelStation.StationStatus.ACTIVE));
 
         stationRepository.save(station(
                 "Green Valley Fuel Station", "GV-SYL-004",
-                "24.8949", "91.8687", "+8801744-444444",
+                "24.8949", "91.8687", "01744444444",
                 "Nasir Hossain", "nasir@greenvalley.com", "Sylhet", FuelStation.StationStatus.ACTIVE));
 
         stationRepository.save(station(
                 "Old Town Fuel Point", "OT-KHU-005",
-                "22.8456", "89.5403", "+8801755-555555",
+                "22.8456", "89.5403", "01755555555",
                 "Bashir Miah", "bashir@oldtownfuel.com", "Khulna", FuelStation.StationStatus.INACTIVE));
 
         stationRepository.save(station(
                 "Rajshahi Central Fuel", "RC-RAJ-006",
-                "24.3745", "88.6042", "+8801766-666666",
+                "24.3745", "88.6042", "01766666666",
                 "Abdul Hakim", "hakim@rajcentral.com", "Rajshahi", FuelStation.StationStatus.ACTIVE));
 
         stationRepository.save(station(
                 "Barishal Bay Petrol", "BB-BAR-007",
-                "22.7010", "90.3535", "+8801777-777777",
+                "22.7010", "90.3535", "01777777777",
                 "Selina Akter", "selina@baybay.com", "Barishal", FuelStation.StationStatus.ACTIVE));
 
         stationRepository.save(station(
                 "Mymensingh Motors Fuel", "MM-MYM-008",
-                "24.7471", "90.4203", "+8801788-888888",
+                "24.7471", "90.4203", "01788888888",
                 "Jamal Khan", "jamal@mymotors.com", "Mymensingh", FuelStation.StationStatus.ACTIVE));
 
         stationRepository.save(station(
                 "Cumilla City Petroleum", "CC-CUM-009",
-                "23.4607", "91.1809", "+8801799-999999",
+                "23.4607", "91.1809", "01799999999",
                 "Shahida Begum", "shahida@cumcity.com", "Cumilla", FuelStation.StationStatus.ACTIVE));
 
         stationRepository.save(station(
                 "Uttara Express Fuel", "UE-DH-010",
-                "23.8759", "90.3795", "+8801700-101010",
+                "23.8759", "90.3795", "01700101010",
                 "Monir Hossain", "monir@uttarafuel.com", "Dhaka", FuelStation.StationStatus.ACTIVE));
 
         stationRepository.save(station(
                 "Mirpur Highway Petrol", "MH-DH-011",
-                "23.8223", "90.3654", "+8801711-111010",
+                "23.8223", "90.3654", "01711111010",
                 "Razia Sultana", "razia@mirpurpetrol.com", "Dhaka", FuelStation.StationStatus.ACTIVE));
 
         stationRepository.save(station(
                 "Agrabad Business Fuel", "AB-CTG-012",
-                "22.3309", "91.8119", "+8801722-121212",
+                "22.3309", "91.8119", "01722121212",
                 "Ibrahim Khalil", "ibrahim@agrabadfu el.com", "Chittagong", FuelStation.StationStatus.ACTIVE));
     }
 
@@ -357,7 +357,7 @@ public class DataInitializer {
         for (int i = 0; i < names.length; i++) {
             String email = names[i].toLowerCase().replace(" ", ".") + "@example.com";
             String nidBase = String.format("%04d%03d", i + 1001, i + 1);
-            String phoneBase = String.format("+8801%d-%06d", 711 + (i % 89), i + 1001);
+            String phoneBase = String.format("01%d%06d", 711 + (i % 89), i + 1001);
             String serial1 = String.format("%02d", (i + 10) % 100);
             String serial2 = String.format("%d", 1000 + i + 1);
 
@@ -454,7 +454,7 @@ public class DataInitializer {
         userRepo.findByEmail("john.doe@example.com").ifPresent(johnDoe -> {
             Vehicle v2 = new Vehicle(
                     "DHAKA METRO A 10-1002", "DHAKA METRO", "A",
-                    johnDoe.getName(), "NID-BD-1001001", "+8801711-001001", johnDoe.getEmail(),
+                    johnDoe.getName(), "NID-BD-1001001", "01711001001", johnDoe.getEmail(),
                     "Honda", "Black", "Motorcycles (Up to 100 cc)", "Octane",
                     LocalDate.of(2023, 5, 10)
             );
@@ -481,55 +481,55 @@ public class DataInitializer {
 
         // Create 25+ pump reps across stations (2-3 per station)
         pumpRep(userRepo, repRepo, findStation(stations, "ABC-DH-001"), pass,
-                "Ahmed Ali", "+8801811-001001", "ahmed.ali@abcfuel.com", "EMP-001", "ahmed.ali");
+                "Ahmed Ali", "01811001001", "ahmed.ali@abcfuel.com", "EMP-001", "ahmed.ali");
         pumpRep(userRepo, repRepo, findStation(stations, "ABC-DH-001"), pass,
-                "Rubel Islam", "+8801811-002002", "rubel.islam@abcfuel.com", "EMP-002", "rubel.islam");
+                "Rubel Islam", "01811002002", "rubel.islam@abcfuel.com", "EMP-002", "rubel.islam");
         pumpRep(userRepo, repRepo, findStation(stations, "XYZ-GL-002"), pass,
-                "Salma Khatun", "+8801822-003003", "salma.khatun@xyzpetrol.com", "EMP-003", "salma.khatun");
+                "Salma Khatun", "01822003003", "salma.khatun@xyzpetrol.com", "EMP-003", "salma.khatun");
         pumpRep(userRepo, repRepo, findStation(stations, "XYZ-GL-002"), pass,
-                "Jahir Uddin", "+8801822-004004", "jahir.uddin@xyzpetrol.com", "EMP-004", "jahir.uddin");
+                "Jahir Uddin", "01822004004", "jahir.uddin@xyzpetrol.com", "EMP-004", "jahir.uddin");
         pumpRep(userRepo, repRepo, findStation(stations, "PC-CTG-003"), pass,
-                "Iqbal Hassan", "+8801833-005005", "iqbal.hassan@portcityfuel.com", "EMP-005", "iqbal.hassan");
+                "Iqbal Hassan", "01833005005", "iqbal.hassan@portcityfuel.com", "EMP-005", "iqbal.hassan");
         pumpRep(userRepo, repRepo, findStation(stations, "PC-CTG-003"), pass,
-                "Nazma Begum", "+8801833-006006", "nazma.begum@portcityfuel.com", "EMP-006", "nazma.begum");
+                "Nazma Begum", "01833006006", "nazma.begum@portcityfuel.com", "EMP-006", "nazma.begum");
         pumpRep(userRepo, repRepo, findStation(stations, "GV-SYL-004"), pass,
-                "Sumaiya Akter", "+8801844-007007", "sumaiya.akter@greenvalley.com", "EMP-007", "sumaiya.akter");
+                "Sumaiya Akter", "01844007007", "sumaiya.akter@greenvalley.com", "EMP-007", "sumaiya.akter");
         pumpRep(userRepo, repRepo, findStation(stations, "GV-SYL-004"), pass,
-                "Hamid Miah", "+8801844-008008", "hamid.miah@greenvalley.com", "EMP-008", "hamid.miah");
+                "Hamid Miah", "01844008008", "hamid.miah@greenvalley.com", "EMP-008", "hamid.miah");
         pumpRep(userRepo, repRepo, findStation(stations, "RC-RAJ-006"), pass,
-                "Aslam Khan", "+8801866-009009", "aslam.khan@rajcentral.com", "EMP-009", "aslam.khan");
+                "Aslam Khan", "01866009009", "aslam.khan@rajcentral.com", "EMP-009", "aslam.khan");
         pumpRep(userRepo, repRepo, findStation(stations, "RC-RAJ-006"), pass,
-                "Shapla Akter", "+8801866-010010", "shapla.akter@rajcentral.com", "EMP-010", "shapla.akter");
+                "Shapla Akter", "01866010010", "shapla.akter@rajcentral.com", "EMP-010", "shapla.akter");
         pumpRep(userRepo, repRepo, findStation(stations, "BB-BAR-007"), pass,
-                "Rafiq Ahmed", "+8801877-011011", "rafiq.ahmed@baybay.com", "EMP-011", "rafiq.ahmed");
+                "Rafiq Ahmed", "01877011011", "rafiq.ahmed@baybay.com", "EMP-011", "rafiq.ahmed");
         pumpRep(userRepo, repRepo, findStation(stations, "BB-BAR-007"), pass,
-                "Parveen Sultana", "+8801877-012012", "parveen.sultana@baybay.com", "EMP-012", "parveen.sultana");
+                "Parveen Sultana", "01877012012", "parveen.sultana@baybay.com", "EMP-012", "parveen.sultana");
         pumpRep(userRepo, repRepo, findStation(stations, "MM-MYM-008"), pass,
-                "Kamal Hossain", "+8801888-013013", "kamal.hossain@mymotors.com", "EMP-013", "kamal.hossain");
+                "Kamal Hossain", "01888013013", "kamal.hossain@mymotors.com", "EMP-013", "kamal.hossain");
         pumpRep(userRepo, repRepo, findStation(stations, "MM-MYM-008"), pass,
-                "Rehana Begum", "+8801888-014014", "rehana.begum@mymotors.com", "EMP-014", "rehana.begum");
+                "Rehana Begum", "01888014014", "rehana.begum@mymotors.com", "EMP-014", "rehana.begum");
         pumpRep(userRepo, repRepo, findStation(stations, "CC-CUM-009"), pass,
-                "Sadiq Rahman", "+8801899-015015", "sadiq.rahman@cumcity.com", "EMP-015", "sadiq.rahman");
+                "Sadiq Rahman", "01899015015", "sadiq.rahman@cumcity.com", "EMP-015", "sadiq.rahman");
         pumpRep(userRepo, repRepo, findStation(stations, "CC-CUM-009"), pass,
-                "Nasima Khatun", "+8801899-016016", "nasima.khatun@cumcity.com", "EMP-016", "nasima.khatun");
+                "Nasima Khatun", "01899016016", "nasima.khatun@cumcity.com", "EMP-016", "nasima.khatun");
         pumpRep(userRepo, repRepo, findStation(stations, "UE-DH-010"), pass,
-                "Shahin Alam", "+8801800-017017", "shahin.alam@uttarafuel.com", "EMP-017", "shahin.alam");
+                "Shahin Alam", "01800017017", "shahin.alam@uttarafuel.com", "EMP-017", "shahin.alam");
         pumpRep(userRepo, repRepo, findStation(stations, "UE-DH-010"), pass,
-                "Roksana Parvin", "+8801800-018018", "roksana.parvin@uttarafuel.com", "EMP-018", "roksana.parvin");
+                "Roksana Parvin", "01800018018", "roksana.parvin@uttarafuel.com", "EMP-018", "roksana.parvin");
         pumpRep(userRepo, repRepo, findStation(stations, "MH-DH-011"), pass,
-                "Habib Ullah", "+8801811-019019", "habib.ullah@mirpurpetrol.com", "EMP-019", "habib.ullah");
+                "Habib Ullah", "01811019019", "habib.ullah@mirpurpetrol.com", "EMP-019", "habib.ullah");
         pumpRep(userRepo, repRepo, findStation(stations, "MH-DH-011"), pass,
-                "Laila Begum", "+8801811-020020", "laila.begum@mirpurpetrol.com", "EMP-020", "laila.begum");
+                "Laila Begum", "01811020020", "laila.begum@mirpurpetrol.com", "EMP-020", "laila.begum");
         pumpRep(userRepo, repRepo, findStation(stations, "AB-CTG-012"), pass,
-                "Mosharraf Khan", "+8801822-021021", "mosharraf.khan@agrabadfu el.com", "EMP-021", "mosharraf.khan");
+                "Mosharraf Khan", "01822021021", "mosharraf.khan@agrabadfu el.com", "EMP-021", "mosharraf.khan");
         pumpRep(userRepo, repRepo, findStation(stations, "AB-CTG-012"), pass,
-                "Tahmina Akter", "+8801822-022022", "tahmina.akter@agrabadfu el.com", "EMP-022", "tahmina.akter");
+                "Tahmina Akter", "01822022022", "tahmina.akter@agrabadfu el.com", "EMP-022", "tahmina.akter");
         pumpRep(userRepo, repRepo, findStation(stations, "ABC-DH-001"), pass,
-                "Shakil Miah", "+8801811-023023", "shakil.miah@abcfuel.com", "EMP-023", "shakil.miah");
+                "Shakil Miah", "01811023023", "shakil.miah@abcfuel.com", "EMP-023", "shakil.miah");
         pumpRep(userRepo, repRepo, findStation(stations, "XYZ-GL-002"), pass,
-                "Mahmuda Khatun", "+8801822-024024", "mahmuda.khatun@xyzpetrol.com", "EMP-024", "mahmuda.khatun");
+                "Mahmuda Khatun", "01822024024", "mahmuda.khatun@xyzpetrol.com", "EMP-024", "mahmuda.khatun");
         pumpRep(userRepo, repRepo, findStation(stations, "PC-CTG-003"), pass,
-                "Saiful Islam", "+8801833-025025", "saiful.islam@portcityfuel.com", "EMP-025", "saiful.islam");
+                "Saiful Islam", "01833025025", "saiful.islam@portcityfuel.com", "EMP-025", "saiful.islam");
     }
 
     private void pumpRep(UserRepository userRepo, PumpRepresentativeRepository repRepo,
@@ -856,7 +856,7 @@ public class DataInitializer {
             if (owner != null && !vehicleRepo.existsByRegistrationNumber("EDGE DRIVER 01-0001")) {
                 var v = new Vehicle(
                         "EDGE DRIVER 01-0001", "EDGE", "TEST",
-                        owner.getName(), "NID-EDGE-01", "+8801700-000001", owner.getEmail(),
+                        owner.getName(), "NID-EDGE-01", "01700000001", owner.getEmail(),
                         "TestMake", "Blue", "Test Vehicle", "Petrol", LocalDate.now()
                 );
                 v.setStatus(Vehicle.VehicleStatus.VERIFIED);
@@ -879,7 +879,7 @@ public class DataInitializer {
             if (owner != null) {
                 var v = new Vehicle(
                         "EDGE DEREG 01-0002", "EDGE", "DEREG",
-                        owner.getName(), "NID-EDGE-02", "+8801700-000002", owner.getEmail(),
+                        owner.getName(), "NID-EDGE-02", "01700000002", owner.getEmail(),
                         "TestMake", "Red", "Deregistered Vehicle", "Diesel", LocalDate.now()
                 );
                 v.setStatus(Vehicle.VehicleStatus.DEREGISTERED);

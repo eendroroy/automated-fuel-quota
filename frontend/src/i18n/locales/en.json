@@ -474,7 +474,7 @@
     "title": "Pump Representative",
     "subtitle": "Sign in with your mobile number to start dispensing fuel",
     "mobileLabel": "Mobile Number",
-    "mobilePlaceholder": "+8801711123456",
+    "mobilePlaceholder": "01711123456",
     "signIn": "Sign In",
     "signingIn": "Signing in…",
     "helpText": "Your mobile number is registered with your station. Contact admin if you have trouble logging in."
@@ -540,6 +540,7 @@
     "fillAllFields": "Please fill in all fields",
     "emailRequired": "Email is required",
     "mobileRequired": "Mobile number is required",
+    "mobileInvalid": "Enter a valid mobile number (e.g. 01711123456)",
     "passwordRequired": "Password is required",
     "passwordMinLength": "Password must be at least 8 characters",
     "passwordMismatch": "Passwords do not match",

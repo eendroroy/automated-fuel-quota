@@ -42,7 +42,7 @@ public class PumpRepresentativeResponse {
     private String name;
 
     /** Contact mobile number. */
-    @Schema(description = "Mobile phone number", example = "+8801755000001")
+    @Schema(description = "Mobile phone number", example = "01755000001")
     private String mobileNumber;
 
     /** Work e-mail address. */

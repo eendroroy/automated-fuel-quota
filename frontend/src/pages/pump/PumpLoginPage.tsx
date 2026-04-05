@@ -18,6 +18,10 @@ export default function PumpLoginPage() {
       toast.error(t('errors.mobileRequired'))
       return
     }
+    if (!/^01[3-9]\d{8}$/.test(mobileNumber.trim())) {
+      toast.error(t('errors.mobileInvalid'))
+      return
+    }
     setLoading(true)
     try {
       const session = await pumpRepLogin({ mobileNumber: mobileNumber.trim() })
@@ -59,6 +63,8 @@ export default function PumpLoginPage() {
               onChange={(e) => setMobileNumber(e.target.value)}
               autoFocus
               autoComplete="tel"
+              maxLength={11}
+              inputMode="numeric"
             />
           </div>
           <button

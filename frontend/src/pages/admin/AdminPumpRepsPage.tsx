@@ -157,7 +157,7 @@ export default function AdminPumpRepsPage() {
             </select>
           </div>
           <div><label className="label">Full Name *</label><input className="input-field" value={form.name} onChange={set('name')} placeholder="John Doe" /></div>
-          <div><label className="label">Mobile Number *</label><input className="input-field" value={form.mobileNumber} onChange={set('mobileNumber')} placeholder="+880 1XXX-XXXXXX" /></div>
+          <div><label className="label">Mobile Number *</label><input className="input-field" value={form.mobileNumber} onChange={set('mobileNumber')} placeholder="01711123456" /></div>
           <div><label className="label">Email *</label><input className="input-field" type="email" value={form.email} onChange={set('email')} placeholder="john@example.com" /></div>
           <div><label className="label">Employee ID *</label><input className="input-field" value={form.employeeId} onChange={set('employeeId')} placeholder="EMP-001" /></div>
           <div><label className="label">Username *</label><input className="input-field" value={form.username} onChange={set('username')} placeholder="john.doe" /></div>

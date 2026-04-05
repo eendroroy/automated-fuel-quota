@@ -3,6 +3,7 @@ package io.github.eendroroy.fuelquota.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,8 +41,9 @@ public class PumpRepresentativeRequest {
 
     /** Contact mobile number. */
     @NotBlank
+    @Pattern(regexp = "^01[3-9]\\d{8}$", message = "Please provide a valid mobile number (e.g. 01711123456)")
     @Size(max = 20)
-    @Schema(description = "Mobile phone number", example = "+8801755000001", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Mobile phone number in local format (01XXXXXXXXX)", example = "01755000001", requiredMode = Schema.RequiredMode.REQUIRED)
     private String mobileNumber;
 
     /** Work e-mail address — must be unique across all representatives. */

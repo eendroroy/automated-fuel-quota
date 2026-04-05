@@ -38,8 +38,8 @@ import java.util.UUID;
  *
  * <p>Handles user registration, login, and JWT token generation.
  *
- * <p><strong>Future scope:</strong> OTP verification via mobile number will be added
- * to confirm the customer's phone during registration before account activation.
+ * <p>OTP verification is required during registration to confirm the customer's mobile number.
+ * Currently uses a dummy OTP ({@code 000000}); no SMS is sent.
  */
 @Service
 @Transactional
@@ -56,6 +56,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final AuthMapper authMapper;
+    private final OtpService otpService;
 
     /**
      * Authenticates a customer user by mobile number and returns a JWT access token.
@@ -108,8 +109,21 @@ public class AuthService {
     }
 
     /**
+     * Sends a (dummy) OTP to the given mobile number for registration verification.
+     *
+     * <p>Currently stores {@code 000000} without dispatching any SMS.
+     *
+     * @param mobileNumber recipient mobile number in 01XXXXXXXXX format
+     */
+    public void sendOtp(String mobileNumber) {
+        otpService.sendOtp(mobileNumber);
+    }
+
+    /**
      * Registers a new customer, creating a {@link User} account.
      * Optionally creates an associated {@link Vehicle} record if vehicle details are provided.
+     *
+     * <p>The mobile number OTP must be verified before account creation.
      *
      * <p>The registration number is assembled from the four structured input parts:
      * {@code {brtaOfficeCode} {vehicleRegistrationCode} {serialPart1}-{serialPart2}}.
@@ -120,16 +134,15 @@ public class AuthService {
      * <p>If vehicle information is not provided, only the user account is created,
      * allowing drivers without vehicles to register.
      *
-     * <p><strong>Future scope:</strong> OTP verification will be required to confirm the
-     * mobile number before account activation.
-     *
-     * <p><strong>Future scope:</strong> BRTA API will be called to verify vehicle
-     * ownership before finalising registration.
-     *
-     * @param request customer registration details
-     * @throws BadRequestException if mobile number already exists, or if vehicle info is provided but incomplete/duplicate
+     * @param request customer registration details (including OTP)
+     * @throws BadRequestException if OTP is invalid/expired, mobile number already exists,
+     *                             or if vehicle info is provided but incomplete/duplicate
      */
     public void registerCustomer(RegisterCustomerRequest request) {
+        // Validate OTP first
+        if (!otpService.verifyOtp(request.getOwnerMobile(), request.getOtp())) {
+            throw new BadRequestException("Invalid or expired OTP. Please request a new OTP.");
+        }
         // Validation - mobile number must always be unique
         if (userRepository.existsByMobileNumber(request.getOwnerMobile())) {
             throw new BadRequestException("Mobile number already exists");
