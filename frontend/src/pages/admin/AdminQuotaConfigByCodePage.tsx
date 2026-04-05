@@ -43,8 +43,10 @@ export default function AdminQuotaConfigByCodePage() {
       ])
       setConfigs(configData)
       setRegCodes(codeData)
-    } catch (err) {
-      toast.error('Failed to load configurations')
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Failed to load configurations'
+      toast.error(message)
+      console.error('Error loading quota configurations:', err)
     } finally {
       setLoading(false)
     }

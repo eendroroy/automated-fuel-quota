@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/admin/quota-config-by-code")
-@PreAuthorize("hasAuthority('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 @Tag(name = "Admin - Quota Config by Registration Code", description = "Admin endpoints for managing quota configurations by vehicle registration code")
 @SecurityRequirement(name = OpenApiConfig.SECURITY_SCHEME_NAME)
