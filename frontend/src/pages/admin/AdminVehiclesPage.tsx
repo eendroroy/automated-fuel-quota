@@ -96,7 +96,14 @@ export default function AdminVehiclesPage() {
                 <tr><td colSpan={7} className="py-12 text-center text-gray-400">{t('adminVehicles.noVehicles')}</td></tr>
               ) : vehicles.map((v) => (
                 <tr key={v.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-mono font-semibold text-brand-700 text-xs">{v.registrationNumber}</td>
+                  <td className="px-4 py-3">
+                    <p className="font-mono font-semibold text-brand-700 text-xs">{v.registrationNumber}</p>
+                    {v.customQuotaConfig && (
+                      <span className="inline-flex items-center mt-1 px-1.5 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700 font-medium">
+                        {t('adminVehicles.customQuota')}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-900">{v.ownerName}</p>
                     <p className="text-xs text-gray-400">{v.ownerEmail}</p>

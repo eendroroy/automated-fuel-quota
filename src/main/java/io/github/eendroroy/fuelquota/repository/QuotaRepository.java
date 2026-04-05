@@ -54,4 +54,10 @@ public interface QuotaRepository extends JpaRepository<Quota, UUID>,
            "JOIN q.vehicle v WHERE q.status = 'ACTIVE' " +
            "GROUP BY v.vehicleClass")
     List<Object[]> getQuotaUsageByVehicleClass();
+
+    /**
+     * Returns all quotas not individually overridden (eligible for bulk sync).
+     */
+    @Query("SELECT q FROM Quota q WHERE q.individuallyOverridden = false AND q.status <> 'SUSPENDED'")
+    List<Quota> findSyncableQuotas();
 }

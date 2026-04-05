@@ -32,7 +32,6 @@ import AdminQuotaConfigPage from '@/pages/admin/AdminQuotaConfigPage'
 import AdminPumpRepsPage from '@/pages/admin/AdminPumpRepsPage'
 import AdminAuditLogsPage from '@/pages/admin/AdminAuditLogsPage'
 import AdminVehicleClaimsPage from '@/pages/admin/AdminVehicleClaimsPage'
-import AdminQuotaConfigByCodePage from '@/pages/admin/AdminQuotaConfigByCodePage'
 
 // Pump Rep Pages
 import PumpLoginPage from '@/pages/pump/PumpLoginPage'
@@ -71,7 +70,6 @@ export default function App() {
           <Route path="stations" element={<AdminStationsPage />} />
           <Route path="quotas" element={<AdminQuotasPage />} />
           <Route path="quota-config" element={<AdminQuotaConfigPage />} />
-          <Route path="quota-config-by-code" element={<AdminQuotaConfigByCodePage />} />
           <Route path="pump-reps" element={<AdminPumpRepsPage />} />
           <Route path="audit-logs" element={<AdminAuditLogsPage />} />
         </Route>

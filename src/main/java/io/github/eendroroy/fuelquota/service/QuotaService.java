@@ -2,9 +2,11 @@ package io.github.eendroroy.fuelquota.service;
 
 import io.github.eendroroy.fuelquota.config.AppProperties;
 import io.github.eendroroy.fuelquota.entity.Quota;
+import io.github.eendroroy.fuelquota.entity.QuotaConfigSet;
 import io.github.eendroroy.fuelquota.entity.Vehicle;
 import io.github.eendroroy.fuelquota.enums.AuthorizationDecision;
 import io.github.eendroroy.fuelquota.repository.QuotaRepository;
+import io.github.eendroroy.fuelquota.repository.QuotaConfigSetRepository;
 import io.github.eendroroy.fuelquota.repository.VehicleRepository;
 import io.github.eendroroy.fuelquota.exception.ResourceNotFoundException;
 import io.github.eendroroy.fuelquota.exception.BadRequestException;
@@ -50,6 +52,7 @@ public class QuotaService {
     private final AppProperties appProperties;
     private final QuotaConfigService quotaConfigService;
     private final io.github.eendroroy.fuelquota.repository.QuotaConfigByRegistrationCodeRepository quotaConfigByRegistrationCodeRepository;
+    private final QuotaConfigSetRepository quotaConfigSetRepository;
 
     /**
      * Retrieves the quota for a vehicle by its UUID.
@@ -183,6 +186,7 @@ public class QuotaService {
         Quota quota = quotaRepository.findByVehicleId(vehicleId)
             .orElseThrow(() -> new ResourceNotFoundException("Quota not found"));
         quota.setLimitLiters(newLimitLiters);
+        quota.setIndividuallyOverridden(true);
         quota = quotaRepository.save(quota);
         logger.info("Quota limit adjusted for vehicle ID: {} to {} liters. Reason: {}",
                 vehicleId, newLimitLiters, reason);
@@ -203,23 +207,33 @@ public class QuotaService {
             throw new BadRequestException("Quota already exists for this vehicle");
         }
 
-        // Check for registration-code-specific quota configuration
         BigDecimal limit;
         QuotaPeriod period;
 
-        var regCodeConfig = quotaConfigByRegistrationCodeRepository
+        // Priority 1: QuotaConfigSet (new system)
+        var configSet = quotaConfigSetRepository
                 .findByRegistrationCode(vehicle.getVehicleRegistrationCode());
-
-        if (regCodeConfig.isPresent()) {
-            limit = regCodeConfig.get().getLimitLitres();
-            period = regCodeConfig.get().getQuotaPeriod();
-            logger.info("Creating quota for vehicle {} using registration-code-specific config: {} = {} L / {}",
-                    vehicle.getRegistrationNumber(), vehicle.getVehicleRegistrationCode(), limit, period);
+        if (configSet.isPresent()) {
+            limit = configSet.get().getLimitLitres();
+            period = configSet.get().getQuotaPeriod();
+            logger.info("Creating quota for vehicle {} using config set '{}': {} L / {}",
+                    vehicle.getRegistrationNumber(), configSet.get().getName(), limit, period);
         } else {
-            limit = quotaConfigService.getDefaultLimitLitres();
-            period = quotaConfigService.getDefaultPeriod();
-            logger.info("Creating quota for vehicle {} using default config: {} L / {}",
-                    vehicle.getRegistrationNumber(), limit, period);
+            // Priority 2: QuotaConfigByRegistrationCode (legacy)
+            var regCodeConfig = quotaConfigByRegistrationCodeRepository
+                    .findByRegistrationCode(vehicle.getVehicleRegistrationCode());
+            if (regCodeConfig.isPresent()) {
+                limit = regCodeConfig.get().getLimitLitres();
+                period = regCodeConfig.get().getQuotaPeriod();
+                logger.info("Creating quota for vehicle {} using legacy registration-code config: {} = {} L / {}",
+                        vehicle.getRegistrationNumber(), vehicle.getVehicleRegistrationCode(), limit, period);
+            } else {
+                // Priority 3: Global default
+                limit = quotaConfigService.getDefaultLimitLitres();
+                period = quotaConfigService.getDefaultPeriod();
+                logger.info("Creating quota for vehicle {} using default config: {} L / {}",
+                        vehicle.getRegistrationNumber(), limit, period);
+            }
         }
 
         return quotaRepository.save(new Quota(vehicle, limit, period));
@@ -232,6 +246,46 @@ public class QuotaService {
      */
     public List<Quota> getQuotasToReset() {
         return quotaRepository.findQuotasToReset(LocalDateTime.now());
+    }
+
+    /**
+     * Syncs quota limits and periods from QuotaConfigSets to all eligible vehicles.
+     *
+     * <p>Vehicles with {@code individuallyOverridden = true} are skipped.
+     * Vehicles not covered by any config set receive the global default.
+     *
+     * @return number of quotas updated
+     */
+    public int syncQuotaConfigs() {
+        List<Quota> quotas = quotaRepository.findSyncableQuotas();
+        int updatedCount = 0;
+        for (Quota quota : quotas) {
+            Vehicle vehicle = quota.getVehicle();
+            if (vehicle.getStatus() == Vehicle.VehicleStatus.DEREGISTERED) continue;
+
+            BigDecimal newLimit;
+            QuotaPeriod newPeriod;
+
+            var configSet = quotaConfigSetRepository
+                    .findByRegistrationCode(vehicle.getVehicleRegistrationCode());
+            if (configSet.isPresent()) {
+                newLimit = configSet.get().getLimitLitres();
+                newPeriod = configSet.get().getQuotaPeriod();
+            } else {
+                newLimit = quotaConfigService.getDefaultLimitLitres();
+                newPeriod = quotaConfigService.getDefaultPeriod();
+            }
+
+            boolean changed = !quota.getLimitLiters().equals(newLimit) || quota.getPeriod() != newPeriod;
+            if (changed) {
+                quota.setLimitLiters(newLimit);
+                quota.setPeriod(newPeriod);
+                quotaRepository.save(quota);
+                updatedCount++;
+            }
+        }
+        logger.info("Quota sync completed: {} quotas updated out of {} eligible", updatedCount, quotas.size());
+        return updatedCount;
     }
 
     /**

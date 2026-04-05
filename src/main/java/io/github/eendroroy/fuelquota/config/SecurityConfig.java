@@ -68,23 +68,23 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html", "/assets/**", "/static/**",
                                  "/favicon.ico", "/manifest.json").permitAll()
 
-                // Auth endpoints
-                .requestMatchers("/api/auth/**").permitAll()
+                // Auth endpoints (versioned)
+                .requestMatchers("/api/auth/v1/**").permitAll()
 
                 // Pump rep app endpoints (public per BRD - no user login needed)
-                .requestMatchers("/api/pump/**").permitAll()
+                .requestMatchers("/api/pump-rep/v1/**").permitAll()
 
                 // Public reference data endpoints (BRTA offices, registration codes)
-                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/public/v1/**").permitAll()
 
                 // Actuator health (public)
                 .requestMatchers("/actuator/health").permitAll()
 
-                // Admin endpoints
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                // Admin endpoints (versioned)
+                .requestMatchers("/api/admin/v1/**").hasRole("ADMIN")
 
-                // Customer endpoints
-                .requestMatchers("/api/customer/**").hasRole("CUSTOMER")
+                // Customer endpoints (versioned)
+                .requestMatchers("/api/customer/v1/**").hasRole("CUSTOMER")
 
                 // All other actuator endpoints require authentication
                 .requestMatchers("/actuator/**").authenticated()

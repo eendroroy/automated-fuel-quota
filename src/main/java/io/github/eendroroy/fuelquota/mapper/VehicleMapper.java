@@ -41,6 +41,7 @@ public class VehicleMapper {
                 .registrationDate(vehicle.getRegistrationDate())
                 .status(vehicle.getStatus().name())
                 .createdAt(vehicle.getCreatedAt())
+                .customQuotaConfig(vehicle.getQuota() != null && vehicle.getQuota().isIndividuallyOverridden())
                 .build();
     }
 }

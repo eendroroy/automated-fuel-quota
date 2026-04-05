@@ -11,7 +11,7 @@ import type {
 
 // Pump API uses a bare axios instance (no JWT, public endpoints)
 const pumpAxios = axios.create({
-  baseURL: '/api/pump',
+  baseURL: '/api/pump-rep/v1',
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 })

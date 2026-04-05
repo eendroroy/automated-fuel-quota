@@ -20,7 +20,7 @@ graph TD
     end
 
     subgraph SpringBoot["Spring Boot 4.0.5 — :8080"]
-        API["REST API<br/>/api/**"]
+        API["REST API<br/>/api/{role}/v1/**"]
         SPA["React 18 SPA<br/>(embedded static files)"]
         SEC["JWT Security<br/>+ RBAC"]
         SCHED["Quota Reset<br/>Scheduler"]
@@ -30,9 +30,9 @@ graph TD
         PG[("PostgreSQL 15+")]
     end
 
-    C -->|JWT /api/customer/*| SEC
-    A -->|JWT /api/admin/*| SEC
-    P -->|Public /api/pump/*| API
+    C -->|JWT /api/customer/v1/*| SEC
+    A -->|JWT /api/admin/v1/*| SEC
+    P -->|Public /api/pump-rep/v1/*| API
     SEC --> API
     API --> PG
     SCHED --> PG
@@ -54,13 +54,16 @@ This project is a **fully functional** fuel quota management system implementing
 - ✅ **Security** - JWT authentication with role-based access control
 - ✅ **Scheduled Jobs** - Automatic quota reset based on configurable period
 - ✅ **Driver-Only Registration** - Users can register without owning vehicles
-- ✅ **Quota by Registration Code** - Different quota limits per vehicle category
+- ✅ **Quota Config Sets** - Group multiple registration codes into shared quota sets (e.g. GA/KHA/BHA → 30L/week)
+- ✅ **Bulk Quota Sync** - Push config-set limits to all non-individually-overridden vehicles with one action
+- ✅ **Custom Quota Marker** - Vehicles with admin-overridden quotas are visually flagged and excluded from sync
 - ✅ **Driver Assignment** - Vehicle owners can assign drivers with full authorization
 
 ### Core Business Logic (Per BRD Requirements)
 
 - ✅ **Configurable Quota** - Flexible limit enforcement per vehicle (default 24L weekly)
-- ✅ **Registration-Code-Specific Quotas** - Different limits per vehicle category (LA = 20L DAILY, GA = 30L WEEKLY)
+- ✅ **Quota Config Sets** - Group vehicle registration codes (GA, KHA, BHA…) into named sets with a shared limit and period
+- ✅ **Custom Quota Override** - Admin can individually adjust a vehicle's limit; it is then excluded from bulk sync operations
 - ✅ **QR Code Authentication** - Encrypted JWT tokens with 1-hour expiration
 - ✅ **GPS Geofencing** - Location-based validation for authorized stations
 - ✅ **Partial Dispense Support** - Smart authorization when requested > remaining quota
@@ -85,7 +88,8 @@ This project is a **fully functional** fuel quota management system implementing
 - **Vehicle Management** - Approve, reject, or suspend vehicle registrations
 - **Fuel Station Management** - CRUD operations with GPS coordinate validation
 - **Quota Administration** - Adjust limits, manual resets, and bulk operations
-- **Quota Config by Registration Code** - Set different quota limits per vehicle category (LA = 20L DAILY, GA = 30L WEEKLY, etc.)
+- **Quota Config Sets** - Create named sets grouping multiple registration codes with a shared fuel limit and period
+- **Bulk Quota Sync** - One-click sync of config-set limits to all eligible vehicles (skips individually overridden quotas)
 - **Analytics & Reporting** - Usage charts, transaction trends, and system metrics
 - **Audit Log Viewer** - Searchable, filterable administrative action history
 
@@ -179,46 +183,73 @@ spring:
 
 ## 🔧 API Endpoints
 
+All REST endpoints are versioned under `/api/{role}/v1/`.
+
 ### Authentication
 ```
-POST /api/auth/customer/login     - Customer login
-POST /api/auth/admin/login        - Admin login  
-POST /api/auth/customer/register  - Vehicle registration
+POST /api/auth/v1/customer/login     - Customer login
+POST /api/auth/v1/admin/login        - Admin login
+POST /api/auth/v1/customer/register  - Vehicle registration
+POST /api/auth/v1/customer/send-otp  - Send OTP for mobile verification
 ```
 
-### Customer API (JWT Required)
+### Customer API (`/api/customer/v1/`, JWT Required)
 ```
-GET  /api/customer/vehicles                    - List own vehicles
-POST /api/customer/vehicles                    - Add new vehicle
-GET  /api/customer/vehicles-as-driver          - List vehicles where user is driver
-POST /api/customer/vehicles/{id}/driver        - Assign driver to vehicle
-DELETE /api/customer/vehicles/{id}/driver      - Remove driver from vehicle
-GET  /api/customer/quota                       - Get quota status  
-GET  /api/customer/qr-code                     - Generate QR token
-POST /api/customer/qr-code/regenerate          - Regenerate QR
-GET  /api/customer/transactions                - Transaction history
-```
-
-### Pump Representative API (Public — Core BRD)
-```
-POST /api/pump/login              - Employee ID login → session details ⭐
-POST /api/pump/authorize          - Authorize via QR token ⭐
-POST /api/pump/authorize-manual   - Authorize via registration number ⭐
-POST /api/pump/confirm            - Confirm fuel dispensed ⭐
-GET  /api/pump/health             - API health check
+GET    /api/customer/v1/vehicles                       - List own vehicles
+POST   /api/customer/v1/vehicles                       - Add new vehicle
+GET    /api/customer/v1/vehicles-as-driver             - List vehicles where user is driver
+POST   /api/customer/v1/vehicles/{id}/driver           - Assign driver to vehicle
+DELETE /api/customer/v1/vehicles/{id}/driver           - Remove driver from vehicle
+GET    /api/customer/v1/quota                          - Get quota status
+GET    /api/customer/v1/vehicles/{id}/qr-code          - Generate QR token for vehicle
+POST   /api/customer/v1/vehicles/{id}/qr-code/regenerate - Regenerate QR
+GET    /api/customer/v1/transactions                   - Transaction history
+POST   /api/customer/v1/vehicles/claim                 - Submit ownership claim
+GET    /api/customer/v1/vehicles/claims                - List own claims
 ```
 
-### Admin API (JWT + Admin Role Required)
+### Pump Representative API (`/api/pump-rep/v1/`, Public — Core BRD)
 ```
-GET    /api/admin/vehicles                       - List vehicles (paginated)
-PUT    /api/admin/vehicles/{id}/reverify         - Re-verify vehicle
-GET    /api/admin/stations                       - List fuel stations
-POST   /api/admin/stations                       - Create station
-GET    /api/admin/quota-config-by-code           - List quota configs by registration code
-POST   /api/admin/quota-config-by-code           - Create quota config for registration code
-PUT    /api/admin/quota-config-by-code/{id}      - Update quota config
-DELETE /api/admin/quota-config-by-code/{id}      - Delete quota config
-GET    /api/admin/stats                          - Dashboard statistics
+POST /api/pump-rep/v1/login              - Employee ID login → session details ⭐
+POST /api/pump-rep/v1/authorize          - Authorize via QR token ⭐
+POST /api/pump-rep/v1/authorize-manual   - Authorize via registration number ⭐
+POST /api/pump-rep/v1/confirm            - Confirm fuel dispensed ⭐
+```
+
+### Admin API (`/api/admin/v1/`, JWT + Admin Role Required)
+```
+GET    /api/admin/v1/stats                        - Dashboard statistics
+GET    /api/admin/v1/vehicles                     - List vehicles (paginated)
+PUT    /api/admin/v1/vehicles/{id}/reverify        - Re-verify vehicle
+GET    /api/admin/v1/vehicle-claims               - List ownership claims
+PUT    /api/admin/v1/vehicle-claims/{id}/approve  - Approve claim
+PUT    /api/admin/v1/vehicle-claims/{id}/reject   - Reject claim
+GET    /api/admin/v1/stations                     - List fuel stations
+POST   /api/admin/v1/stations                     - Create station
+PUT    /api/admin/v1/stations/{id}                - Update station
+DELETE /api/admin/v1/stations/{id}                - Delete station
+GET    /api/admin/v1/pump-representatives         - List pump reps
+POST   /api/admin/v1/pump-representatives         - Create pump rep
+PUT    /api/admin/v1/pump-representatives/{id}    - Update pump rep
+GET    /api/admin/v1/quotas                       - List all quotas (paginated)
+PUT    /api/admin/v1/quotas/{vehicleId}/adjust    - Adjust individual quota (marks as overridden)
+POST   /api/admin/v1/quotas/{vehicleId}/reset     - Reset individual quota
+POST   /api/admin/v1/quotas/bulk-reset            - Bulk reset all quotas
+GET    /api/admin/v1/quota-config                 - Get global quota configuration
+PUT    /api/admin/v1/quota-config                 - Update global quota configuration
+GET    /api/admin/v1/quota-config-sets            - List all quota config sets
+POST   /api/admin/v1/quota-config-sets            - Create quota config set
+PUT    /api/admin/v1/quota-config-sets/{id}       - Update quota config set
+DELETE /api/admin/v1/quota-config-sets/{id}       - Delete quota config set
+POST   /api/admin/v1/quota-config/sync            - Sync config set limits to vehicles
+GET    /api/admin/v1/audit-logs                   - Audit log (paginated)
+GET    /api/admin/v1/transactions                 - All transactions (paginated)
+```
+
+### Public Reference Data (`/api/public/v1/`, No Auth)
+```
+GET /api/public/v1/registration-codes  - Vehicle registration codes
+GET /api/public/v1/brta-offices        - BRTA regional office codes
 ```
 
 ## 🔄 Core Business Process Flow
@@ -309,25 +340,41 @@ automated-fuel-quota/
 │   └── USER_JOURNEY.md           # User journey maps (all actor types)
 ├── src/main/java/io/github/eendroroy/fuelquota/
 │   ├── config/          # Security, OpenAPI, DataInitializer
-│   ├── controller/      # REST controllers (Auth, Customer, Admin, Pump)
-│   ├── dto/             # Request/Response DTOs
-│   ├── entity/          # JPA entities
+│   ├── controller/
+│   │   └── v1/
+│   │       ├── admin/   # V1AdminDashboardController, V1AdminVehicleController,
+│   │       │            # V1AdminQuotaController, V1AdminStationController,
+│   │       │            # V1AdminPumpRepController, V1AdminAuditController,
+│   │       │            # V1AdminTransactionController
+│   │       ├── customer/ # V1CustomerController
+│   │       ├── pump/     # V1PumpRepController
+│   │       ├── auth/     # V1AuthController
+│   │       └── pub/      # V1ReferenceDataController
+│   ├── dto/             # Request/Response DTOs (incl. QuotaConfigSetRequest/Response)
+│   ├── entity/          # JPA entities (incl. QuotaConfigSet, Quota.individuallyOverridden)
 │   ├── enums/           # Domain enumerations
 │   ├── exception/       # Global exception handling
-│   ├── repository/      # JPA repositories (with Specification support)
+│   ├── repository/      # JPA repositories
 │   ├── security/        # JWT provider and filter
-│   └── service/         # Business logic layer
+│   └── service/         # Business logic (incl. QuotaConfigSetService, QuotaService.syncQuotaConfigs)
 ├── src/main/resources/
 │   ├── application.yaml # Application configuration
 │   └── static/          # Frontend build output (served by Spring Boot)
 ├── frontend/            # React 18 / TypeScript SPA
 │   └── src/
-│       ├── api/         # Axios API clients (axiosInstance + pumpApi)
+│       ├── api/         # Versioned Axios API clients
+│       │   ├── authApi.ts            # /auth/v1/**
+│       │   ├── vehicleApi.ts         # /customer/v1/**, /admin/v1/vehicles/**
+│       │   ├── quotaApi.ts           # /customer/v1/quota, /admin/v1/quotas/**
+│       │   ├── quotaConfigApi.ts     # /admin/v1/quota-config, /quota-config-sets/**, sync
+│       │   ├── stationApi.ts         # /admin/v1/stations/**
+│       │   ├── pumpApi.ts            # /pump-rep/v1/**
+│       │   └── ...
 │       ├── components/  # Reusable UI components
 │       ├── layouts/     # PublicLayout, CustomerLayout, AdminLayout, PumpRepLayout
 │       ├── pages/
 │       │   ├── customer/    # Customer portal pages
-│       │   ├── admin/       # Admin portal pages
+│       │   ├── admin/       # Admin portal pages (incl. unified AdminQuotaConfigPage)
 │       │   └── pump/        # Pump rep portal (Login, Scan, Dispense)
 │       └── types/           # Shared TypeScript interfaces
 └── AGENTS.md            # AI coding agent guide

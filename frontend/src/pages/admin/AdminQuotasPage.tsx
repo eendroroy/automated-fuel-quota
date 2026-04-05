@@ -236,11 +236,16 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
                     isLowQuota ? 'bg-red-50/30' : ''
                   }`}>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-mono font-semibold text-brand-700">{q.registrationNumber}</p>
                         {isLowQuota && (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
                             Low
+                          </span>
+                        )}
+                        {q.individuallyOverridden && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">
+                            Custom
                           </span>
                         )}
                       </div>

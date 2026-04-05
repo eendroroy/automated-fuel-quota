@@ -3,12 +3,12 @@ import type { Transaction, PagedResponse } from '@/types'
 
 export const getMyTransactions = (params: { page?: number; size?: number }) =>
   axiosInstance
-    .get<PagedResponse<Transaction>>('/customer/transactions', { params })
+    .get<PagedResponse<Transaction>>('/customer/v1/transactions', { params })
     .then((r) => r.data)
 
 export const getVehicleTransactions = (vehicleId: string, params: { page?: number; size?: number }) =>
   axiosInstance
-    .get<PagedResponse<Transaction>>(`/customer/vehicles/${vehicleId}/transactions`, { params })
+    .get<PagedResponse<Transaction>>(`/customer/v1/vehicles/${vehicleId}/transactions`, { params })
     .then((r) => r.data)
 
 export const getAllTransactions = (params: {
@@ -20,6 +20,5 @@ export const getAllTransactions = (params: {
   endDate?: string
 }) =>
   axiosInstance
-    .get<PagedResponse<Transaction>>('/admin/transactions', { params })
+    .get<PagedResponse<Transaction>>('/admin/v1/transactions', { params })
     .then((r) => r.data)
-

@@ -8,17 +8,16 @@ export const getAllStations = (params?: {
   search?: string;
   district?: string;
 }) =>
-  axiosInstance.get<PagedResponse<FuelStation>>('/admin/stations', { params }).then((r) => r.data)
+  axiosInstance.get<PagedResponse<FuelStation>>('/admin/v1/stations', { params }).then((r) => r.data)
 
 export const getStation = (id: string) =>
-  axiosInstance.get<FuelStation>(`/admin/stations/${id}`).then((r) => r.data)
+  axiosInstance.get<FuelStation>(`/admin/v1/stations/${id}`).then((r) => r.data)
 
 export const createStation = (data: StationFormData) =>
-  axiosInstance.post<FuelStation>('/admin/stations', data).then((r) => r.data)
+  axiosInstance.post<FuelStation>('/admin/v1/stations', data).then((r) => r.data)
 
 export const updateStation = (id: string, data: Partial<StationFormData>) =>
-  axiosInstance.put<FuelStation>(`/admin/stations/${id}`, data).then((r) => r.data)
+  axiosInstance.put<FuelStation>(`/admin/v1/stations/${id}`, data).then((r) => r.data)
 
 export const deleteStation = (id: string) =>
-  axiosInstance.delete(`/admin/stations/${id}`).then((r) => r.data)
-
+  axiosInstance.delete(`/admin/v1/stations/${id}`).then((r) => r.data)

@@ -42,6 +42,8 @@ export interface Vehicle {
   registrationDate: string
   status: VehicleStatus
   createdAt: string
+  /** True when the vehicle has an individually admin-overridden quota not managed by config sets */
+  customQuotaConfig?: boolean
 }
 
 export interface RegisterVehicleRequest {
@@ -113,6 +115,8 @@ export interface Quota {
   resetTimestamp: string
   lastTransactionTimestamp: string | null
   status: QuotaStatus
+  /** True when an admin manually adjusted this quota — excluded from bulk sync */
+  individuallyOverridden?: boolean
 }
 
 export interface QuotaAdjustRequest {
@@ -261,23 +265,30 @@ export interface QuotaConfigUpdateRequest {
   description?: string
 }
 
-// ─── Quota Config by Registration Code ──────────────────────────────────────
-export interface QuotaConfigByRegistrationCode {
+// ─── Quota Config Sets ────────────────────────────────────────────────────────
+export interface RegistrationCodeInfo {
+  code: string
+  description: string
+}
+
+export interface QuotaConfigSet {
   id: string
-  registrationCode: string
-  registrationCodeDescription: string | null
+  name: string
   limitLitres: number
   quotaPeriod: QuotaPeriod
   description: string | null
+  registrationCodes: string[]
+  registrationCodeDetails: RegistrationCodeInfo[]
   createdAt: string
   updatedAt: string
 }
 
-export interface QuotaConfigByRegistrationCodeRequest {
-  registrationCode: string
+export interface QuotaConfigSetRequest {
+  name: string
   limitLitres: number
   quotaPeriod: QuotaPeriod
   description?: string
+  registrationCodes: string[]
 }
 
 // ─── Driver Assignment ───────────────────────────────────────────────────────

@@ -32,6 +32,7 @@ public class QuotaMapper {
                 .resetTimestamp(quota.getResetTimestamp())
                 .lastTransactionTimestamp(quota.getLastTransactionTimestamp())
                 .status(quota.getStatus().name())
+                .individuallyOverridden(quota.isIndividuallyOverridden())
                 .build();
     }
 }

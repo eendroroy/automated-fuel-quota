@@ -115,5 +115,12 @@ public class VehicleResponse implements Serializable {
     /** Timestamp when the vehicle record was first created. */
     @Schema(description = "Record creation timestamp")
     private LocalDateTime createdAt;
+
+    /**
+     * {@code true} when the vehicle's quota has been individually overridden
+     * by an admin and does not reflect the system-wide registration-code config.
+     */
+    @Schema(description = "Whether the vehicle has an individually overridden quota (not managed by config sets)")
+    private boolean customQuotaConfig;
 }
 

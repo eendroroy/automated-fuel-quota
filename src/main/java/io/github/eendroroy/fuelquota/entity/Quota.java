@@ -92,6 +92,14 @@ public class Quota implements Serializable {
     private QuotaStatus status = QuotaStatus.ACTIVE;
 
     /**
+     * Indicates that this quota was individually overridden by an admin
+     * (limit differs from the matching registration-code config set).
+     * Vehicles with this flag set are excluded from bulk sync operations.
+     */
+    @Column(name = "individually_overridden", nullable = false)
+    private boolean individuallyOverridden = false;
+
+    /**
      * JPA optimistic-locking version counter.
      * Prevents concurrent transactions from double-decrementing the quota.
      */

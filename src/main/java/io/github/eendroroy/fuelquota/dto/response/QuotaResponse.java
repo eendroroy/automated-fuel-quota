@@ -71,4 +71,8 @@ public class QuotaResponse {
     /** Operational status of the quota: {@code ACTIVE}, {@code SUSPENDED}, or {@code EXPIRED}. */
     @Schema(description = "Quota status: ACTIVE, SUSPENDED, or EXPIRED", example = "ACTIVE")
     private String status;
+
+    /** True when an admin manually adjusted this quota — excluded from bulk config-set sync. */
+    @Schema(description = "Whether this quota was individually overridden by an admin")
+    private boolean individuallyOverridden;
 }

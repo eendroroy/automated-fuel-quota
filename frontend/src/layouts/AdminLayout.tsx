@@ -23,7 +23,6 @@ export default function AdminLayout() {
     { to: '/admin/stations', icon: MapPin, label: t('adminNav.fuelStations') },
     { to: '/admin/quotas', icon: Droplets, label: t('adminNav.quotaManagement') },
     { to: '/admin/quota-config', icon: Settings, label: t('adminNav.quotaConfig') },
-    { to: '/admin/quota-config-by-code', icon: Settings, label: t('adminNav.quotaByCode') },
     { to: '/admin/pump-reps', icon: Users, label: t('adminNav.pumpRepresentatives') },
     { to: '/admin/audit-logs', icon: ClipboardList, label: t('adminNav.auditLogs') },
   ]

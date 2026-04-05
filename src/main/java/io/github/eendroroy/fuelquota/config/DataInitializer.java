@@ -34,6 +34,7 @@ public class DataInitializer {
                                    TransactionRepository transactionRepository,
                                    AuditLogRepository auditLogRepository,
                                    QuotaConfigByRegistrationCodeRepository quotaConfigByRegistrationCodeRepository,
+                                   QuotaConfigSetRepository quotaConfigSetRepository,
                                    VehicleClaimRepository vehicleClaimRepository,
                                    PasswordEncoder passwordEncoder) {
         return args -> {
@@ -119,10 +120,10 @@ public class DataInitializer {
                 }
             }
 
-            // ── 9. Quota configs by registration code ───────────────────────────
-            if (quotaConfigByRegistrationCodeRepository.count() == 0) {
-                seedQuotaConfigByRegistrationCode(quotaConfigByRegistrationCodeRepository, registrationCodeRepository);
-                logger.info("Seeded QuotaConfigByRegistrationCode");
+            // ── 9. Quota config sets (new merged quota config) ──────────────────
+            if (quotaConfigSetRepository.count() == 0) {
+                seedQuotaConfigSets(quotaConfigSetRepository);
+                logger.info("Seeded QuotaConfigSets");
             }
 
             // ── 10. Vehicle claims ─────────────────────────────────────────────
@@ -763,30 +764,38 @@ public class DataInitializer {
     }
 
     // ── QuotaConfigByRegistrationCode Seeder ─────────────────────────────
-    private void seedQuotaConfigByRegistrationCode(
-            QuotaConfigByRegistrationCodeRepository repo,
-            RegistrationCodeRepository regCodeRepo) {
-        if (repo.count() == 0) {
-            repo.save(QuotaConfigByRegistrationCode.builder()
-                    .registrationCode("GA")
-                    .limitLitres(new BigDecimal("30.00"))
-                    .quotaPeriod(QuotaPeriod.WEEKLY)
-                    .description("Private Cars (1301 to 2000 cc) - 30L/week")
-                    .build());
-            repo.save(QuotaConfigByRegistrationCode.builder()
-                    .registrationCode("LA")
-                    .limitLitres(new BigDecimal("20.00"))
-                    .quotaPeriod(QuotaPeriod.DAILY)
-                    .description("Motorcycles (126 to 165 cc) - 20L/day")
-                    .build());
-            repo.save(QuotaConfigByRegistrationCode.builder()
-                    .registrationCode("KHA")
-                    .limitLitres(new BigDecimal("50.00"))
-                    .quotaPeriod(QuotaPeriod.MONTHLY)
-                    .description("Private Cars (1001 to 1300 cc) - 50L/month")
-                    .build());
-            logger.info("Seeded 3 QuotaConfigByRegistrationCode records");
-        }
+    private void seedQuotaConfigSets(QuotaConfigSetRepository repo) {
+        // Private Cars group: GA, KHA, BHA
+        QuotaConfigSet privateCars = QuotaConfigSet.builder()
+                .name("Private Cars")
+                .limitLitres(new BigDecimal("30.00"))
+                .quotaPeriod(QuotaPeriod.WEEKLY)
+                .description("Standard private cars (all displacements) — 30L/week")
+                .registrationCodes(List.of("GA", "KHA", "BHA"))
+                .build();
+        repo.save(privateCars);
+
+        // Motorcycles group: A, HA, LA
+        QuotaConfigSet motorcycles = QuotaConfigSet.builder()
+                .name("Motorcycles")
+                .limitLitres(new BigDecimal("10.00"))
+                .quotaPeriod(QuotaPeriod.DAILY)
+                .description("All motorcycle categories — 10L/day")
+                .registrationCodes(List.of("A", "HA", "LA"))
+                .build();
+        repo.save(motorcycles);
+
+        // Commercial Vehicles group: JA, BA, TA, MA
+        QuotaConfigSet commercial = QuotaConfigSet.builder()
+                .name("Commercial Vehicles")
+                .limitLitres(new BigDecimal("100.00"))
+                .quotaPeriod(QuotaPeriod.WEEKLY)
+                .description("Buses and trucks — 100L/week")
+                .registrationCodes(List.of("JA", "BA", "TA", "MA"))
+                .build();
+        repo.save(commercial);
+
+        logger.info("Seeded 3 QuotaConfigSet records (Private Cars, Motorcycles, Commercial Vehicles)");
     }
 
     // ── Vehicle Claims Seeder ────────────────────────────────────────────

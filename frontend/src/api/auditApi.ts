@@ -9,6 +9,6 @@ export const getAuditLogs = (params?: {
   endDate?: string
 }) =>
   axiosInstance
-    .get<PagedResponse<AuditLog>>('/admin/audit-logs', { params })
+    .get<PagedResponse<AuditLog>>('/admin/v1/audit-logs', { params })
     .then((r) => r.data)
 

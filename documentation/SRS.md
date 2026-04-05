@@ -1,10 +1,10 @@
 # Software Requirements Specification (SRS)
 ## Automated Fuel Quota Management System
 
-**Document Version:** 2.3  
-**Date:** 2026-04-04  
+**Document Version:** 2.4  
+**Date:** 2026-04-05  
 **Status:** Approved  
-**Based on:** BRD v2.3 (includes Driver Assignment, Driver-Only Registration, Quota by Registration Code)
+**Based on:** BRD v2.4 (includes Versioned API Groups, Quota Config Sets, Custom Quota Marker, Bulk Sync)
 
 ---
 
@@ -94,6 +94,7 @@ FuelStation (1) ──── (*) Transaction
 FuelStation (1) ──── (*) PumpRepresentative
 User (1) ──────────── (*) VehicleClaim (claimant)
 Vehicle (1) ─────────── (*) VehicleClaim (subject)
+QuotaConfigSet (1) ── (*) registrationCodes (element collection)
 ```
 
 ### 3.2 Entity Descriptions
@@ -189,45 +190,46 @@ Vehicle (1) ─────────── (*) VehicleClaim (subject)
 
 ## 4. API Specification
 
+All REST endpoints follow the versioned URL scheme `/api/{role}/v1/`.
 
-### 4.1 Authentication Endpoints (Public)
+### 4.1 Authentication Endpoints (`/api/auth/v1/`, Public)
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/auth/customer/register` | Customer self-registration |
-| POST | `/api/auth/customer/login` | Customer login → JWT |
-| POST | `/api/auth/admin/login` | Admin login → JWT |
+| POST | `/api/auth/v1/customer/register` | Customer self-registration |
+| POST | `/api/auth/v1/customer/send-otp` | Send OTP to mobile |
+| POST | `/api/auth/v1/customer/login` | Customer login → JWT |
+| POST | `/api/auth/v1/admin/login` | Admin login → JWT |
 
-### 4.2 Customer Endpoints (JWT: CUSTOMER role)
+### 4.2 Customer Endpoints (`/api/customer/v1/`, JWT: CUSTOMER role)
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/customer/vehicles` | List own vehicles |
-| POST | `/api/customer/vehicles` | Add a new vehicle |
-| DELETE | `/api/customer/vehicles/{id}` | Deregister a vehicle |
-| GET | `/api/customer/vehicles-as-driver` | List vehicles where user is assigned as driver |
-| POST | `/api/customer/vehicles/{id}/driver` | Assign a driver to a vehicle by email |
-| DELETE | `/api/customer/vehicles/{id}/driver` | Remove assigned driver from a vehicle |
-| GET | `/api/customer/vehicles/{id}/qr-code` | Get QR token for specific vehicle (owner or driver) |
-| POST | `/api/customer/vehicles/{id}/qr-code/regenerate` | Regenerate QR token |
-| GET | `/api/customer/quota` | Get own quota status |
-| GET | `/api/customer/qr-code` | Get QR token (primary vehicle) |
-| POST | `/api/customer/qr-code/regenerate` | Regenerate QR (primary vehicle) |
-| GET | `/api/customer/transactions` | Paginated transaction history |
-| POST | `/api/customer/vehicles/claim` | Submit ownership claim |
-| GET | `/api/customer/vehicles/claims` | List own claims |
+| GET | `/api/customer/v1/vehicles` | List own vehicles |
+| POST | `/api/customer/v1/vehicles` | Add a new vehicle |
+| DELETE | `/api/customer/v1/vehicles/{id}` | Deregister a vehicle |
+| GET | `/api/customer/v1/vehicles-as-driver` | List vehicles where user is assigned as driver |
+| POST | `/api/customer/v1/vehicles/{id}/driver` | Assign a driver to a vehicle |
+| DELETE | `/api/customer/v1/vehicles/{id}/driver` | Remove assigned driver from a vehicle |
+| GET | `/api/customer/v1/vehicles/{id}/qr-code` | Get QR token for specific vehicle |
+| POST | `/api/customer/v1/vehicles/{id}/qr-code/regenerate` | Regenerate QR token |
+| GET | `/api/customer/v1/quota` | Get own quota status |
+| GET | `/api/customer/v1/qr-code` | Get QR token (primary vehicle) |
+| POST | `/api/customer/v1/qr-code/regenerate` | Regenerate QR (primary vehicle) |
+| GET | `/api/customer/v1/transactions` | Paginated transaction history |
+| POST | `/api/customer/v1/vehicles/claim` | Submit ownership claim |
+| GET | `/api/customer/v1/vehicles/claims` | List own claims |
 
-### 4.3 Pump Representative Endpoints (Public — Core BRD)
+### 4.3 Pump Representative Endpoints (`/api/pump-rep/v1/`, Public — Core BRD)
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/pump/login` | Pump rep login by employee ID → session details |
-| POST | `/api/pump/authorize` | Validate QR token + check eligibility + authorize litres |
-| POST | `/api/pump/authorize-manual` | Authorize by registration number (no QR token needed) |
-| POST | `/api/pump/confirm` | Record dispensed litres + update quota (qrToken optional) |
-| GET | `/api/pump/health` | API health check |
+| POST | `/api/pump-rep/v1/login` | Pump rep login by mobile number → session details |
+| POST | `/api/pump-rep/v1/authorize` | Validate QR token + check eligibility + authorize litres |
+| POST | `/api/pump-rep/v1/authorize-manual` | Authorize by registration number (no QR token needed) |
+| POST | `/api/pump-rep/v1/confirm` | Record dispensed litres + update quota |
 
-#### `POST /api/pump/login`
+#### `POST /api/pump-rep/v1/login`
 **Request:**
 ```json
-{ "employeeId": "EMP-001" }
+{ "mobileNumber": "01711123456" }
 ```
 **Response:**
 ```json
@@ -241,7 +243,7 @@ Vehicle (1) ─────────── (*) VehicleClaim (subject)
 }
 ```
 
-#### `POST /api/pump/authorize` and `POST /api/pump/authorize-manual`
+#### `POST /api/pump-rep/v1/authorize` and `POST /api/pump-rep/v1/authorize-manual`
 Both return the same `AuthorizationResponse` shape:
 ```json
 {
@@ -259,7 +261,7 @@ Both return the same `AuthorizationResponse` shape:
 }
 ```
 
-#### `POST /api/pump/confirm`
+#### `POST /api/pump-rep/v1/confirm`
 `qrToken` is **optional** — omit and supply `registrationNumber` for manual-path transactions:
 ```json
 {
@@ -272,39 +274,61 @@ Both return the same `AuthorizationResponse` shape:
 }
 ```
 
-### 4.4 Admin Endpoints (JWT: ADMIN role)
+### 4.4 Admin Endpoints (`/api/admin/v1/`, JWT: ADMIN role)
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/admin/vehicles` | List vehicles (paginated, filterable) |
-| PUT | `/api/admin/vehicles/{id}/reverify` | Trigger BRTA re-verification |
-| GET | `/api/admin/stations` | List fuel stations |
-| POST | `/api/admin/stations` | Create fuel station |
-| PUT | `/api/admin/stations/{id}` | Update fuel station |
-| DELETE | `/api/admin/stations/{id}` | Delete fuel station |
-| GET | `/api/admin/quotas` | List all quotas |
-| PUT | `/api/admin/quotas/{vehicleId}/adjust` | Adjust quota limit |
-| POST | `/api/admin/quotas/{vehicleId}/reset` | Manual quota reset |
-| GET | `/api/admin/quota-config` | Get global quota configuration |
-| PUT | `/api/admin/quota-config` | Update global quota configuration |
-| GET | `/api/admin/quota-config-by-code` | List quota configs by registration code |
-| POST | `/api/admin/quota-config-by-code` | Create quota config for registration code |
-| PUT | `/api/admin/quota-config-by-code/{id}` | Update quota config |
-| DELETE | `/api/admin/quota-config-by-code/{id}` | Delete quota config |
-| GET | `/api/admin/pump-representatives` | List pump representatives |
-| POST | `/api/admin/pump-representatives` | Create pump representative |
-| PUT | `/api/admin/pump-representatives/{id}` | Update pump representative |
-| DELETE | `/api/admin/pump-representatives/{id}` | Delete pump representative |
-| GET | `/api/admin/vehicle-claims` | List ownership claims |
-| PUT | `/api/admin/vehicle-claims/{id}/approve` | Approve ownership claim |
-| PUT | `/api/admin/vehicle-claims/{id}/reject` | Reject ownership claim |
-| GET | `/api/admin/audit-logs` | View audit logs |
-| GET | `/api/admin/stats` | Dashboard statistics |
+| GET | `/api/admin/v1/stats` | Dashboard statistics |
+| GET | `/api/admin/v1/vehicles` | List vehicles (paginated, filterable) |
+| PUT | `/api/admin/v1/vehicles/{id}/reverify` | Trigger BRTA re-verification |
+| GET | `/api/admin/v1/vehicle-claims` | List ownership claims |
+| PUT | `/api/admin/v1/vehicle-claims/{id}/approve` | Approve ownership claim |
+| PUT | `/api/admin/v1/vehicle-claims/{id}/reject` | Reject ownership claim |
+| GET | `/api/admin/v1/stations` | List fuel stations |
+| POST | `/api/admin/v1/stations` | Create fuel station |
+| PUT | `/api/admin/v1/stations/{id}` | Update fuel station |
+| DELETE | `/api/admin/v1/stations/{id}` | Delete fuel station |
+| GET | `/api/admin/v1/quotas` | List all quotas (includes `individuallyOverridden` flag) |
+| PUT | `/api/admin/v1/quotas/{vehicleId}/adjust` | Adjust quota limit (marks as individually overridden) |
+| POST | `/api/admin/v1/quotas/{vehicleId}/reset` | Manual quota reset |
+| POST | `/api/admin/v1/quotas/bulk-reset` | Bulk reset all quotas |
+| GET | `/api/admin/v1/quota-config` | Get global (fallback) quota configuration |
+| PUT | `/api/admin/v1/quota-config` | Update global quota configuration |
+| GET | `/api/admin/v1/quota-config-sets` | List all quota config sets |
+| POST | `/api/admin/v1/quota-config-sets` | Create quota config set |
+| PUT | `/api/admin/v1/quota-config-sets/{id}` | Update quota config set |
+| DELETE | `/api/admin/v1/quota-config-sets/{id}` | Delete quota config set |
+| POST | `/api/admin/v1/quota-config/sync` | Sync config set limits to all non-overridden vehicles |
+| GET | `/api/admin/v1/pump-representatives` | List pump representatives |
+| POST | `/api/admin/v1/pump-representatives` | Create pump representative |
+| PUT | `/api/admin/v1/pump-representatives/{id}` | Update pump representative |
+| DELETE | `/api/admin/v1/pump-representatives/{id}` | Delete pump representative |
+| GET | `/api/admin/v1/audit-logs` | View audit logs |
+| GET | `/api/admin/v1/transactions` | All transactions (paginated) |
 
-### 4.5 Public Reference Data Endpoints
+#### Quota Config Set — Request / Response
+```json
+// POST/PUT /api/admin/v1/quota-config-sets
+{
+  "name": "Private Cars",
+  "limitLitres": 30.0,
+  "quotaPeriod": "WEEKLY",
+  "description": "Quota for private automobile category",
+  "registrationCodes": ["GA", "KHA", "BHA"]
+}
+// Response includes id, registrationCodeDetails, createdAt, updatedAt
+```
+
+#### Quota Sync — Response
+```json
+// POST /api/admin/v1/quota-config/sync
+{ "message": "Quota sync completed", "updatedCount": 42 }
+```
+
+### 4.5 Public Reference Data Endpoints (`/api/public/v1/`, No Auth)
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/public/registration-codes` | List BRTA vehicle registration codes |
-| GET | `/api/public/brta-offices` | List BRTA office codes |
+| GET | `/api/public/v1/registration-codes` | List BRTA vehicle registration codes |
+| GET | `/api/public/v1/brta-offices` | List BRTA office codes |
 
 ---
 
@@ -355,11 +379,11 @@ Both return the same `AuthorizationResponse` shape:
 /transactions         → CustomerTransactionsPage
 /claims               → CustomerClaimsPage
 /admin/dashboard      → AdminDashboardPage (AdminLayout, ADMIN role)
-/admin/vehicles       → AdminVehiclesPage
+/admin/vehicles       → AdminVehiclesPage (shows customQuotaConfig badge)
 /admin/vehicle-claims → AdminVehicleClaimsPage
 /admin/stations       → AdminStationsPage
-/admin/quotas         → AdminQuotasPage
-/admin/quota-config   → AdminQuotaConfigPage
+/admin/quotas         → AdminQuotasPage (shows individuallyOverridden badge)
+/admin/quota-config   → AdminQuotaConfigPage (unified: config sets + global config + sync)
 /admin/pump-reps      → AdminPumpRepsPage
 /admin/audit-logs     → AdminAuditLogsPage
 /pump                 → PumpLoginPage     (PumpRepLayout, public)
@@ -387,8 +411,9 @@ Both return the same `AuthorizationResponse` shape:
 - Local component state for UI data (no global state library required).
 
 ### 8.5 API Client Pattern
-- `/api/pump/*` calls use a **separate Axios instance** (`pumpApi.ts`) with no JWT header — these are public endpoints.
+- `/api/pump-rep/v1/*` calls use a **separate Axios instance** (`pumpApi.ts`) with no JWT header — these are public endpoints.
 - All other API calls use the shared Axios instance with JWT header injection.
+- All endpoints use versioned paths: `/api/{role}/v1/`.
 
 ### 8.6 Pump API Module (`src/api/pumpApi.ts`)
 | Function | Endpoint | Notes |
