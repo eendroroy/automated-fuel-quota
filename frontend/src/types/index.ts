@@ -38,6 +38,8 @@ export interface Vehicle {
   vehicleColor: string
   vehicleClass: string
   fuelType: string
+  /** Secondary fuel types the vehicle can use (e.g. CNG for a petrol car) */
+  secondaryFuelTypes?: string[]
   engineDisplacement?: number
   registrationDate: string
   status: VehicleStatus
@@ -78,6 +80,7 @@ export interface AddVehicleRequest {
   vehicleMake: string
   vehicleColor: string
   fuelType: string
+  secondaryFuelTypes?: string[]
   engineDisplacement?: number
   registrationDate: string
 }
@@ -296,28 +299,6 @@ export interface AssignDriverRequest {
   driverMobile: string
 }
 
-// ─── Vehicle Claims ──────────────────────────────────────────────────────────
-export type ClaimStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
-
-export interface VehicleClaim {
-  id: string
-  vehicleId: string
-  registrationNumber: string
-  claimantUserId: string
-  claimantName: string
-  claimantNid: string
-  reason: string
-  status: ClaimStatus
-  adminNotes: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface ClaimVehicleRequest {
-  registrationNumber: string
-  claimantNid: string
-  reason: string
-}
 
 // ─── Generic ─────────────────────────────────────────────────────────────────
 export interface PagedResponse<T> {
@@ -386,5 +367,26 @@ export interface PumpConfirmResponse {
   remainingQuota: number
   timestamp: string
   message: string
+}
+
+// ─── User Management ──────────────────────────────────────────────────────────
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'INACTIVE'
+
+export interface AppUser {
+  id: string
+  name: string
+  mobileNumber: string
+  email: string | null
+  nid: string
+  role: UserRole
+  status: UserStatus
+  createdAt: string
+  lastLoginTimestamp: string | null
+  vehicleCount?: number
+}
+
+export interface UserStatusUpdateRequest {
+  status: UserStatus
+  reason?: string
 }
 

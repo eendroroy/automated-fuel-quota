@@ -137,8 +137,8 @@ const AdminStationsPage = memo(function AdminStationsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{t('adminStations.title')}</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{totalElements} {t('adminStations.noStations').replace('No ', '').replace(' found', '')}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('adminStations.title')}</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{totalElements} {t('adminStations.noStations').replace('No ', '').replace(' found', '')}</p>
       </div>
 
       {/* Enhanced Search and Filters */}
@@ -167,7 +167,7 @@ const AdminStationsPage = memo(function AdminStationsPage() {
             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
               showFilters || statusFilter || districtFilter
                 ? 'bg-brand-50 text-brand-700 border-brand-200'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             <Filter className="h-4 w-4" />
@@ -176,10 +176,10 @@ const AdminStationsPage = memo(function AdminStationsPage() {
         </div>
 
         {showFilters && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+          <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                 <select
                   className="input-field text-sm"
                   value={statusFilter}
@@ -192,7 +192,7 @@ const AdminStationsPage = memo(function AdminStationsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">District</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">District</label>
                 <select
                   className="input-field text-sm"
                   value={districtFilter}
@@ -217,13 +217,13 @@ const AdminStationsPage = memo(function AdminStationsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('adminStations.stationName')}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">{t('adminStations.stationCode')}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">{t('adminStations.district')}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">{t('adminStations.manager')}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('adminStations.status')}</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">{t('common.actions')}</th>
+              <tr className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-700">
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">{t('adminStations.stationName')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden sm:table-cell">{t('adminStations.stationCode')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden md:table-cell">{t('adminStations.district')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden lg:table-cell">{t('adminStations.manager')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">{t('adminStations.status')}</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -234,26 +234,26 @@ const AdminStationsPage = memo(function AdminStationsPage() {
                   {search || statusFilter || districtFilter ? 'No stations match your search criteria' : t('adminStations.noStations')}
                 </td></tr>
               ) : filteredStations.map((s) => (
-                <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                <tr key={s.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-brand-500 flex-shrink-0" />
                       <div>
-                        <p className="font-medium text-gray-900">{s.stationName}</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{s.stationName}</p>
                         <p className="text-xs text-gray-400">{s.latitude}, {s.longitude}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 hidden sm:table-cell font-mono text-xs text-gray-600">{s.stationCode}</td>
-                  <td className="px-4 py-3 hidden md:table-cell text-gray-600">{s.district}</td>
+                  <td className="px-4 py-3 hidden sm:table-cell font-mono text-xs text-gray-600 dark:text-gray-400">{s.stationCode}</td>
+                  <td className="px-4 py-3 hidden md:table-cell text-gray-600 dark:text-gray-400">{s.district}</td>
                   <td className="px-4 py-3 hidden lg:table-cell">
-                    <p className="text-gray-800">{s.managerName}</p>
+                    <p className="text-gray-800 dark:text-gray-200">{s.managerName}</p>
                     <p className="text-xs text-gray-400">{s.managerEmail}</p>
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={s.status} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1.5">
-                      <button onClick={() => openEdit(s)} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+                      <button onClick={() => openEdit(s)} className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button onClick={() => handleDelete(s)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors">

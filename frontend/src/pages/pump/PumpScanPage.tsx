@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode'
 import { MapPin, ScanLine, Loader2, AlertCircle, Keyboard } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -12,14 +13,13 @@ type Mode = 'scan' | 'manual'
 
 export default function PumpScanPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const session = getPumpSession()
   const scannerRef = useRef<Html5QrcodeScanner | null>(null)
   const [mode, setMode] = useState<Mode>('scan')
   const [scanning, setScanning] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Manual entry state
   const [regNumber, setRegNumber] = useState('')
   const [manualLoading, setManualLoading] = useState(false)
 
@@ -108,41 +108,41 @@ export default function PumpScanPage() {
   if (!session) return null
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Station info banner */}
-      <div className="flex items-center gap-3 bg-brand-50 border border-brand-200 rounded-xl px-4 py-3">
-        <MapPin className="h-5 w-5 text-brand-600 shrink-0" />
+      <div className="flex items-center gap-3 bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 rounded-xl px-4 py-3">
+        <MapPin className="h-5 w-5 text-brand-600 dark:text-brand-400 shrink-0" />
         <div className="min-w-0">
-          <p className="text-xs text-brand-500 font-medium">Logged in as</p>
-          <p className="text-sm font-semibold text-brand-800 truncate">
+          <p className="text-xs text-brand-500 dark:text-brand-400 font-medium">{t('pumpScan.loggedInAs')}</p>
+          <p className="text-sm font-semibold text-brand-800 dark:text-brand-200 truncate">
             {session.name} · {session.stationName}
           </p>
         </div>
       </div>
 
-      {/* Mode toggle tabs */}
-      <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+      {/* Mode toggle */}
+      <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 gap-1">
         <button
           onClick={() => { setMode('scan'); setError(null) }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all ${
             mode === 'scan'
-              ? 'bg-white text-brand-700 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white dark:bg-gray-700 text-brand-700 dark:text-brand-300 shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           }`}
         >
           <ScanLine className="h-4 w-4" />
-          Scan QR Code
+          {t('pumpScan.scanTab')}
         </button>
         <button
           onClick={() => { setMode('manual'); setError(null) }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-medium transition-all ${
             mode === 'manual'
-              ? 'bg-white text-brand-700 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white dark:bg-gray-700 text-brand-700 dark:text-brand-300 shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           }`}
         >
           <Keyboard className="h-4 w-4" />
-          Enter Manually
+          {t('pumpScan.manualTab')}
         </button>
       </div>
 
@@ -150,10 +150,8 @@ export default function PumpScanPage() {
       {mode === 'scan' && (
         <>
           <div className="text-center">
-            <h2 className="text-lg font-bold text-gray-900">Scan Customer QR Code</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Point the camera at the QR code from the customer's Fuel Quota app
-            </p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('pumpScan.scanQrTitle')}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('pumpScan.scanQrDesc')}</p>
           </div>
 
           <div className="rounded-xl overflow-hidden border-2 border-brand-200 bg-black relative">
@@ -167,9 +165,7 @@ export default function PumpScanPage() {
           </div>
 
           {scanning && !processing && (
-            <p className="text-center text-xs text-gray-400">
-              Waiting for QR code… Make sure camera permissions are granted.
-            </p>
+            <p className="text-center text-xs text-gray-400">{t('pumpDispense.waitingForQR')}</p>
           )}
         </>
       )}
@@ -178,43 +174,32 @@ export default function PumpScanPage() {
       {mode === 'manual' && (
         <>
           <div className="text-center">
-            <h2 className="text-lg font-bold text-gray-900">Enter Vehicle Number</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Type the registration number if the customer's QR code is unavailable
-            </p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('pumpScan.enterManualTitle')}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('pumpScan.enterManualDesc')}</p>
           </div>
 
           <form onSubmit={handleManualSubmit} className="card space-y-4">
             <div>
-              <label className="label" htmlFor="reg-number">
-                Registration Number
-              </label>
+              <label className="label" htmlFor="reg-number">{t('pumpScan.manualLabel')}</label>
               <input
                 id="reg-number"
                 type="text"
                 className="input-field text-center text-lg font-mono tracking-widest uppercase"
-                placeholder="e.g. DHK-KA-11-1234"
+                placeholder={t('pumpScan.manualPlaceholder')}
                 value={regNumber}
                 onChange={(e) => setRegNumber(e.target.value)}
                 autoFocus
                 autoComplete="off"
                 autoCapitalize="characters"
               />
-              <p className="text-xs text-gray-400 mt-1.5">
-                Enter the full registration number as printed on the vehicle
-              </p>
             </div>
             <button
               type="submit"
               disabled={!regNumber.trim() || manualLoading}
-              className="btn-primary w-full py-3 gap-2"
+              className="btn-primary w-full py-3.5 gap-2 text-base"
             >
-              {manualLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <ScanLine className="h-5 w-5" />
-              )}
-              {manualLoading ? 'Looking up vehicle…' : 'Verify & Continue'}
+              {manualLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ScanLine className="h-5 w-5" />}
+              {manualLoading ? t('pumpScan.lookingUp') : t('pumpScan.verifyBtn')}
             </button>
           </form>
         </>
@@ -222,7 +207,7 @@ export default function PumpScanPage() {
 
       {/* Error message (shared) */}
       {error && (
-        <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+        <div className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3 text-sm text-red-700 dark:text-red-400">
           <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
           <span>{error}</span>
         </div>

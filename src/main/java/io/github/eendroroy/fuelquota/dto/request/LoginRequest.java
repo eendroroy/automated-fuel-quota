@@ -2,7 +2,6 @@ package io.github.eendroroy.fuelquota.dto.request;
 
 import io.github.eendroroy.fuelquota.dto.response.AuthResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -42,13 +41,5 @@ public class LoginRequest {
     @Size(min = 8, message = "Password must be at least 8 characters")
     @Schema(description = "User's password (min 8 characters)", example = "securePass1!", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
-
-    /**
-     * Deprecated: Use {@link #mobileNumber} instead.
-     * Kept for backward compatibility during transition.
-     */
-    @Deprecated(since = "2.0", forRemoval = true)
-    @Transient
-    private String email;
 }
 

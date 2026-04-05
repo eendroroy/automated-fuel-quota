@@ -175,10 +175,10 @@ public class Quota implements Serializable {
         this.resetTimestamp = calculateNextResetTime(this.period);
     }
 
-    /** @deprecated Use {@link #resetQuota()} */
-    @Deprecated
-    public void resetWeeklyQuota() {
-        resetQuota();
+    /** Updates the limit and recomputes remaining when changed by admin. */
+    public void setLimitLiters(BigDecimal limitLiters) {
+        this.limitLiters = limitLiters;
+        this.remainingLiters = limitLiters.subtract(this.usedLiters);
     }
 
     /**
@@ -217,27 +217,6 @@ public class Quota implements Serializable {
         return requestedLiters.compareTo(remainingLiters) <= 0 ? requestedLiters : remainingLiters;
     }
 
-    /** Updates the limit and recomputes remaining when changed by admin. */
-    public void setLimitLiters(BigDecimal limitLiters) {
-        this.limitLiters = limitLiters;
-        this.remainingLiters = limitLiters.subtract(this.usedLiters);
-    }
-
-    /**
-     * @deprecated Use {@link #setLimitLiters(BigDecimal)}
-     */
-    @Deprecated
-    public void setWeeklyLimitLiters(BigDecimal limitLiters) {
-        setLimitLiters(limitLiters);
-    }
-
-    /**
-     * @deprecated Use {@link #getLimitLiters()}
-     */
-    @Deprecated
-    public BigDecimal getWeeklyLimitLiters() {
-        return limitLiters;
-    }
 
     // ── Internal helpers ──────────────────────────────────────────────────────
 

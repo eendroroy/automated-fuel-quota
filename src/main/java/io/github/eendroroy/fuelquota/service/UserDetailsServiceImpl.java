@@ -36,7 +36,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .password(user.getPassword())
                 .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
                 .accountExpired(!user.getEnabled())
-                .accountLocked(!user.getEnabled())
+                .accountLocked(user.getStatus() != null && user.getStatus() == User.UserStatus.SUSPENDED)
                 .credentialsExpired(false)
                 .disabled(!user.getEnabled())
                 .build();
@@ -52,7 +52,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .password(user.getPassword())
                 .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
                 .accountExpired(!user.getEnabled())
-                .accountLocked(!user.getEnabled())
+                .accountLocked(user.getStatus() != null && user.getStatus() == User.UserStatus.SUSPENDED)
                 .credentialsExpired(false)
                 .disabled(!user.getEnabled())
                 .build();

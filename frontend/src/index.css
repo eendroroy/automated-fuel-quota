@@ -45,5 +45,43 @@
   .label {
     @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
   }
+
+  /* ── Table helpers ── */
+  .table-header {
+    @apply bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-700;
+  }
+
+  .table-row {
+    @apply border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors;
+  }
+
+  .th {
+    @apply text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400;
+  }
+
+  /* ── Page layout helpers ── */
+  .page-title {
+    @apply text-2xl font-bold text-gray-900 dark:text-white;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-gray-500 dark:text-gray-400 mt-0.5;
+  }
+
+  .section-title {
+    @apply font-semibold text-gray-900 dark:text-white text-lg;
+  }
+
+  .filter-panel {
+    @apply bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4;
+  }
+
+  .info-banner {
+    @apply bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 text-sm text-blue-700 dark:text-blue-300;
+  }
+
+  .stat-pill {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 flex items-center gap-3;
+  }
 }
 

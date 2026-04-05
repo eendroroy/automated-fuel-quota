@@ -30,13 +30,13 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       {/* Dialog */}
       <div
-        className={`relative bg-white rounded-xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
+        className={`relative bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 rounded-lg p-1 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg p-1 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -46,4 +46,3 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
     </div>
   )
 }
-

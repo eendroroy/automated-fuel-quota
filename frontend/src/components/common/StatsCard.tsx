@@ -25,9 +25,9 @@ export default function StatsCard({
         <Icon className={`h-6 w-6 ${iconColor}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-500 font-medium truncate">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-0.5">{value}</p>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium truncate">{title}</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5">{value}</p>
+        {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{subtitle}</p>}
         {trend && (
           <p className={`text-xs font-medium mt-1 ${trend.value >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {trend.value >= 0 ? '↑' : '↓'} {Math.abs(trend.value)}% {trend.label}
@@ -37,4 +37,3 @@ export default function StatsCard({
     </div>
   )
 }
-

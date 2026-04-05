@@ -3,15 +3,12 @@ package io.github.eendroroy.fuelquota.controller.admin.v1;
 import io.github.eendroroy.fuelquota.config.OpenApiConfig;
 import io.github.eendroroy.fuelquota.dto.response.BrtaOfficeResponse;
 import io.github.eendroroy.fuelquota.dto.response.RegistrationCodeResponse;
-import io.github.eendroroy.fuelquota.dto.response.VehicleClaimResponse;
 import io.github.eendroroy.fuelquota.dto.response.VehicleResponse;
 import io.github.eendroroy.fuelquota.entity.AuditLog;
 import io.github.eendroroy.fuelquota.entity.Vehicle;
-import io.github.eendroroy.fuelquota.entity.VehicleClaim;
 import io.github.eendroroy.fuelquota.service.AuditLogService;
 import io.github.eendroroy.fuelquota.service.BrtaOfficeService;
 import io.github.eendroroy.fuelquota.service.RegistrationCodeService;
-import io.github.eendroroy.fuelquota.service.VehicleClaimService;
 import io.github.eendroroy.fuelquota.service.VehicleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,12 +31,11 @@ import java.util.UUID;
 @RequestMapping("/api/admin/v1")
 @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
-@Tag(name = "Admin v1 - Vehicles", description = "Vehicle and ownership claim management")
+@Tag(name = "Admin v1 - Vehicles", description = "Vehicle management and BRTA verification")
 @SecurityRequirement(name = OpenApiConfig.SECURITY_SCHEME_NAME)
 public class V1AdminVehicleController {
 
     private final VehicleService vehicleService;
-    private final VehicleClaimService vehicleClaimService;
     private final AuditLogService auditLogService;
     private final BrtaOfficeService brtaOfficeService;
     private final RegistrationCodeService registrationCodeService;
@@ -92,54 +88,4 @@ public class V1AdminVehicleController {
     public ResponseEntity<List<RegistrationCodeResponse>> getAllRegistrationCodes() {
         return ResponseEntity.ok(registrationCodeService.getAllCodes());
     }
-
-    // ── Vehicle Claims ────────────────────────────────────────────────────────
-
-    @GetMapping("/vehicle-claims")
-    @Operation(summary = "Get vehicle ownership claims")
-    public ResponseEntity<Page<VehicleClaimResponse>> getVehicleClaims(
-            @Parameter(description = "Filter by status: PENDING, APPROVED, REJECTED")
-            @RequestParam(required = false) String status,
-            @PageableDefault(size = 20) Pageable pageable) {
-        VehicleClaim.ClaimStatus statusEnum = null;
-        if (status != null && !status.isBlank()) {
-            statusEnum = VehicleClaim.ClaimStatus.valueOf(status);
-        }
-        return ResponseEntity.ok(vehicleClaimService.getAllClaims(statusEnum, pageable));
-    }
-
-    @PutMapping("/vehicle-claims/{claimId}/approve")
-    @Operation(summary = "Approve vehicle ownership claim")
-    public ResponseEntity<VehicleClaimResponse> approveVehicleClaim(
-            @PathVariable UUID claimId,
-            @RequestBody(required = false) Map<String, String> body,
-            HttpServletRequest request) {
-        String adminNotes = body != null ? body.get("adminNotes") : null;
-        VehicleClaimResponse claim = vehicleClaimService.approveClaim(claimId, adminNotes);
-        auditLogService.log(
-                (UUID) request.getAttribute("userId"),
-                (String) request.getAttribute("userName"),
-                AuditLog.AuditAction.VEHICLE_APPROVED,
-                "VehicleClaim", claimId.toString(),
-                null, Map.of("status", "APPROVED", "vehicle", claim.getRegistrationNumber()), adminNotes);
-        return ResponseEntity.ok(claim);
-    }
-
-    @PutMapping("/vehicle-claims/{claimId}/reject")
-    @Operation(summary = "Reject vehicle ownership claim")
-    public ResponseEntity<VehicleClaimResponse> rejectVehicleClaim(
-            @PathVariable UUID claimId,
-            @RequestBody Map<String, String> body,
-            HttpServletRequest request) {
-        String adminNotes = body != null ? body.get("adminNotes") : null;
-        VehicleClaimResponse claim = vehicleClaimService.rejectClaim(claimId, adminNotes);
-        auditLogService.log(
-                (UUID) request.getAttribute("userId"),
-                (String) request.getAttribute("userName"),
-                AuditLog.AuditAction.VEHICLE_REJECTED,
-                "VehicleClaim", claimId.toString(),
-                null, Map.of("status", "REJECTED", "vehicle", claim.getRegistrationNumber()), adminNotes);
-        return ResponseEntity.ok(claim);
-    }
 }
-

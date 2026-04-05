@@ -36,11 +36,11 @@ export default function AdminLoginPage() {
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center h-14 w-14 bg-gray-100 rounded-2xl mb-4">
-            <Shield className="h-7 w-7 text-gray-700" />
+          <div className="inline-flex items-center justify-center h-14 w-14 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-4">
+            <Shield className="h-7 w-7 text-gray-700 dark:text-gray-300" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('adminLogin.title')}</h1>
-          <p className="text-gray-500 text-sm mt-1">{t('adminLogin.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('adminLogin.title')}</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{t('adminLogin.subtitle')}</p>
         </div>
 
         <div className="card border-gray-200">
@@ -57,7 +57,7 @@ export default function AdminLoginPage() {
                   placeholder={t('adminLogin.passwordPlaceholder')} value={form.password}
                   onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} autoComplete="current-password" />
                 <button type="button" onClick={() => setShowPwd((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                   {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>

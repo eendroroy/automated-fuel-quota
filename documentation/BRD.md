@@ -207,7 +207,7 @@ Authorization requires all of the following:
 | FR-25 | Admin shall view and adjust individual vehicle quotas with a reason |
 | FR-26 | Admin shall manually reset an individual vehicle quota |
 | FR-27 | Admin shall configure global quota settings (limit, period, geofence radius, cron expression) |
-| FR-28 | Admin shall review, approve, and reject vehicle ownership claims |
+| FR-28 | Admin shall view, search, and manage user accounts (suspend/activate customers and admins) |
 | FR-29 | Admin shall view a searchable, filterable audit log of all administrative actions |
 | FR-30 | Admin shall view dashboard statistics and analytics charts |
 
@@ -271,7 +271,7 @@ Authorization requires all of the following:
 | ATS-05 | Invalid/expired QR | `DENIED`, reason = invalid token |
 | ATS-06 | Quota reset | After scheduled reset: used = 0, remaining = limit |
 | ATS-07 | Idempotent confirm | Second confirm with same QR token: 400 error, no deduction |
-| ATS-08 | Vehicle claim approval | Vehicle transfers to claimant; NID, name, email updated |
+| ATS-08 | Second-hand vehicle add — BRTA passes | Vehicle transfers to new customer; old quota deleted, new quota created |
 | ATS-09 | New registration | Vehicle auto-VERIFIED; quota created as ACTIVE |
 | ATS-10 | Pump rep login — valid employee ID | 200 response with rep details and station info |
 | ATS-11 | Pump rep login — invalid employee ID | 400 error |
@@ -290,7 +290,7 @@ Authorization requires all of the following:
 | BR-3 Partial Dispense | FR-15, FR-18 | UC-15, UC-17 | — |
 | BR-4 Scheduled Reset | FR-31 | UC-31 | [Quota States](diagrams/07-state-diagrams.md) |
 | BR-5 Eligibility Checks | FR-13, FR-14 | UC-12, UC-13 | [Vehicle States](diagrams/07-state-diagrams.md) |
-| BR-6 Ownership Transfer | FR-09, FR-28 | UC-09, UC-28 | [Claim States](diagrams/07-state-diagrams.md) |
+| BR-6 Ownership Transfer  | FR-09 | UC-09 | [Vehicle States](diagrams/07-state-diagrams.md) |
 | BR-7 Vehicle Registration | FR-01, FR-04 | UC-01, UC-04 | [Vehicle States](diagrams/07-state-diagrams.md) |
 | BR-8 Rep Login | FR-11 | UC-11 | [Rep States](diagrams/07-state-diagrams.md) |
 | BR-9 Manual Authorization | FR-14, FR-18 | UC-13, UC-17 | — |

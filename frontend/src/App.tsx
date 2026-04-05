@@ -20,7 +20,6 @@ import CustomerDashboardPage from '@/pages/customer/CustomerDashboardPage'
 import CustomerQRCodePage from '@/pages/customer/CustomerQRCodePage'
 import CustomerTransactionsPage from '@/pages/customer/CustomerTransactionsPage'
 import CustomerVehiclesPage from '@/pages/customer/CustomerVehiclesPage'
-import CustomerClaimsPage from '@/pages/customer/CustomerClaimsPage'
 
 // Admin Pages
 import AdminLoginPage from '@/pages/admin/AdminLoginPage'
@@ -31,7 +30,7 @@ import AdminQuotasPage from '@/pages/admin/AdminQuotasPage'
 import AdminQuotaConfigPage from '@/pages/admin/AdminQuotaConfigPage'
 import AdminPumpRepsPage from '@/pages/admin/AdminPumpRepsPage'
 import AdminAuditLogsPage from '@/pages/admin/AdminAuditLogsPage'
-import AdminVehicleClaimsPage from '@/pages/admin/AdminVehicleClaimsPage'
+import AdminUsersPage from '@/pages/admin/AdminUsersPage'
 
 // Pump Rep Pages
 import PumpLoginPage from '@/pages/pump/PumpLoginPage'
@@ -54,7 +53,6 @@ export default function App() {
         <Route path="/" element={<CustomerLayout />}>
             <Route path="dashboard" element={<CustomerDashboardPage />} />
             <Route path="vehicles" element={<CustomerVehiclesPage />} />
-            <Route path="claims" element={<CustomerClaimsPage />} />
             <Route path="qr-code" element={<CustomerQRCodePage />} />
             <Route path="transactions" element={<CustomerTransactionsPage />} />
           </Route>
@@ -66,11 +64,11 @@ export default function App() {
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="vehicles" element={<AdminVehiclesPage />} />
-          <Route path="vehicle-claims" element={<AdminVehicleClaimsPage />} />
           <Route path="stations" element={<AdminStationsPage />} />
           <Route path="quotas" element={<AdminQuotasPage />} />
           <Route path="quota-config" element={<AdminQuotaConfigPage />} />
           <Route path="pump-reps" element={<AdminPumpRepsPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
           <Route path="audit-logs" element={<AdminAuditLogsPage />} />
         </Route>
       </Route>

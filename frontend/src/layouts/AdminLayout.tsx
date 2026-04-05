@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Fuel, LayoutDashboard, Car, MapPin, Droplets, Users, ClipboardList,
-  LogOut, Menu, ChevronRight, Settings, FileCheck,
+  LogOut, Menu, ChevronRight, Settings, UserCog,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useTranslation } from 'react-i18next'
@@ -19,11 +19,11 @@ export default function AdminLayout() {
   const navItems = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: t('adminNav.dashboard') },
     { to: '/admin/vehicles', icon: Car, label: t('adminNav.vehicles') },
-    { to: '/admin/vehicle-claims', icon: FileCheck, label: t('adminNav.ownershipClaims') },
     { to: '/admin/stations', icon: MapPin, label: t('adminNav.fuelStations') },
     { to: '/admin/quotas', icon: Droplets, label: t('adminNav.quotaManagement') },
     { to: '/admin/quota-config', icon: Settings, label: t('adminNav.quotaConfig') },
     { to: '/admin/pump-reps', icon: Users, label: t('adminNav.pumpRepresentatives') },
+    { to: '/admin/users', icon: UserCog, label: t('adminNav.userManagement') },
     { to: '/admin/audit-logs', icon: ClipboardList, label: t('adminNav.auditLogs') },
   ]
 
@@ -95,7 +95,7 @@ export default function AdminLayout() {
   )
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-950 overflow-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:flex-col w-64 bg-gray-800 flex-shrink-0">
         <SidebarContent />

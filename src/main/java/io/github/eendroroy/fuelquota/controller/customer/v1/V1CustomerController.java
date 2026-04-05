@@ -3,10 +3,8 @@ package io.github.eendroroy.fuelquota.controller.customer.v1;
 import io.github.eendroroy.fuelquota.config.OpenApiConfig;
 import io.github.eendroroy.fuelquota.dto.request.AddVehicleRequest;
 import io.github.eendroroy.fuelquota.dto.request.AssignDriverRequest;
-import io.github.eendroroy.fuelquota.dto.request.ClaimVehicleRequest;
 import io.github.eendroroy.fuelquota.dto.response.*;
 import io.github.eendroroy.fuelquota.service.CustomerService;
-import io.github.eendroroy.fuelquota.service.VehicleClaimService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +31,6 @@ import java.util.UUID;
 public class V1CustomerController {
 
     private final CustomerService customerService;
-    private final VehicleClaimService vehicleClaimService;
 
     @GetMapping("/vehicle")
     @Operation(summary = "Get my primary vehicle")
@@ -110,19 +107,6 @@ public class V1CustomerController {
         return ResponseEntity.ok(customerService.getTransactionsByVehicleId((UUID) request.getAttribute("userId"), vehicleId, pageable));
     }
 
-    @PostMapping("/vehicles/claim")
-    @Operation(summary = "Claim a registered vehicle")
-    public ResponseEntity<VehicleClaimResponse> claimVehicle(@Valid @RequestBody ClaimVehicleRequest req, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(vehicleClaimService.submitClaim((UUID) request.getAttribute("userId"), req));
-    }
-
-    @GetMapping("/vehicles/claims")
-    @Operation(summary = "Get my vehicle ownership claims")
-    public ResponseEntity<Page<VehicleClaimResponse>> getMyClaims(HttpServletRequest request, Pageable pageable) {
-        return ResponseEntity.ok(vehicleClaimService.getMyClaims((UUID) request.getAttribute("userId"), pageable));
-    }
-
     @PostMapping("/vehicles/{vehicleId}/driver")
     @Operation(summary = "Assign a driver to a vehicle")
     public ResponseEntity<VehicleResponse> assignDriver(
@@ -142,4 +126,3 @@ public class V1CustomerController {
         return ResponseEntity.ok(customerService.getVehiclesWhereDriver((UUID) request.getAttribute("userId")));
     }
 }
-

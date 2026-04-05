@@ -116,8 +116,12 @@ public class CustomerService {
                 throw new BadRequestException("Vehicle is already registered in your account");
             }
 
-            // BRTA ownership verification (live API integration is future scope — always passes)
-            logger.info("BRTA ownership check for vehicle {} → PASSED (mock)", registrationNumber);
+            // BRTA ownership verification
+            if (!performBrtaVerification(registrationNumber, request.getOwnerNid())) {
+                throw new BadRequestException(
+                    "BRTA ownership verification failed. The provided NID could not be confirmed as the registered owner of vehicle " + registrationNumber + ".");
+            }
+            logger.info("BRTA ownership check for vehicle {} → PASSED", registrationNumber);
 
             User newOwner = userRepository.findById(userId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -418,5 +422,26 @@ public class CustomerService {
         return vehicleRepository.findByDriverId(userId).stream()
                 .map(vehicleMapper::toResponse)
                 .toList();
+    }
+
+    /**
+     * Performs BRTA ownership verification for a vehicle registration number and NID.
+     *
+     * <p>This is a stub implementation — the live BRTA API integration is future scope.
+     * The current implementation always returns {@code true} (ownership confirmed), which
+     * means any customer can take over any existing vehicle by providing the registration
+     * number during the add-vehicle flow. Once the BRTA API is available, this method
+     * should call the external service and return the actual verification result.
+     *
+     * @param registrationNumber vehicle registration number to verify
+     * @param ownerNid           NID of the person claiming ownership
+     * @return {@code true} if BRTA confirms ownership, {@code false} otherwise
+     */
+    private boolean performBrtaVerification(String registrationNumber, String ownerNid) {
+        // TODO: Integrate with BRTA API — POST /brta/v1/verify-ownership
+        //       Expected payload: { "registrationNumber": ..., "nid": ... }
+        //       Expected response: { "verified": true/false }
+        logger.info("BRTA stub: ownership check reg={} nid={} → PASSED (mock)", registrationNumber, ownerNid);
+        return true;
     }
 }

@@ -24,7 +24,6 @@ const ACTION_OPTIONS = [
 export default function AdminAuditLogsPage() {
   const { t } = useTranslation()
   const [logs, setLogs] = useState<AuditLog[]>([])
-  // ...existing code...
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
   const [page, setPage] = useState(0)
@@ -52,23 +51,23 @@ export default function AdminAuditLogsPage() {
     action.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')
 
   const getActionColor = (action: string) => {
-    if (action.includes('APPROVED') || action.includes('CREATED')) return 'text-green-600'
-    if (action.includes('REJECTED') || action.includes('SUSPENDED') || action.includes('DELETED')) return 'text-red-600'
-    if (action.includes('UPDATED') || action.includes('ADJUSTMENT')) return 'text-blue-600'
-    return 'text-gray-600'
+    if (action.includes('APPROVED') || action.includes('CREATED')) return 'text-green-600 dark:text-green-400'
+    if (action.includes('REJECTED') || action.includes('SUSPENDED') || action.includes('DELETED')) return 'text-red-600 dark:text-red-400'
+    if (action.includes('UPDATED') || action.includes('ADJUSTMENT')) return 'text-blue-600 dark:text-blue-400'
+    return 'text-gray-600 dark:text-gray-400'
   }
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{t('adminAuditLogs.title')}</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{totalElements.toLocaleString()} {t('adminAuditLogs.auditRecords')}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('adminAuditLogs.title')}</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{totalElements.toLocaleString()} {t('adminAuditLogs.auditRecords')}</p>
       </div>
 
       {/* Filters */}
       <div className="card py-4 flex flex-col md:flex-row gap-3">
         <div className="flex-1">
-          <label className="block text-xs text-gray-500 mb-1">{t('adminAuditLogs.filterAction')}</label>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('adminAuditLogs.filterAction')}</label>
           <div className="relative">
             <select className="input-field pr-8 appearance-none"
               value={actionTypeFilter} onChange={(e) => { setActionTypeFilter(e.target.value); setPage(0) }}>
@@ -87,11 +86,11 @@ export default function AdminAuditLogsPage() {
           </div>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">{t('adminAuditLogs.startDate')}</label>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('adminAuditLogs.startDate')}</label>
           <input className="input-field" type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(0) }} />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">{t('adminAuditLogs.endDate')}</label>
+          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('adminAuditLogs.endDate')}</label>
           <input className="input-field" type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(0) }} />
         </div>
       </div>
@@ -100,12 +99,12 @@ export default function AdminAuditLogsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('adminAuditLogs.timestamp')}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('adminAuditLogs.admin')}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('adminAuditLogs.action')}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">{t('adminAuditLogs.target')}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden xl:table-cell">{t('adminAuditLogs.reason')}</th>
+              <tr className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-700">
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">{t('adminAuditLogs.timestamp')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">{t('adminAuditLogs.admin')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">{t('adminAuditLogs.action')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden lg:table-cell">{t('adminAuditLogs.target')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden xl:table-cell">{t('adminAuditLogs.reason')}</th>
               </tr>
             </thead>
             <tbody>
@@ -114,21 +113,21 @@ export default function AdminAuditLogsPage() {
               ) : logs.length === 0 ? (
                 <tr><td colSpan={5} className="py-12 text-center text-gray-400">{t('adminAuditLogs.noLogs')}</td></tr>
               ) : logs.map((log) => (
-                <tr key={log.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 text-gray-500 text-xs">{formatDateTime(log.actionTimestamp)}</td>
+                <tr key={log.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{formatDateTime(log.actionTimestamp)}</td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-800">{log.adminName}</p>
+                    <p className="font-medium text-gray-800 dark:text-gray-200">{log.adminName}</p>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`font-medium ${getActionColor(log.actionType)}`}>
                       {formatActionType(log.actionType)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 hidden lg:table-cell text-gray-600">
+                  <td className="px-4 py-3 hidden lg:table-cell text-gray-600 dark:text-gray-400">
                     {log.targetEntity}
-                    {log.targetEntityId && <span className="text-xs text-gray-400 block">ID: {log.targetEntityId.substring(0, 8)}</span>}
+                    {log.targetEntityId && <span className="text-xs text-gray-400 dark:text-gray-500 block">ID: {log.targetEntityId.substring(0, 8)}</span>}
                   </td>
-                  <td className="px-4 py-3 hidden xl:table-cell text-gray-500 text-xs max-w-xs truncate">
+                  <td className="px-4 py-3 hidden xl:table-cell text-gray-500 dark:text-gray-400 text-xs max-w-xs truncate">
                     {log.reasonNotes ?? '-'}
                   </td>
                 </tr>

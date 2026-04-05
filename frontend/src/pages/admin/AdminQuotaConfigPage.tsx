@@ -180,8 +180,8 @@ export default function AdminQuotaConfigPage() {
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('adminQuotaConfig.title')}</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{t('adminQuotaConfig.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('adminQuotaConfig.title')}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('adminQuotaConfig.subtitle')}</p>
         </div>
         <button
           onClick={handleSync}
@@ -198,8 +198,8 @@ export default function AdminQuotaConfigPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Tags className="h-5 w-5 text-brand-600" />
-            <h2 className="text-lg font-semibold text-gray-800">{t('adminQuotaConfigSets.title')}</h2>
-            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{sets.length}</span>
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('adminQuotaConfigSets.title')}</h2>
+            <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">{sets.length}</span>
           </div>
           <div className="flex gap-2">
             <button onClick={loadSets} className="btn-secondary gap-2 text-sm">
@@ -211,7 +211,7 @@ export default function AdminQuotaConfigPage() {
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 text-sm text-blue-700 dark:text-blue-300">
           {t('adminQuotaConfigSets.setsNote')}
         </div>
 
@@ -224,18 +224,18 @@ export default function AdminQuotaConfigPage() {
               <p>{t('adminQuotaConfigSets.noSets')}</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
               {sets.map((s) => (
-                <div key={s.id} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
+                <div key={s.id} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-gray-900">{s.name}</p>
-                      <span className="text-xs font-medium bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">
+                      <p className="font-semibold text-gray-900 dark:text-white">{s.name}</p>
+                      <span className="text-xs font-medium bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded-full">
                         {Number(s.limitLitres).toFixed(1)} L / {t(`adminQuotaConfig.${s.quotaPeriod}`)}
                       </span>
                     </div>
                     {s.description && (
-                      <p className="text-xs text-gray-400 mt-0.5">{s.description}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{s.description}</p>
                     )}
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {s.registrationCodes.map((code) => {
@@ -244,7 +244,7 @@ export default function AdminQuotaConfigPage() {
                           <span
                             key={code}
                             title={detail?.description}
-                            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono font-bold bg-gray-100 text-gray-700 border border-gray-200"
+                            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono font-bold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
                           >
                             {code}
                           </span>
@@ -253,10 +253,10 @@ export default function AdminQuotaConfigPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <button onClick={() => openEdit(s)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                    <button onClick={() => openEdit(s)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
                       <Edit2 className="h-4 w-4" />
                     </button>
-                    <button onClick={() => handleDeleteSet(s)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                    <button onClick={() => handleDeleteSet(s)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -271,8 +271,8 @@ export default function AdminQuotaConfigPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Settings2 className="h-5 w-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-gray-800">{t('adminQuotaConfig.defaultConfig')}</h2>
+            <Settings2 className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t('adminQuotaConfig.defaultConfig')}</h2>
           </div>
           <button onClick={loadConfig} className="btn-secondary gap-2 text-sm">
             <RefreshCw className="h-4 w-4" /> {t('common.refresh')}
@@ -280,7 +280,7 @@ export default function AdminQuotaConfigPage() {
         </div>
 
         {config && (
-          <div className="bg-brand-50 border border-brand-200 rounded-xl px-4 py-3 text-sm text-brand-700">
+          <div className="bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 rounded-xl px-4 py-3 text-sm text-brand-700 dark:text-brand-300">
             <strong>{t('adminQuotaConfig.current')}:</strong> {Number(config.limitLitres).toFixed(1)} L {t('adminQuotaConfig.perPeriod')}{' '}
             <span className="font-semibold">{t(`adminQuotaConfig.${config.quotaPeriod}`)}</span> {t('adminQuotaConfig.period')}
             {config.updatedAt && (
@@ -322,7 +322,7 @@ export default function AdminQuotaConfigPage() {
                     className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
                       form.quotaPeriod === p
                         ? 'bg-brand-600 text-white border-brand-600'
-                        : 'bg-white text-gray-600 border-gray-300 hover:border-brand-400 hover:text-brand-600'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-brand-400 hover:text-brand-600'
                     }`}>
                     {t(`adminQuotaConfig.${p}`)}
                   </button>
@@ -342,9 +342,9 @@ export default function AdminQuotaConfigPage() {
                 {CRON_PRESETS.map((p) => (
                   <button key={p.cron} type="button"
                     onClick={() => setForm((f) => ({ ...f, quotaPeriod: p.period, resetCronExpression: p.cron }))}
-                    className="text-left text-xs text-gray-500 hover:text-brand-600 hover:bg-brand-50 rounded px-2 py-1 transition-colors">
-                    <span className="font-mono text-gray-400">{p.cron}</span>
-                    <span className="ml-2 text-gray-600">{t(`adminQuotaConfig.preset_${p.label.replace(/\s+/g, '_').toLowerCase()}`)}</span>
+                    className="text-left text-xs text-gray-500 dark:text-gray-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded px-2 py-1 transition-colors">
+                    <span className="font-mono text-gray-400 dark:text-gray-500">{p.cron}</span>
+                    <span className="ml-2 text-gray-600 dark:text-gray-400">{t(`adminQuotaConfig.preset_${p.label.replace(/\s+/g, '_').toLowerCase()}`)}</span>
                   </button>
                 ))}
               </div>
@@ -359,7 +359,7 @@ export default function AdminQuotaConfigPage() {
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             </div>
 
-            <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+            <div className="flex justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
               <button onClick={loadConfig} className="btn-secondary">{t('common.reset')}</button>
               <button onClick={handleSaveConfig} disabled={configSaving} className="btn-primary gap-2">
                 {configSaving ? <LoadingSpinner size="sm" /> : <Save className="h-4 w-4" />}
@@ -369,7 +369,7 @@ export default function AdminQuotaConfigPage() {
           </div>
         )}
 
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
           <strong>{t('common.note')}:</strong> {t('adminQuotaConfig.changeNote')}
         </div>
       </div>
@@ -414,7 +414,7 @@ export default function AdminQuotaConfigPage() {
           <div>
             <label className="label">{t('adminQuotaConfigSets.registrationCodes')} *</label>
             <p className="text-xs text-gray-400 mb-2">{t('adminQuotaConfigSets.codesHint')}</p>
-            <div className="flex flex-wrap gap-2 p-3 border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+            <div className="flex flex-wrap gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg max-h-48 overflow-y-auto">
               {regCodes.map((rc) => {
                 const isSelected = configSetForm.registrationCodes.includes(rc.code)
                 const isUsedByOther = usedCodes.includes(rc.code)
@@ -429,8 +429,8 @@ export default function AdminQuotaConfigPage() {
                       isSelected
                         ? 'bg-brand-600 text-white border-brand-600'
                         : isUsedByOther
-                          ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-brand-400 hover:text-brand-600'
+                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-500 border-gray-200 dark:border-gray-600 cursor-not-allowed'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-brand-400 hover:text-brand-600'
                     }`}
                   >
                     {rc.code}
@@ -445,7 +445,7 @@ export default function AdminQuotaConfigPage() {
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+          <div className="flex justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
             <button onClick={() => setSetModal({ open: false, editing: null })} className="btn-secondary gap-2">
               <X className="h-4 w-4" /> {t('common.cancel')}
             </button>

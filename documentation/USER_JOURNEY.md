@@ -1,9 +1,9 @@
 # User Journey Maps
 ## Automated Fuel Quota Management System
 
-**Document Version:** 1.1  
-**Date:** 2026-04-04  
-**Status:** Approved — Updated with Driver-Only Registration, Driver Assignment, and Quota by Registration Code
+**Document Version:** 1.2  
+**Date:** 2026-04-05  
+**Status:** Approved — Removed ownership-claim journey; replaced with automatic BRTA-driven transfer during the add-vehicle flow
 
 ---
 
@@ -103,9 +103,9 @@ Customer at QR page
 
 ---
 
-## Journey 3: Customer — Vehicle Ownership Claim
+## Journey 3: Customer — Add a Second-Hand Vehicle (Automatic Ownership Transfer)
 
-**Goal:** A customer wants to transfer ownership of a vehicle currently registered under another person's account (e.g. purchased a second-hand vehicle).
+**Goal:** A customer wants to register a vehicle whose registration number is already in the system (purchased second-hand).
 
 **Persona:** Karim, 42, just bought a used car. The car is registered to the previous owner in the system.
 
@@ -114,20 +114,20 @@ Customer at QR page
 | # | Step | Actor Action | System Response | Status |
 |---|------|-------------|-----------------|--------|
 | 1 | **Login** | Logs into their customer account | JWT issued | 🟢 |
-| 2 | **Navigate to Claims** | Clicks "My Claims" → `/claims` | `CustomerClaimsPage` loads | 🟢 |
-| 3 | **Submit new claim** | Clicks "Submit Ownership Claim" | Claim form modal opens | 🟢 |
-| 4 | **Fill claim form** | Enters: Vehicle registration number, their NID, reason for claim | — | 🟢 |
-| 5 | **Submit** | Clicks "Submit Claim" | `POST /api/customer/vehicles/claim` → claim created in PENDING state | 🟢 |
-| 6 | **Track status** | Returns to `/claims` page | `GET /api/customer/vehicles/claims` → list showing PENDING | 🟡 Waiting |
-| 7 | **Admin approves** | (Admin action — see Admin Journey 4) | Claim status → APPROVED | 🟢 |
-| 8 | **Ownership transferred** | Refreshes claims page | Status = APPROVED; vehicle now appears in own vehicle list | 🟢 |
+| 2 | **Navigate to Vehicles** | Clicks "My Vehicles" → `/vehicles` | `CustomerVehiclesPage` loads | 🟢 |
+| 3 | **Click Add Vehicle** | Clicks "Add Vehicle" | Form modal opens | 🟢 |
+| 4 | **Enter details** | Fills registration number, NID, and other vehicle fields | — | 🟢 |
+| 5 | **Submit** | Clicks "Add Vehicle" | `POST /api/customer/v1/vehicles` — backend detects existing registration | 🟢 |
+| 6 | **BRTA verification** | — (automatic) | Backend calls `performBrtaVerification(regNumber, nid)` — currently always passes | 🟢 |
+| 7 | **Ownership transferred** | — | Vehicle re-assigned to Karim; previous owner's quota deleted; fresh quota created | 🟢 |
+| 8 | **View vehicle** | — | New vehicle appears in Karim's vehicle list with `VERIFIED` status and `ACTIVE` quota | 🟢 |
 
 ### Error Paths
 
 | Scenario | System Response |
 |----------|-----------------|
-| Vehicle not found | `400 — validation error` |
-| Claim already pending for this vehicle | `400 — "Claim already pending"` |
+| BRTA verification fails (future) | `400 — "BRTA ownership verification failed…"` |
+| Vehicle already owned by this user | `400 — "Vehicle is already registered in your account"` |
 
 ---
 
@@ -313,27 +313,18 @@ Customer at QR page
 
 ---
 
-## Journey 8: System Administrator — Ownership Claim Review
+## Journey 8: System Administrator — User Management
 
-**Goal:** Admin reviews a pending vehicle ownership claim and approves or rejects it.
+**Goal:** Admin views, filters, suspends, or reactivates customer and admin user accounts.
 
 | # | Step | Actor Action | System Response |
 |---|------|-------------|-----------------|
-| 1 | Navigate to `/admin/vehicle-claims` | Sees pending claims list | `GET /api/admin/vehicle-claims?status=PENDING` |
-| 2 | Open claim details | Clicks on claim | Claim details: claimant name, NID, reason, vehicle reg number |
-| 3 | Review | Admin cross-references NID with vehicle record | — |
-| 4 | Approve | Clicks "Approve" + optional admin notes | `PUT /api/admin/vehicle-claims/{id}/approve { adminNotes: "..." }` |
-| 5 | System transfers ownership | — | `Vehicle.user → claimant`, `Vehicle.ownerName/Email/Nid` updated |
-| 6 | Audit log | — | `VEHICLE_APPROVED` action logged |
-| 7 | Customer sees update | Claimant's vehicle list now includes the vehicle | — |
-
-### Reject Path
-
-| # | Step | System Response |
-|---|------|-----------------|
-| 4 | Admin clicks "Reject" | `PUT /api/admin/vehicle-claims/{id}/reject { adminNotes: "NID mismatch" }` |
-| 5 | Claim status → REJECTED | Vehicle ownership unchanged |
-| 6 | Audit log | `VEHICLE_REJECTED` action logged |
+| 1 | Navigate to `/admin/users` | Views paginated user list | `GET /api/admin/v1/users` |
+| 2 | Search / filter | Types name/mobile/email or selects role/status filter | Live-filtered results |
+| 3 | Suspend user | Clicks "Suspend", enters reason, confirms | `PUT /api/admin/v1/users/{id}/status { status: "SUSPENDED", reason: "..." }` |
+| 4 | System updates | — | User `enabled = false`; existing JWT tokens rejected; audit log entry created |
+| 5 | Reactivate user | Clicks "Activate" on a suspended account | `PUT /api/admin/v1/users/{id}/status { status: "ACTIVE" }` |
+| 6 | System updates | — | User `enabled = true`; audit log entry created |
 
 ---
 
@@ -451,7 +442,7 @@ Customer Generates QR ──► Rep Scans ──► Authorization ──► Disp
                                                                 │
                                               Sunday 00:00 ──► Quota Reset ──► Back to 24L
                                                                 │
-Customer Submits Claim ──► Admin Reviews ──► Approve ──► Ownership Transferred
+Customer Adds Existing Vehicle ──► BRTA Verify ──► Pass ──► Ownership Transferred Automatically
                                                                 │
 Admin Adjusts Quota ──────────────────────────────────────────► Individual Quota Updated
 ```

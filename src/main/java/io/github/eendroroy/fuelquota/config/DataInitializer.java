@@ -321,7 +321,7 @@ public class DataInitializer {
         stationRepository.save(station(
                 "Agrabad Business Fuel", "AB-CTG-012",
                 "22.3309", "91.8119", "01722121212",
-                "Ibrahim Khalil", "ibrahim@agrabadfu el.com", "Chittagong", FuelStation.StationStatus.ACTIVE));
+                "Ibrahim Khalil", "ibrahim@agrabaduel.com", "Chittagong", FuelStation.StationStatus.ACTIVE));
     }
 
     private FuelStation station(String name, String code, String lat, String lon,
@@ -522,9 +522,9 @@ public class DataInitializer {
         pumpRep(userRepo, repRepo, findStation(stations, "MH-DH-011"), pass,
                 "Laila Begum", "01811020020", "laila.begum@mirpurpetrol.com", "EMP-020", "laila.begum");
         pumpRep(userRepo, repRepo, findStation(stations, "AB-CTG-012"), pass,
-                "Mosharraf Khan", "01822021021", "mosharraf.khan@agrabadfu el.com", "EMP-021", "mosharraf.khan");
+                "Mosharraf Khan", "01822021021", "mosharraf.khan@agrabaduel.com", "EMP-021", "mosharraf.khan");
         pumpRep(userRepo, repRepo, findStation(stations, "AB-CTG-012"), pass,
-                "Tahmina Akter", "01822022022", "tahmina.akter@agrabadfu el.com", "EMP-022", "tahmina.akter");
+                "Tahmina Akter", "01822022022", "tahmina.akter@agrabaduel.com", "EMP-022", "tahmina.akter");
         pumpRep(userRepo, repRepo, findStation(stations, "ABC-DH-001"), pass,
                 "Shakil Miah", "01811023023", "shakil.miah@abcfuel.com", "EMP-023", "shakil.miah");
         pumpRep(userRepo, repRepo, findStation(stations, "XYZ-GL-002"), pass,
@@ -758,10 +758,6 @@ public class DataInitializer {
                 .findFirst().orElse(reps.getFirst());
     }
 
-    private User findRepUser(List<User> users, String email) {
-        return users.stream().filter(u -> email.equals(u.getEmail()))
-                .findFirst().orElse(users.getFirst());
-    }
 
     // ── QuotaConfigByRegistrationCode Seeder ─────────────────────────────
     private void seedQuotaConfigSets(QuotaConfigSetRepository repo) {
@@ -856,6 +852,7 @@ public class DataInitializer {
             var driver = new User(
                     "disabled.driver@example.com", pw.encode("test123"), "Disabled Driver", User.UserRole.CUSTOMER);
             driver.setEnabled(false);
+            driver.setStatus(User.UserStatus.SUSPENDED);
             userRepo.save(driver);
 
             var owner = userRepo.findAll().stream()

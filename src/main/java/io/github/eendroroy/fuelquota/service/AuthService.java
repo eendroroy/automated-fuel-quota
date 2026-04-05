@@ -78,6 +78,10 @@ public class AuthService {
             throw new BadRequestException("Invalid credentials");
         }
 
+        // Record last login timestamp
+        user.setLastLoginTimestamp(java.time.LocalDateTime.now());
+        userRepository.save(user);
+
         String token = tokenProvider.generateAccessToken(user);
         return authMapper.toResponse(token, user);
     }
@@ -103,6 +107,10 @@ public class AuthService {
         if (user.getRole() != User.UserRole.ADMIN) {
             throw new BadRequestException("Invalid credentials");
         }
+
+        // Record last login timestamp
+        user.setLastLoginTimestamp(java.time.LocalDateTime.now());
+        userRepository.save(user);
 
         String token = tokenProvider.generateAccessToken(user);
         return authMapper.toResponse(token, user);
@@ -162,6 +170,8 @@ public class AuthService {
             User.UserRole.CUSTOMER
         );
         user.setMobileNumber(request.getOwnerMobile());
+        user.setNid(request.getOwnerNid());
+        user.setStatus(User.UserStatus.ACTIVE);
         user = userRepository.save(user);
 
         // Only create vehicle if vehicle information is provided

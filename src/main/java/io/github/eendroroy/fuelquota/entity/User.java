@@ -80,11 +80,33 @@ public class User implements Serializable {
     private UserRole role;
 
     /**
-     * Whether the account is currently enabled.
-     * Set to {@code false} when a customer's vehicle is suspended.
+    /**
+     * National Identity Document number of the user.
+     * Populated from vehicle registration NID at account creation for customers.
      */
+    @Column(length = 20)
+    private String nid;
+
+    /**
+     * Current lifecycle status of this account.
+     *
+     * <ul>
+     *   <li>{@code ACTIVE} – account is fully operational.</li>
+     *   <li>{@code SUSPENDED} – account is temporarily locked by an admin.</li>
+     *   <li>{@code INACTIVE} – account is dormant but not deleted.</li>
+     * </ul>
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'ACTIVE'")
+    private UserStatus status = UserStatus.ACTIVE;
+
+    /** Whether the account is currently enabled (synced with {@link #status}). */
     @Column(nullable = false)
     private Boolean enabled = true;
+
+    /** Timestamp of the user's most recent successful login. */
+    @Column(name = "last_login_timestamp")
+    private LocalDateTime lastLoginTimestamp;
 
     /** Automatically populated by Spring Data JPA auditing. */
     @CreatedDate
@@ -107,6 +129,13 @@ public class User implements Serializable {
      */
     public enum UserRole {
         CUSTOMER, ADMIN, PUMP_REPRESENTATIVE
+    }
+
+    /**
+     * Lifecycle status of a user account.
+     */
+    public enum UserStatus {
+        ACTIVE, SUSPENDED, INACTIVE
     }
 
     /**

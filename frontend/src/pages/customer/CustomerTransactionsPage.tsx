@@ -68,15 +68,15 @@ export default function CustomerTransactionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Transaction History</h1>
-        <p className="text-gray-500 text-sm mt-0.5">All your fuel dispensing records across all vehicles.</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Transaction History</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">All your fuel dispensing records across all vehicles.</p>
       </div>
 
       {/* Vehicle filter — dropdown for large fleets, pills for small ones */}
       {vehicles.length > 1 && (
         vehicles.length > 6 ? (
           <div className="flex items-center gap-3">
-            <label htmlFor="vehicle-filter" className="text-sm text-gray-500 font-medium whitespace-nowrap">
+            <label htmlFor="vehicle-filter" className="text-sm text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
               Filter by vehicle:
             </label>
             <select
@@ -102,13 +102,13 @@ export default function CustomerTransactionsPage() {
           </div>
         ) : (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-gray-500 font-medium">Filter by vehicle:</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Filter by vehicle:</span>
             <button
               onClick={clearFilter}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                 !vehicleIdParam
                   ? 'bg-brand-600 text-white border-brand-600'
-                  : 'border-gray-200 text-gray-600 hover:border-brand-400 hover:text-brand-600'
+                  : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-brand-400 hover:text-brand-600'
               }`}
             >
               All Vehicles
@@ -120,7 +120,7 @@ export default function CustomerTransactionsPage() {
                 className={`text-xs px-3 py-1.5 rounded-full border font-mono transition-colors ${
                   vehicleIdParam === v.id
                     ? 'bg-brand-600 text-white border-brand-600'
-                    : 'border-gray-200 text-gray-600 hover:border-brand-400 hover:text-brand-600'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-brand-400 hover:text-brand-600'
                 }`}
               >
                 {v.registrationNumber}
@@ -132,11 +132,11 @@ export default function CustomerTransactionsPage() {
 
       {/* Active filter pill */}
       {selectedVehicle && (
-        <div className="flex items-center gap-2 bg-brand-50 border border-brand-200 rounded-xl px-4 py-2.5 text-sm">
+        <div className="flex items-center gap-2 bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 rounded-xl px-4 py-2.5 text-sm">
           <Car className="h-4 w-4 text-brand-600" />
-          <span className="font-mono font-semibold text-brand-800">{selectedVehicle.registrationNumber}</span>
-          <span className="text-brand-600">— {selectedVehicle.vehicleMake} · {selectedVehicle.vehicleColor}</span>
-          <button onClick={clearFilter} className="ml-auto text-brand-500 hover:text-brand-700">
+          <span className="font-mono font-semibold text-brand-800 dark:text-brand-300">{selectedVehicle.registrationNumber}</span>
+          <span className="text-brand-600 dark:text-brand-400">— {selectedVehicle.vehicleMake} · {selectedVehicle.vehicleColor}</span>
+          <button onClick={clearFilter} className="ml-auto text-brand-500 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -145,20 +145,20 @@ export default function CustomerTransactionsPage() {
       {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div className="card py-4">
-          <p className="text-xs text-gray-500">Total Transactions</p>
-          <p className="text-2xl font-bold text-gray-900">{totalElements}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Total Transactions</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalElements}</p>
         </div>
         <div className="card py-4">
-          <p className="text-xs text-gray-500">This Page · Total Litres</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">This Page · Total Litres</p>
           <p className="text-2xl font-bold text-brand-700">{formatLitres(totalLitres)}</p>
         </div>
       </div>
 
       {/* Table */}
       <div className="card p-0 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
           <History className="h-5 w-5 text-brand-600" />
-          <h2 className="font-semibold text-gray-900">
+          <h2 className="font-semibold text-gray-900 dark:text-white">
             {selectedVehicle ? `${selectedVehicle.registrationNumber} Transactions` : 'All Transactions'}
           </h2>
         </div>
@@ -177,14 +177,14 @@ export default function CustomerTransactionsPage() {
           </div>
         ) : (
           <>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-gray-800">
               {transactions.map((tx) => (
-                <div key={tx.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
-                  <div className="h-10 w-10 bg-brand-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div key={tx.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <div className="h-10 w-10 bg-brand-50 dark:bg-brand-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
                     <Fuel className="h-5 w-5 text-brand-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{tx.stationName}</p>
+                    <p className="font-medium text-gray-900 dark:text-white truncate">{tx.stationName}</p>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span className="flex items-center gap-1 text-xs text-gray-400">
                         <MapPin className="h-3 w-3" />
@@ -194,7 +194,7 @@ export default function CustomerTransactionsPage() {
                       {!vehicleIdParam && tx.registrationNumber && (
                         <Link
                           to={`/transactions?vehicleId=${tx.vehicleId}`}
-                          className="text-xs font-mono bg-gray-100 text-gray-600 rounded px-1.5 py-0.5 hover:bg-brand-50 hover:text-brand-700 transition-colors"
+                          className="text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded px-1.5 py-0.5 hover:bg-brand-50 dark:hover:bg-brand-900/30 hover:text-brand-700 dark:hover:text-brand-300 transition-colors"
                         >
                           {tx.registrationNumber}
                         </Link>
@@ -202,14 +202,14 @@ export default function CustomerTransactionsPage() {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-bold text-gray-900">−{formatLitres(tx.amountDispensedLiters)}</p>
+                    <p className="font-bold text-gray-900 dark:text-white">−{formatLitres(tx.amountDispensedLiters)}</p>
                     <div className="mt-0.5">
                       <StatusBadge status={tx.status} />
                     </div>
                   </div>
-                  <div className="text-right hidden sm:block flex-shrink-0 text-xs text-gray-400">
+                  <div className="text-right hidden sm:block flex-shrink-0 text-xs text-gray-400 dark:text-gray-500">
                     <p>Remaining after</p>
-                    <p className="font-medium text-gray-700">{formatLitres(tx.remainingQuotaAfter)}</p>
+                    <p className="font-medium text-gray-700 dark:text-gray-300">{formatLitres(tx.remainingQuotaAfter)}</p>
                   </div>
                 </div>
               ))}

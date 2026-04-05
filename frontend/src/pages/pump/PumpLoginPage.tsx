@@ -43,8 +43,8 @@ export default function PumpLoginPage() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-lg mb-2">
           <Fuel className="h-8 w-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">{t('pumpLogin.title')}</h1>
-        <p className="text-gray-500 text-sm">{t('pumpLogin.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('pumpLogin.title')}</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">{t('pumpLogin.subtitle')}</p>
       </div>
 
       {/* Login card */}

@@ -230,12 +230,12 @@ export default function CustomerRegisterPage() {
                     ? 'bg-green-500 border-green-500 text-white'
                     : step === s.id
                     ? 'bg-brand-600 border-brand-600 text-white'
-                    : 'bg-white border-gray-300 text-gray-400'
+                    : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-400'
                 }`}
               >
                 {step > s.id ? <Check className="h-5 w-5" /> : <s.icon className="h-4 w-4" />}
               </div>
-              <span className={`text-xs font-medium hidden sm:block ${step >= s.id ? 'text-gray-800' : 'text-gray-400'}`}>
+              <span className={`text-xs font-medium hidden sm:block ${step >= s.id ? 'text-gray-800 dark:text-gray-200' : 'text-gray-400'}`}>
                 {s.label}
               </span>
             </div>
@@ -247,7 +247,7 @@ export default function CustomerRegisterPage() {
       </div>
 
       <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
           {step === 1 ? 'Personal Information'
             : step === 2 ? 'Verify Mobile Number'
             : step === 3 ? 'Vehicle Details'
@@ -392,26 +392,26 @@ export default function CustomerRegisterPage() {
         {/* Step 4: Review */}
         {step === 4 && (
           <div className="space-y-4">
-            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-              <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Personal Information</h3>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-3">
+              <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm uppercase tracking-wide">Personal Information</h3>
               <dl className="grid grid-cols-2 gap-2 text-sm">
-                <div><dt className="text-gray-500">Name</dt><dd className="font-medium">{form.ownerName}</dd></div>
-                <div><dt className="text-gray-500">NID</dt><dd className="font-medium">{form.ownerNid}</dd></div>
-                <div><dt className="text-gray-500">Mobile</dt><dd className="font-medium">{form.ownerMobile} <span className="text-green-600 text-xs">✓ Verified</span></dd></div>
-                <div><dt className="text-gray-500">Email</dt><dd className="font-medium">{form.ownerEmail}</dd></div>
+                <div><dt className="text-gray-500 dark:text-gray-400">Name</dt><dd className="font-medium dark:text-gray-200">{form.ownerName}</dd></div>
+                <div><dt className="text-gray-500 dark:text-gray-400">NID</dt><dd className="font-medium dark:text-gray-200">{form.ownerNid}</dd></div>
+                <div><dt className="text-gray-500 dark:text-gray-400">Mobile</dt><dd className="font-medium dark:text-gray-200">{form.ownerMobile} <span className="text-green-600 text-xs">✓ Verified</span></dd></div>
+                <div><dt className="text-gray-500 dark:text-gray-400">Email</dt><dd className="font-medium dark:text-gray-200">{form.ownerEmail}</dd></div>
               </dl>
             </div>
             {hasVehicleInfo() ? (
               <>
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Vehicle Information</h3>
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-3">
+                  <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm uppercase tracking-wide">Vehicle Information</h3>
                   <dl className="grid grid-cols-2 gap-2 text-sm">
-                    <div><dt className="text-gray-500">Reg. No.</dt><dd className="font-medium font-mono">{assembledRegNumber()}</dd></div>
-                    <div><dt className="text-gray-500">Make</dt><dd className="font-medium">{form.vehicleMake}</dd></div>
-                    <div><dt className="text-gray-500">Color</dt><dd className="font-medium">{form.vehicleColor}</dd></div>
-                    <div><dt className="text-gray-500">Fuel Type</dt><dd className="font-medium">{form.fuelType}</dd></div>
-                    <div><dt className="text-gray-500">Reg. Date</dt><dd className="font-medium">{form.registrationDate}</dd></div>
-                    {form.engineDisplacement && <div><dt className="text-gray-500">Engine Displacement</dt><dd className="font-medium">{form.engineDisplacement} CC</dd></div>}
+                    <div><dt className="text-gray-500 dark:text-gray-400">Reg. No.</dt><dd className="font-medium font-mono dark:text-gray-200">{assembledRegNumber()}</dd></div>
+                    <div><dt className="text-gray-500 dark:text-gray-400">Make</dt><dd className="font-medium dark:text-gray-200">{form.vehicleMake}</dd></div>
+                    <div><dt className="text-gray-500 dark:text-gray-400">Color</dt><dd className="font-medium dark:text-gray-200">{form.vehicleColor}</dd></div>
+                    <div><dt className="text-gray-500 dark:text-gray-400">Fuel Type</dt><dd className="font-medium dark:text-gray-200">{form.fuelType}</dd></div>
+                    <div><dt className="text-gray-500 dark:text-gray-400">Reg. Date</dt><dd className="font-medium dark:text-gray-200">{form.registrationDate}</dd></div>
+                    {form.engineDisplacement && <div><dt className="text-gray-500 dark:text-gray-400">Engine Displacement</dt><dd className="font-medium dark:text-gray-200">{form.engineDisplacement} CC</dd></div>}
                   </dl>
                 </div>
                 <p className="text-xs text-gray-500 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
@@ -429,7 +429,7 @@ export default function CustomerRegisterPage() {
         )}
 
         {/* Navigation buttons */}
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
           {step > 1 ? (
             <button onClick={() => setStep((s) => s - 1)} className="btn-secondary">Back</button>
           ) : (
@@ -458,4 +458,3 @@ export default function CustomerRegisterPage() {
     </div>
   )
 }
-

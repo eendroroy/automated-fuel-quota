@@ -105,24 +105,10 @@ public class AuditLog implements Serializable {
          */
         QUOTA_SYNC,
         /**
-         * Vehicle ownership transferred to a new customer via BRTA-verified second-hand purchase flow.
+         * Vehicle automatically transferred to a new customer after BRTA ownership
+         * verification passed during the {@code POST /api/customer/v1/vehicles} flow.
          */
         VEHICLE_TRANSFERRED,
-        /**
-         * @deprecated Legacy claim approval workflow removed. Kept for historical audit entries.
-         */
-        @Deprecated
-        VEHICLE_APPROVED,
-        /**
-         * @deprecated Legacy claim rejection workflow removed. Kept for historical audit entries.
-         */
-        @Deprecated
-        VEHICLE_REJECTED,
-        /**
-         * @deprecated Vehicle suspension workflow removed. Kept for historical audit entries.
-         */
-        @Deprecated
-        VEHICLE_SUSPENDED,
         /**
          * Admin triggered a BRTA re-verification for a vehicle.
          * Currently always succeeds (BRTA API integration is future scope).

@@ -53,11 +53,17 @@ This project is a **fully functional** fuel quota management system implementing
 - ✅ **Business Logic** - Configurable quota management with partial dispense support
 - ✅ **Security** - JWT authentication with role-based access control
 - ✅ **Scheduled Jobs** - Automatic quota reset based on configurable period
-- ✅ **Driver-Only Registration** - Users can register without owning vehicles
+- ✅ **Automatic Ownership Transfer** — When a customer adds a vehicle already registered under another account, BRTA verification runs automatically; on success the vehicle transfers immediately (no admin approval step)
 - ✅ **Quota Config Sets** - Group multiple registration codes into shared quota sets (e.g. GA/KHA/BHA → 30L/week)
 - ✅ **Bulk Quota Sync** - Push config-set limits to all non-individually-overridden vehicles with one action
 - ✅ **Custom Quota Marker** - Vehicles with admin-overridden quotas are visually flagged and excluded from sync
-- ✅ **Driver Assignment** - Vehicle owners can assign drivers with full authorization
+- ✅ **Driver-Only Registration** — Users can register without owning vehicles
+- ✅ **Driver Assignment** — Vehicle owners can assign drivers with full authorization
+- ✅ **Multi-language Support** - English and Bangla translations across all views
+- ✅ **Mobile Optimization** - Responsive design for QR code and pump rep portal
+- ✅ **User Management** - Admin panel to manage customer and admin user accounts
+- ✅ **Primary + Secondary Fuel Types** - Vehicles support one primary and optional secondary fuel types
+- ✅ **Fuel-Type QR Generation** - Customers can generate QR codes for secondary fuel types
 
 ### Core Business Logic (Per BRD Requirements)
 
@@ -77,30 +83,34 @@ This project is a **fully functional** fuel quota management system implementing
 ### Vehicle Owner App (Customer Portal)
 - **Flexible Registration** - Register as vehicle owner OR driver-only account (optional vehicle)
 - **Multi-step Registration** - Personal info → Vehicle details (optional) → Review & submit
-- **QR Code Management** - Generate, regenerate, and download fuel QR codes  
+- **Primary + Secondary Fuel Types** - Assign a primary fuel type and optional secondary fuel types per vehicle
+- **QR Code Management** - Generate, regenerate, and download fuel QR codes with fuel type selection (mobile-optimized)
+- **Secondary Fuel QR** - Select a secondary fuel type when generating a QR code for refueling with an alternate fuel
 - **Driver Management** - Assign registered drivers to vehicles; both owner and driver can generate QR codes
 - **Quota Dashboard** - Visual gauge showing used vs. remaining fuel allocation
-- **Transaction History** - Complete record of fuel dispensing activities
-- **Vehicle Ownership Claims** - Submit and track ownership transfer requests
+- **Transaction History** - Complete record of fuel dispensing activities with vehicle filtering
 - **Vehicles as Driver** - View and manage vehicles where user is assigned as driver
 
 ### Admin Dashboard
+- **User Management** - View, search, suspend, and activate customer and admin user accounts
 - **Vehicle Management** - Approve, reject, or suspend vehicle registrations
 - **Fuel Station Management** - CRUD operations with GPS coordinate validation
 - **Quota Administration** - Adjust limits, manual resets, and bulk operations
 - **Quota Config Sets** - Create named sets grouping multiple registration codes with a shared fuel limit and period
 - **Bulk Quota Sync** - One-click sync of config-set limits to all eligible vehicles (skips individually overridden quotas)
+- **Pump Representative Management** - Create and manage pump rep accounts
 - **Analytics & Reporting** - Usage charts, transaction trends, and system metrics
 - **Audit Log Viewer** - Searchable, filterable administrative action history
 
-### Pump Representative Web Portal (`/pump`)
+### Pump Representative Web Portal (`/pump`) — Mobile-Optimized
 - **Employee ID Login** - Authenticate with employee code; station info shown after login
 - **QR Code Scanner** - Camera-based scanning via `html5-qrcode` library
 - **Manual Fallback** - Enter vehicle registration number directly when QR is unavailable
-- **Vehicle Verification Panel** - Shows registration number, BRTA status badge, owner name, vehicle make/color
+- **Vehicle Verification Panel** - Shows registration number, BRTA status badge, fuel type highlighted, owner name, vehicle make/color
 - **Quota Progress Bar** - Color-coded remaining/total quota display (green → yellow → red)
 - **On-screen Numeric Keypad** - Mobile-friendly fuel amount entry (4 digits + 2 decimals)
-- **Fuel Type Selector** - Dropdown pre-populated from vehicle's registered fuel type
+- **Fuel Type Display** - Read-only highlighted fuel type from vehicle registration
+- **Full-Width Amount Entry** - Optimized layout for mobile touch interaction
 - **Transaction Receipt** - Reference number, dispensed amount, and remaining quota shown after confirmation
 
 ## 🛠️ Technology Stack
@@ -195,17 +205,16 @@ POST /api/auth/v1/customer/send-otp  - Send OTP for mobile verification
 
 ### Customer API (`/api/customer/v1/`, JWT Required)
 ```
-GET    /api/customer/v1/vehicles                       - List own vehicles
-POST   /api/customer/v1/vehicles                       - Add new vehicle
-GET    /api/customer/v1/vehicles-as-driver             - List vehicles where user is driver
-POST   /api/customer/v1/vehicles/{id}/driver           - Assign driver to vehicle
-DELETE /api/customer/v1/vehicles/{id}/driver           - Remove driver from vehicle
-GET    /api/customer/v1/quota                          - Get quota status
-GET    /api/customer/v1/vehicles/{id}/qr-code          - Generate QR token for vehicle
-POST   /api/customer/v1/vehicles/{id}/qr-code/regenerate - Regenerate QR
-GET    /api/customer/v1/transactions                   - Transaction history
-POST   /api/customer/v1/vehicles/claim                 - Submit ownership claim
-GET    /api/customer/v1/vehicles/claims                - List own claims
+GET    /api/customer/v1/vehicles                              - List own vehicles
+POST   /api/customer/v1/vehicles                              - Add vehicle; transfers ownership if already registered and BRTA passes
+GET    /api/customer/v1/vehicles-as-driver                    - List vehicles where user is driver
+POST   /api/customer/v1/vehicles/{id}/driver                  - Assign driver to vehicle
+DELETE /api/customer/v1/vehicles/{id}/driver                  - Remove driver from vehicle
+PUT    /api/customer/v1/vehicles/{id}/fuel-types              - Update secondary fuel types
+GET    /api/customer/v1/quota                                 - Get quota status
+GET    /api/customer/v1/vehicles/{id}/qr-code                 - Generate QR (?fuelType for secondary fuel)
+POST   /api/customer/v1/vehicles/{id}/qr-code/regenerate      - Regenerate QR (?fuelType for secondary fuel)
+GET    /api/customer/v1/transactions                          - Transaction history
 ```
 
 ### Pump Representative API (`/api/pump-rep/v1/`, Public — Core BRD)
@@ -219,11 +228,10 @@ POST /api/pump-rep/v1/confirm            - Confirm fuel dispensed ⭐
 ### Admin API (`/api/admin/v1/`, JWT + Admin Role Required)
 ```
 GET    /api/admin/v1/stats                        - Dashboard statistics
+GET    /api/admin/v1/users                        - List users (customers + admins, paginated, filterable)
+PUT    /api/admin/v1/users/{id}/status            - Update user status (suspend/activate)
 GET    /api/admin/v1/vehicles                     - List vehicles (paginated)
 PUT    /api/admin/v1/vehicles/{id}/reverify        - Re-verify vehicle
-GET    /api/admin/v1/vehicle-claims               - List ownership claims
-PUT    /api/admin/v1/vehicle-claims/{id}/approve  - Approve claim
-PUT    /api/admin/v1/vehicle-claims/{id}/reject   - Reject claim
 GET    /api/admin/v1/stations                     - List fuel stations
 POST   /api/admin/v1/stations                     - Create station
 PUT    /api/admin/v1/stations/{id}                - Update station
@@ -334,6 +342,7 @@ java -jar target/automated-fuel-quota-0.0.1-SNAPSHOT.jar
 
 ```
 automated-fuel-quota/
+├── Dockerfile                    # Multi-stage Docker build (JDK build → JRE runtime)
 ├── documentation/
 │   ├── BRD.md                    # Business Requirements Document
 │   ├── SRS.md                    # Software Requirements Specification

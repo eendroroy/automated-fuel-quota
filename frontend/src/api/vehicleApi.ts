@@ -21,11 +21,18 @@ export const addMyVehicle = (data: AddVehicleRequest) =>
 export const removeMyVehicle = (vehicleId: string) =>
   axiosInstance.delete(`/customer/v1/vehicles/${vehicleId}`).then((r) => r.data)
 
-export const getQrTokenForVehicle = (vehicleId: string) =>
-  axiosInstance.get<QrTokenResponse>(`/customer/v1/vehicles/${vehicleId}/qr-code`).then((r) => r.data)
+export const getQrTokenForVehicle = (vehicleId: string, fuelType?: string) =>
+  axiosInstance.get<QrTokenResponse>(`/customer/v1/vehicles/${vehicleId}/qr-code`, {
+    params: fuelType ? { fuelType } : undefined,
+  }).then((r) => r.data)
 
-export const regenerateQrTokenForVehicle = (vehicleId: string) =>
-  axiosInstance.post<{ token: string }>(`/customer/v1/vehicles/${vehicleId}/qr-code/regenerate`).then((r) => r.data)
+export const regenerateQrTokenForVehicle = (vehicleId: string, fuelType?: string) =>
+  axiosInstance.post<{ token: string }>(`/customer/v1/vehicles/${vehicleId}/qr-code/regenerate`, undefined, {
+    params: fuelType ? { fuelType } : undefined,
+  }).then((r) => r.data)
+
+export const updateVehicleSecondaryFuelTypes = (vehicleId: string, secondaryFuelTypes: string[]) =>
+  axiosInstance.put<Vehicle>(`/customer/v1/vehicles/${vehicleId}/fuel-types`, { secondaryFuelTypes }).then((r) => r.data)
 
 // ── Customer: driver assignment ───────────────────────────────────────────────
 export const assignDriver = (vehicleId: string, data: AssignDriverRequest) =>

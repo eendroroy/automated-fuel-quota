@@ -123,8 +123,8 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{t('adminQuotas.title')}</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{totalElements.toLocaleString()} {t('common.totalItems', { count: totalElements }).replace(/\d+ /, '')}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('adminQuotas.title')}</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{totalElements.toLocaleString()} {t('common.totalItems', { count: totalElements }).replace(/\d+ /, '')}</p>
       </div>
 
       {/* Enhanced Search and Filters */}
@@ -153,7 +153,7 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
               showFilters || statusFilter
                 ? 'bg-brand-50 text-brand-700 border-brand-200'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             <Filter className="h-4 w-4" />
@@ -162,10 +162,10 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
         </div>
 
         {showFilters && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+          <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="grid sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.status')}</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t('common.status')}</label>
                 <select
                   className="input-field text-sm"
                   value={statusFilter}
@@ -178,7 +178,7 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">{t('adminQuotas.sortBy')}</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{t('adminQuotas.sortBy')}</label>
                 <select
                   className="input-field text-sm"
                   value={sortBy}
@@ -191,7 +191,7 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Order</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Order</label>
                 <select
                   className="input-field text-sm"
                   value={sortOrder}
@@ -210,13 +210,13 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Vehicle</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Limit / Period</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Used / Remaining</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Reset At</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
+              <tr className="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-700">
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Vehicle</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden sm:table-cell">Limit / Period</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Used / Remaining</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden md:table-cell">Reset At</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -232,19 +232,19 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
                 const isMediumQuota = pct >= 60 && pct < 90
 
                 return (
-                  <tr key={q.id} className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                    isLowQuota ? 'bg-red-50/30' : ''
+                  <tr key={q.id} className={`border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
+                    isLowQuota ? 'bg-red-50/30 dark:bg-red-900/10' : ''
                   }`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-mono font-semibold text-brand-700">{q.registrationNumber}</p>
                         {isLowQuota && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
                             Low
                           </span>
                         )}
                         {q.individuallyOverridden && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
                             Custom
                           </span>
                         )}
@@ -252,14 +252,14 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
                       <p className="text-xs text-gray-400">{q.ownerName}</p>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      <p className="text-gray-600">{formatLitres(q.limitLiters)}</p>
-                      <span className="text-xs text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded font-medium">
+                      <p className="text-gray-600 dark:text-gray-400">{formatLitres(q.limitLiters)}</p>
+                      <span className="text-xs text-brand-600 bg-brand-50 dark:bg-brand-900/20 px-1.5 py-0.5 rounded font-medium">
                         {q.period ?? 'WEEKLY'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-gray-100 rounded-full h-1.5 max-w-[80px]">
+                        <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 max-w-[80px]">
                           <div
                             className={`h-1.5 rounded-full transition-all ${
                               isLowQuota ? 'bg-red-500' : isMediumQuota ? 'bg-yellow-400' : 'bg-green-500'
@@ -268,16 +268,16 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
                           />
                         </div>
                         <span className={`text-xs font-medium ${
-                          isLowQuota ? 'text-red-600' : isMediumQuota ? 'text-yellow-600' : 'text-gray-500'
+                          isLowQuota ? 'text-red-600' : isMediumQuota ? 'text-yellow-600' : 'text-gray-500 dark:text-gray-400'
                         }`}>
                           {pct}%
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {formatLitres(q.usedLiters)} used · {formatLitres(q.remainingLiters)} left
                       </p>
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell text-gray-500 text-xs">
+                    <td className="px-4 py-3 hidden md:table-cell text-gray-500 dark:text-gray-400 text-xs">
                       {formatDateTime(q.resetTimestamp)}
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={q.status} /></td>
@@ -290,14 +290,14 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
                             setNewLimit(String(q.limitLiters));
                             setReasonText('')
                           }}
-                          className="p-1.5 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                          className="p-1.5 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition-colors"
                         >
                           <SlidersHorizontal className="h-4 w-4" />
                         </button>
                         <button
                           title="Reset Quota"
                           onClick={() => handleReset(q)}
-                          className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                          className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         >
                           <RotateCcw className="h-4 w-4" />
                         </button>
@@ -315,10 +315,10 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
       {/* Adjust Modal */}
       <Modal isOpen={!!adjustModal} onClose={() => setAdjustModal(null)} title="Adjust Quota">
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Adjusting quota for <span className="font-semibold">{adjustModal?.registrationNumber}</span>
             {adjustModal?.period && (
-              <span className="ml-2 text-xs text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">
+              <span className="ml-2 text-xs text-brand-600 bg-brand-50 dark:bg-brand-900/20 px-1.5 py-0.5 rounded">
                 {adjustModal.period} period
               </span>
             )}

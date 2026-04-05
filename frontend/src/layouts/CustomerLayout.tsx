@@ -1,5 +1,5 @@
 import { Link, Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { Fuel, LayoutDashboard, QrCode, History, LogOut, User, Car, FileCheck } from 'lucide-react'
+import { Fuel, LayoutDashboard, QrCode, History, LogOut, User, Car } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import ThemeToggle from '@/components/common/ThemeToggle'
@@ -14,7 +14,6 @@ export default function CustomerLayout() {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
     { to: '/vehicles', icon: Car, label: t('nav.myVehicles') },
-    { to: '/claims', icon: FileCheck, label: t('nav.claims') },
     { to: '/qr-code', icon: QrCode, label: t('nav.myQrCode') },
     { to: '/transactions', icon: History, label: t('nav.transactions') },
   ]

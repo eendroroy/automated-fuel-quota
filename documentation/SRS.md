@@ -1,10 +1,10 @@
 # Software Requirements Specification (SRS)
 ## Automated Fuel Quota Management System
 
-**Document Version:** 2.4  
+**Document Version:** 2.5  
 **Date:** 2026-04-05  
 **Status:** Approved  
-**Based on:** BRD v2.4 (includes Versioned API Groups, Quota Config Sets, Custom Quota Marker, Bulk Sync)
+**Based on:** BRD v2.4 (removes claim-and-approval workflow; ownership transfer is now BRTA-driven and automatic)
 
 ---
 
@@ -92,8 +92,6 @@ User (1) ─────────── (*) Vehicle (1) ───────
                            └── (*) Transaction
 FuelStation (1) ──── (*) Transaction
 FuelStation (1) ──── (*) PumpRepresentative
-User (1) ──────────── (*) VehicleClaim (claimant)
-Vehicle (1) ─────────── (*) VehicleClaim (subject)
 QuotaConfigSet (1) ── (*) registrationCodes (element collection)
 ```
 
@@ -175,16 +173,8 @@ QuotaConfigSet (1) ── (*) registrationCodes (element collection)
 | district | String(50) | nullable | Administrative district |
 | status | Enum | NOT NULL | `ACTIVE`, `INACTIVE`, `SUSPENDED` |
 
-#### VehicleClaim
-| Field | Type | Constraints | Description |
-|-------|------|-------------|-------------|
-| id | UUID | PK | Auto-generated |
-| vehicle_id | UUID | FK(Vehicle) | Vehicle being claimed |
-| claimant_id | UUID | FK(User) | User submitting the claim |
-| claimantNid | String(20) | NOT NULL | NID provided as proof of ownership |
-| reason | String(500) | NOT NULL | Reason for the claim |
-| status | Enum | NOT NULL | `PENDING`, `APPROVED`, `REJECTED` |
-| adminNotes | String(500) | nullable | Admin review notes |
+#### VehicleClaim — **Removed**
+> The vehicle claim entity has been removed. Ownership transfer is now automatic: when a customer calls `POST /api/customer/v1/vehicles` with a registration number that already exists, the backend runs BRTA verification. On success the vehicle is re-assigned to the new owner immediately; on failure a `400` error is returned.
 
 ---
 
@@ -204,7 +194,7 @@ All REST endpoints follow the versioned URL scheme `/api/{role}/v1/`.
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/customer/v1/vehicles` | List own vehicles |
-| POST | `/api/customer/v1/vehicles` | Add a new vehicle |
+| POST | `/api/customer/v1/vehicles` | Add a vehicle; if reg. number exists and BRTA verification passes, ownership transfers automatically |
 | DELETE | `/api/customer/v1/vehicles/{id}` | Deregister a vehicle |
 | GET | `/api/customer/v1/vehicles-as-driver` | List vehicles where user is assigned as driver |
 | POST | `/api/customer/v1/vehicles/{id}/driver` | Assign a driver to a vehicle |
@@ -215,8 +205,6 @@ All REST endpoints follow the versioned URL scheme `/api/{role}/v1/`.
 | GET | `/api/customer/v1/qr-code` | Get QR token (primary vehicle) |
 | POST | `/api/customer/v1/qr-code/regenerate` | Regenerate QR (primary vehicle) |
 | GET | `/api/customer/v1/transactions` | Paginated transaction history |
-| POST | `/api/customer/v1/vehicles/claim` | Submit ownership claim |
-| GET | `/api/customer/v1/vehicles/claims` | List own claims |
 
 ### 4.3 Pump Representative Endpoints (`/api/pump-rep/v1/`, Public — Core BRD)
 | Method | Path | Description |
@@ -280,9 +268,8 @@ Both return the same `AuthorizationResponse` shape:
 | GET | `/api/admin/v1/stats` | Dashboard statistics |
 | GET | `/api/admin/v1/vehicles` | List vehicles (paginated, filterable) |
 | PUT | `/api/admin/v1/vehicles/{id}/reverify` | Trigger BRTA re-verification |
-| GET | `/api/admin/v1/vehicle-claims` | List ownership claims |
-| PUT | `/api/admin/v1/vehicle-claims/{id}/approve` | Approve ownership claim |
-| PUT | `/api/admin/v1/vehicle-claims/{id}/reject` | Reject ownership claim |
+| GET | `/api/admin/v1/users` | List users (customers + admins, paginated, filterable) |
+| PUT | `/api/admin/v1/users/{id}/status` | Suspend or activate a user account |
 | GET | `/api/admin/v1/stations` | List fuel stations |
 | POST | `/api/admin/v1/stations` | Create fuel station |
 | PUT | `/api/admin/v1/stations/{id}` | Update fuel station |
@@ -377,10 +364,8 @@ Both return the same `AuthorizationResponse` shape:
 /vehicles             → CustomerVehiclesPage
 /qr-code              → CustomerQrPage
 /transactions         → CustomerTransactionsPage
-/claims               → CustomerClaimsPage
 /admin/dashboard      → AdminDashboardPage (AdminLayout, ADMIN role)
 /admin/vehicles       → AdminVehiclesPage (shows customQuotaConfig badge)
-/admin/vehicle-claims → AdminVehicleClaimsPage
 /admin/stations       → AdminStationsPage
 /admin/quotas         → AdminQuotasPage (shows individuallyOverridden badge)
 /admin/quota-config   → AdminQuotaConfigPage (unified: config sets + global config + sync)

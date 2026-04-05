@@ -46,20 +46,20 @@ export default function LandingPage() {
 
       {/* Portal Cards */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">{t('landing.accessPortal')}</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-8">{t('landing.accessPortal')}</h2>
         <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {/* Customer Portal */}
-          <div className="card border-2 border-brand-100 hover:border-brand-300 transition-colors group">
+          <div className="card border-2 border-brand-100 dark:border-brand-800 hover:border-brand-300 dark:hover:border-brand-600 transition-colors group">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-brand-50 rounded-xl">
+              <div className="p-3 bg-brand-50 dark:bg-brand-900/30 rounded-xl">
                 <Car className="h-7 w-7 text-brand-600" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 text-lg">{t('landing.vehicleOwnerPortal')}</h3>
-                <p className="text-sm text-gray-500">{t('landing.vehicleOwnerPortalDesc')}</p>
+                <h3 className="font-bold text-gray-900 dark:text-white text-lg">{t('landing.vehicleOwnerPortal')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('landing.vehicleOwnerPortalDesc')}</p>
               </div>
             </div>
-            <ul className="space-y-2 text-sm text-gray-600 mb-6">
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
               <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.viewManageQuota')}</li>
               <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.downloadQrCode')}</li>
               <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.trackHistory')}</li>
@@ -71,17 +71,17 @@ export default function LandingPage() {
           </div>
 
           {/* Admin Portal */}
-          <div className="card border-2 border-gray-100 hover:border-gray-300 transition-colors group">
+          <div className="card border-2 border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500 transition-colors group">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-gray-100 rounded-xl">
-                <Shield className="h-7 w-7 text-gray-600" />
+              <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-xl">
+                <Shield className="h-7 w-7 text-gray-600 dark:text-gray-400" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 text-lg">{t('landing.adminDashboard')}</h3>
-                <p className="text-sm text-gray-500">{t('landing.adminDashboardDesc')}</p>
+                <h3 className="font-bold text-gray-900 dark:text-white text-lg">{t('landing.adminDashboard')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('landing.adminDashboardDesc')}</p>
               </div>
             </div>
-            <ul className="space-y-2 text-sm text-gray-600 mb-6">
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
               <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.manageVehiclesQuotas')}</li>
               <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.overseeStations')}</li>
               <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.analyticsAudit')}</li>
@@ -94,17 +94,17 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="bg-gray-50 border-t border-gray-100 py-16">
+      <section className="bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <h2 className="text-2xl font-bold text-center text-gray-900 mb-10">{t('landing.howItWorks')}</h2>
+          <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-10">{t('landing.howItWorks')}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="card text-center">
-                <div className="inline-flex p-3 bg-brand-50 rounded-xl mb-4">
+                <div className="inline-flex p-3 bg-brand-50 dark:bg-brand-900/30 rounded-xl mb-4">
                   <Icon className="h-6 w-6 text-brand-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
-                <p className="text-sm text-gray-500">{desc}</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{desc}</p>
               </div>
             ))}
           </div>

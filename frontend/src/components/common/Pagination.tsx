@@ -21,7 +21,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
       <button
         disabled={page === 0}
         onClick={() => onPageChange(page - 1)}
-        className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -33,7 +33,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
           className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
             p === page
               ? 'bg-brand-600 text-white'
-              : 'text-gray-600 hover:bg-gray-100'
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
           }`}
         >
           {p + 1}
@@ -43,11 +43,10 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
       <button
         disabled={page >= totalPages - 1}
         onClick={() => onPageChange(page + 1)}
-        className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronRight className="h-4 w-4" />
       </button>
     </div>
   )
 }
-
