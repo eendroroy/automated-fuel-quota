@@ -67,17 +67,20 @@ public interface QuotaRepository extends JpaRepository<Quota, UUID>,
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         UPDATE quotas q
-        SET weekly_limit_liters = cs.limit_litres,
-            quota_period = cs.quota_period,
-            remaining_liters = LEAST(q.remaining_liters, cs.limit_litres),
+        SET weekly_limit_liters = config_data.limit_litres,
+            quota_period = config_data.quota_period,
+            remaining_liters = LEAST(q.remaining_liters, config_data.limit_litres),
             updated_at = :now
-        FROM quota_config_set_codes csrc
-        JOIN quota_config_sets cs ON cs.id = csrc.config_set_id
-        JOIN vehicles v ON v.id = q.vehicle_id
-        WHERE v.vehicle_registration_code = csrc.registration_code
+        FROM (
+            SELECT v.id AS vehicle_id, cs.limit_litres, cs.quota_period
+            FROM quota_config_set_codes csrc
+            JOIN quota_config_sets cs ON cs.id = csrc.config_set_id
+            JOIN vehicles v ON v.vehicle_registration_code = csrc.registration_code
+            WHERE v.status <> 'DEREGISTERED'
+        ) AS config_data
+        WHERE q.vehicle_id = config_data.vehicle_id
           AND q.individually_overridden = false
           AND q.status <> 'SUSPENDED'
-          AND v.status <> 'DEREGISTERED'
         """, nativeQuery = true)
     int bulkSyncFromConfigSets(@Param("now") LocalDateTime now);
 
