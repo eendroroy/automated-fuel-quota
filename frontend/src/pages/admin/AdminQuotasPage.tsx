@@ -50,7 +50,7 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
         setTotalPages(d.totalPages);
         setTotalElements(d.totalElements)
       })
-      .catch(() => toast.error('Failed to load quotas'))
+      .catch(() => toast.error(t('adminQuotas.loadFailed')))
       .finally(() => setLoading(false))
   }, [page, debouncedSearch, statusFilter, sortBy, sortOrder])
 
@@ -82,26 +82,26 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
 
   const handleAdjust = async () => {
     if (!adjustModal || !newLimit || !reasonText.trim()) {
-      toast.error('Fill all required fields');
+      toast.error(t('adminQuotas.fillRequiredFields'));
       return
     }
 
     const limitValue = parseFloat(newLimit)
     if (isNaN(limitValue) || limitValue <= 0 || limitValue > 500) {
-      toast.error('Please enter a valid limit between 0.1 and 500 liters')
+      toast.error(t('adminQuotas.validLimitError'))
       return
     }
 
     setSaving(true)
     try {
       await adjustQuota(adjustModal.vehicleId, { newLimitLiters: limitValue, reason: reasonText })
-      toast.success(`Quota adjusted to ${formatLitres(limitValue)}`)
+      toast.success(t('adminQuotas.quotaAdjusted', { limit: formatLitres(limitValue) }))
       setAdjustModal(null)
       setNewLimit('')
       setReasonText('')
       fetchQuotas()
     } catch (err: any) {
-      const message = err?.response?.data?.message || 'Failed to adjust quota'
+      const message = err?.response?.data?.message || t('adminQuotas.adjustFailed')
       toast.error(message)
     } finally {
       setSaving(false)
@@ -109,9 +109,15 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
   }
 
   const handleReset = async (q: Quota) => {
-    if (!confirm(`Reset quota for ${q.registrationNumber}?`)) return
-    try { await manualResetQuota(q.vehicleId); toast.success(t('adminQuotas.resetSuccess')); fetchQuotas() }
-    catch { toast.error(t('errors.saveFailed')) }
+    if (!confirm(t('adminQuotas.confirmReset', { registrationNumber: q.registrationNumber }))) return
+    try {
+      await manualResetQuota(q.vehicleId);
+      toast.success(t('adminQuotas.resetSuccess'));
+      fetchQuotas()
+    }
+    catch {
+      toast.error(t('errors.saveFailed'))
+    }
   }
 
   return (
@@ -145,13 +151,13 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-              showFilters
+              showFilters || statusFilter
                 ? 'bg-brand-50 text-brand-700 border-brand-200'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
             }`}
           >
             <Filter className="h-4 w-4" />
-            Filters
+            {t('common.filter')}
           </button>
         </div>
 
@@ -159,20 +165,20 @@ const AdminQuotasPage = memo(function AdminQuotasPage() {
           <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
             <div className="grid sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.status')}</label>
                 <select
                   className="input-field text-sm"
                   value={statusFilter}
                   onChange={(e) => { setStatusFilter(e.target.value); setPage(0) }}
                 >
-                  <option value="">All Statuses</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="SUSPENDED">Suspended</option>
-                  <option value="EXHAUSTED">Exhausted</option>
+                  <option value="">{t('adminQuotas.allStatuses')}</option>
+                  <option value="ACTIVE">{t('status.ACTIVE')}</option>
+                  <option value="SUSPENDED">{t('status.SUSPENDED')}</option>
+                  <option value="EXHAUSTED">{t('adminQuotas.exhausted')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Sort By</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">{t('adminQuotas.sortBy')}</label>
                 <select
                   className="input-field text-sm"
                   value={sortBy}
