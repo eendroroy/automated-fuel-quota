@@ -260,31 +260,31 @@ export default function CustomerRegisterPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="label">Full Name *</label>
-                <input className="input-field" placeholder="John Doe" value={form.ownerName} onChange={set('ownerName')} />
+                <input className="input-field" placeholder="John Doe" value={form.ownerName} onChange={set('ownerName')} autoComplete="name" />
               </div>
               <div>
                 <label className="label">National ID (NID) *</label>
-                <input className="input-field" placeholder="123456789V" value={form.ownerNid} onChange={set('ownerNid')} />
+                <input className="input-field" placeholder="123456789V" value={form.ownerNid} onChange={set('ownerNid')} autoComplete="off" />
               </div>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="label">Mobile Number *</label>
-                <input className="input-field" type="tel" placeholder="01711123456" value={form.ownerMobile} onChange={set('ownerMobile')} />
+                <input className="input-field" type="tel" placeholder="01711123456" value={form.ownerMobile} onChange={set('ownerMobile')} autoComplete="tel" inputMode="numeric" />
               </div>
               <div>
                 <label className="label">Email Address *</label>
-                <input className="input-field" type="email" placeholder="you@example.com" value={form.ownerEmail} onChange={set('ownerEmail')} />
+                <input className="input-field" type="email" placeholder="you@example.com" value={form.ownerEmail} onChange={set('ownerEmail')} autoComplete="email" />
               </div>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="label">Password *</label>
-                <input className="input-field" type="password" placeholder="Min. 8 characters" value={form.password} onChange={set('password')} />
+                <input className="input-field" type="password" placeholder="Min. 8 characters" value={form.password} onChange={set('password')} autoComplete="new-password" />
               </div>
               <div>
                 <label className="label">Confirm Password *</label>
-                <input className="input-field" type="password" placeholder="Repeat password" value={form.confirmPassword} onChange={set('confirmPassword')} />
+                <input className="input-field" type="password" placeholder="Repeat password" value={form.confirmPassword} onChange={set('confirmPassword')} autoComplete="new-password" />
               </div>
             </div>
           </div>
@@ -305,6 +305,7 @@ export default function CustomerRegisterPage() {
                 className="input-field text-center text-2xl tracking-widest font-mono"
                 type="text"
                 inputMode="numeric"
+                autoComplete="one-time-code"
                 maxLength={6}
                 placeholder="000000"
                 value={form.otp}

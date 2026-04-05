@@ -243,7 +243,9 @@
     "driverManagement": "চালক ব্যবস্থাপনা",
     "currentDriver": "বর্তমান চালক",
     "assignDriverByEmail": "ইমেইল দিয়ে চালক নিয়োগ",
+    "assignDriverByMobile": "মোবাইল নম্বর দিয়ে চালক নিয়োগ",
     "driverEmailPlaceholder": "driver@example.com",
+    "driverMobilePlaceholder": "01711123456",
     "confirmRemoveDriver": "এই যানবাহন থেকে চালক সরানো হবে?",
     "vehicleAddedSuccess": "যানবাহন সফলভাবে যোগ করা হয়েছে",
     "driverAssigned": "চালক সফলভাবে নিয়োগ করা হয়েছে",
@@ -337,7 +339,7 @@
     "vehicleClass": "যানবাহনের শ্রেণী",
     "vehicleStatus": "অবস্থা",
     "confirmReverify": "এই যানবাহনটি পুনরায় যাচাই করবেন?",
-    "reverifySuccess": "যানবাহন পুনরায় যাচাই হয়েছে",
+    "reverifySuccess": "পুনরায় যাচাই হয়েছে",
     "noVehicles": "কোনো যানবাহন পাওয়া যায়নি"
   },
   "adminStations": {
@@ -546,7 +548,8 @@
     "passwordMismatch": "পাসওয়ার্ড মিলছে না",
     "loadFailed": "তথ্য লোড ব্যর্থ",
     "saveFailed": "সংরক্ষণ ব্যর্থ",
-    "deleteFailed": "মুছে ফেলা ব্যর্থ",
+    "deleteFailed": "মুছে ফেলতে ব্যর্থ",
+    "fillAllFields": "সকল ক্ষেত্র পূরণ করুন",
     "qrLoadFailed": "QR কোড লোড করা যায়নি",
     "qrRegenFailed": "QR কোড পুনরায় তৈরি করা যায়নি",
     "unauthorized": "এই পাতা দেখার অনুমতি নেই",

@@ -35,26 +35,27 @@ export default function PumpRepLayout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40 shadow-sm">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-brand-700 dark:text-brand-400 text-base">
             <Fuel className="h-5 w-5 text-brand-600" />
-            <span>{t('pumpRepLayout.portalTitle')}</span>
+            <span className="truncate">{t('pumpRepLayout.portalTitle')}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <LanguageSwitcher />
             {session && (
               <>
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
+                <div className="hidden sm:flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
                   <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">{session.name}</span>
+                  <span className="truncate max-w-[100px]">{session.name}</span>
                 </div>
                 <ThemeToggle />
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-1 text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                  title={t('pumpRepLayout.logout')}
                 >
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">{t('pumpRepLayout.logout')}</span>
@@ -67,11 +68,11 @@ export default function PumpRepLayout() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6">
+      <main className="flex-1 max-w-lg mx-auto w-full px-4 py-4 sm:py-6">
         <Outlet />
       </main>
 
-      <footer className="py-3 text-center text-xs text-gray-400 border-t border-gray-100">
+      <footer className="py-3 text-center text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
         {t('footer.copyright', { year: new Date().getFullYear() })}
       </footer>
     </div>

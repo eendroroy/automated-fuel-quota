@@ -1,8 +1,8 @@
 # Business Requirements Document (BRD)
 ## Automated Fuel Quota Management System
 
-**Document Version:** 2.3  
-**Date:** 2026-04-04  
+**Document Version:** 2.3
+**Date:** 2026-04-04
 **Status:** Approved — Updated with Driver Assignment, Driver-Only Registration, and Quota by Registration Code features
 
 ---
@@ -57,7 +57,7 @@ The Automated Fuel Quota Management System is a platform to **control, authorize
 - Physical pump hardware integration.
 - Multi-timezone support (single fixed timezone).
 - BRTA API live integration (currently simulated; vehicles are auto-verified).
-- OTP/SMS-based mobile verification.
+- SMS gateway integration (TOTP verification can work with future SMS service).
 - Offline-first workflows.
 
 ---
@@ -300,7 +300,7 @@ Authorization requires all of the following:
 ## 13. Open Items / Future Scope
 
 1. **BRTA API Integration** — Real-time ownership verification against national vehicle registry.
-2. **OTP Verification** — Mobile number confirmation via SMS during customer registration.
+2. **SMS Gateway Integration** — Connect TOTP OTP system to SMS provider for production deployment.
 3. **Pump Hardware Integration** — Direct integration with pump telemetry for automatic dispense confirmation.
 4. **Offline Mode** — Pump app operation during connectivity loss with sync-on-reconnect.
 5. **Multi-tenant Support** — Multiple quota programs per vehicle class or region.

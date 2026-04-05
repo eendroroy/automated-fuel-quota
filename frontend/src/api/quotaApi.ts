@@ -7,7 +7,14 @@ export const getMyQuota = () =>
 export const getVehicleQuota = (vehicleId: string) =>
   axiosInstance.get<Quota>(`/customer/vehicles/${vehicleId}/quota`).then((r) => r.data)
 
-export const getAllQuotas = (params: { page?: number; size?: number; search?: string }) =>
+export const getAllQuotas = (params: {
+  page?: number;
+  size?: number;
+  search?: string;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}) =>
   axiosInstance.get<PagedResponse<Quota>>('/admin/quotas', { params }).then((r) => r.data)
 
 export const adjustQuota = (vehicleId: string, data: QuotaAdjustRequest) =>

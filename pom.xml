@@ -100,6 +100,13 @@
 			<version>${mapstruct.version}</version>
 		</dependency>
 
+		<!-- ── OTP Generation (kotp TOTP/HOTP library) ───────────────────────── -->
+		<dependency>
+			<groupId>io.github.eendroroy</groupId>
+			<artifactId>kotp</artifactId>
+			<version>2.0.2</version>
+		</dependency>
+
 		<!-- ── JWT Authentication ────────────────────────────────────────────── -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

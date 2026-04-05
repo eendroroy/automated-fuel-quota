@@ -33,7 +33,7 @@ export interface Vehicle {
   ownerEmail: string
   driverId?: string
   driverName?: string
-  driverEmail?: string
+  driverMobile?: string
   vehicleMake: string
   vehicleColor: string
   vehicleClass: string
@@ -282,7 +282,7 @@ export interface QuotaConfigByRegistrationCodeRequest {
 
 // ─── Driver Assignment ───────────────────────────────────────────────────────
 export interface AssignDriverRequest {
-  driverEmail: string
+  driverMobile: string
 }
 
 // ─── Vehicle Claims ──────────────────────────────────────────────────────────

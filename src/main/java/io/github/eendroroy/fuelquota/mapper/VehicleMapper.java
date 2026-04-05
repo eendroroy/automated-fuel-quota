@@ -32,7 +32,7 @@ public class VehicleMapper {
                 .ownerEmail(vehicle.getOwnerEmail())
                 .driverId(vehicle.getDriver() != null ? vehicle.getDriver().getId().toString() : null)
                 .driverName(vehicle.getDriver() != null ? vehicle.getDriver().getName() : null)
-                .driverEmail(vehicle.getDriver() != null ? vehicle.getDriver().getEmail() : null)
+                .driverMobile(vehicle.getDriver() != null ? vehicle.getDriver().getMobileNumber() : null)
                 .vehicleMake(vehicle.getVehicleMake())
                 .vehicleColor(vehicle.getVehicleColor())
                 .vehicleClass(vehicle.getVehicleClass())

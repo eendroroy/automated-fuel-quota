@@ -1,7 +1,13 @@
 import axiosInstance from './axiosInstance'
 import type { FuelStation, StationFormData, PagedResponse } from '@/types'
 
-export const getAllStations = (params?: { page?: number; size?: number; status?: string }) =>
+export const getAllStations = (params?: {
+  page?: number;
+  size?: number;
+  status?: string;
+  search?: string;
+  district?: string;
+}) =>
   axiosInstance.get<PagedResponse<FuelStation>>('/admin/stations', { params }).then((r) => r.data)
 
 export const getStation = (id: string) =>

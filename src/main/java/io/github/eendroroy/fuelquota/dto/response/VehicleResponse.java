@@ -78,9 +78,9 @@ public class VehicleResponse implements Serializable {
     @Schema(description = "Driver's full name", example = "Jane Smith")
     private String driverName;
 
-    /** Driver's e-mail address (if assigned). */
-    @Schema(description = "Driver's email address", example = "jane@example.com")
-    private String driverEmail;
+    /** Driver's mobile number (if assigned). */
+    @Schema(description = "Driver's mobile number", example = "01711123456")
+    private String driverMobile;
 
     /** Manufacturer / brand (e.g. Toyota, Honda). */
     @Schema(description = "Vehicle manufacturer / make", example = "Toyota")

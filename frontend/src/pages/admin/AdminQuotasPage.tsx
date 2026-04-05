@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from 'react'
-import { Search, SlidersHorizontal, RotateCcw } from 'lucide-react'
+import { useEffect, useState, useCallback, useMemo, memo } from 'react'
+import { Search, SlidersHorizontal, RotateCcw, Filter, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getAllQuotas, adjustQuota, manualResetQuota } from '@/api/quotaApi'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import StatusBadge from '@/components/common/StatusBadge'
@@ -10,59 +11,193 @@ import { formatDateTime, formatLitres } from '@/utils/formatters'
 import type { Quota } from '@/types'
 import { DEFAULT_PAGE_SIZE } from '@/config/constants'
 
-export default function AdminQuotasPage() {
+const AdminQuotasPage = memo(function AdminQuotasPage() {
+  const { t } = useTranslation()
   const [quotas, setQuotas] = useState<Quota[]>([])
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
   const [page, setPage] = useState(0)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('')
+  const [sortBy, setSortBy] = useState<'registration' | 'usage' | 'remaining' | 'resetDate'>('registration')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [loading, setLoading] = useState(true)
   const [adjustModal, setAdjustModal] = useState<Quota | null>(null)
   const [newLimit, setNewLimit] = useState('')
   const [reasonText, setReasonText] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Debounce search to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
 
   const fetchQuotas = useCallback(() => {
     setLoading(true)
-    getAllQuotas({ page, size: DEFAULT_PAGE_SIZE, search })
-      .then((d) => { setQuotas(d.content); setTotalPages(d.totalPages); setTotalElements(d.totalElements) })
+    getAllQuotas({
+      page,
+      size: DEFAULT_PAGE_SIZE,
+      search: debouncedSearch,
+      status: statusFilter || undefined,
+      sortBy: sortBy !== 'registration' ? sortBy : undefined,
+      sortOrder
+    })
+      .then((d) => {
+        setQuotas(d.content);
+        setTotalPages(d.totalPages);
+        setTotalElements(d.totalElements)
+      })
       .catch(() => toast.error('Failed to load quotas'))
       .finally(() => setLoading(false))
-  }, [page, search])
+  }, [page, debouncedSearch, statusFilter, sortBy, sortOrder])
 
-  useEffect(() => { fetchQuotas() }, [fetchQuotas])
+  useEffect(() => {
+    fetchQuotas()
+  }, [fetchQuotas])
+
+  // Memoized filtered and sorted quotas for performance
+  const processedQuotas = useMemo(() => {
+    let result = [...quotas]
+
+    // Apply client-side sorting if needed
+    if (sortBy === 'usage') {
+      result.sort((a, b) => {
+        const aUsage = (a.usedLiters / a.limitLiters) * 100
+        const bUsage = (b.usedLiters / b.limitLiters) * 100
+        return sortOrder === 'asc' ? aUsage - bUsage : bUsage - aUsage
+      })
+    } else if (sortBy === 'remaining') {
+      result.sort((a, b) => {
+        return sortOrder === 'asc'
+          ? a.remainingLiters - b.remainingLiters
+          : b.remainingLiters - a.remainingLiters
+      })
+    }
+
+    return result
+  }, [quotas, sortBy, sortOrder])
 
   const handleAdjust = async () => {
-    if (!adjustModal || !newLimit || !reasonText.trim()) { toast.error('Fill all fields'); return }
+    if (!adjustModal || !newLimit || !reasonText.trim()) {
+      toast.error('Fill all required fields');
+      return
+    }
+
+    const limitValue = parseFloat(newLimit)
+    if (isNaN(limitValue) || limitValue <= 0 || limitValue > 500) {
+      toast.error('Please enter a valid limit between 0.1 and 500 liters')
+      return
+    }
+
     setSaving(true)
     try {
-      await adjustQuota(adjustModal.vehicleId, { newLimitLiters: parseFloat(newLimit), reason: reasonText })
-      toast.success('Quota adjusted')
-      setAdjustModal(null); fetchQuotas()
-    } catch { toast.error('Failed to adjust quota') }
-    finally { setSaving(false) }
+      await adjustQuota(adjustModal.vehicleId, { newLimitLiters: limitValue, reason: reasonText })
+      toast.success(`Quota adjusted to ${formatLitres(limitValue)}`)
+      setAdjustModal(null)
+      setNewLimit('')
+      setReasonText('')
+      fetchQuotas()
+    } catch (err: any) {
+      const message = err?.response?.data?.message || 'Failed to adjust quota'
+      toast.error(message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleReset = async (q: Quota) => {
     if (!confirm(`Reset quota for ${q.registrationNumber}?`)) return
-    try { await manualResetQuota(q.vehicleId); toast.success('Quota reset'); fetchQuotas() }
-    catch { toast.error('Reset failed') }
+    try { await manualResetQuota(q.vehicleId); toast.success(t('adminQuotas.resetSuccess')); fetchQuotas() }
+    catch { toast.error(t('errors.saveFailed')) }
   }
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Quota Management</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{totalElements.toLocaleString()} vehicles</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('adminQuotas.title')}</h1>
+        <p className="text-sm text-gray-500 mt-0.5">{totalElements.toLocaleString()} {t('common.totalItems', { count: totalElements }).replace(/\d+ /, '')}</p>
       </div>
 
-      {/* Search */}
+      {/* Enhanced Search and Filters */}
       <div className="card py-4">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input className="input-field pl-9" placeholder="Search by registration number…"
-            value={search} onChange={(e) => { setSearch(e.target.value); setPage(0) }} />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              className="input-field pl-9"
+              placeholder={t('adminQuotas.searchPlaceholder') || 'Search by registration number or owner name...'}
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(0) }}
+            />
+            {search && (
+              <button
+                onClick={() => { setSearch(''); setPage(0) }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
+              >
+                <X className="h-3 w-3 text-gray-400" />
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+              showFilters
+                ? 'bg-brand-50 text-brand-700 border-brand-200'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+          </button>
         </div>
+
+        {showFilters && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+            <div className="grid sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  className="input-field text-sm"
+                  value={statusFilter}
+                  onChange={(e) => { setStatusFilter(e.target.value); setPage(0) }}
+                >
+                  <option value="">All Statuses</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="SUSPENDED">Suspended</option>
+                  <option value="EXHAUSTED">Exhausted</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Sort By</label>
+                <select
+                  className="input-field text-sm"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                >
+                  <option value="registration">Registration</option>
+                  <option value="usage">Usage %</option>
+                  <option value="remaining">Remaining</option>
+                  <option value="resetDate">Reset Date</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Order</label>
+                <select
+                  className="input-field text-sm"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as any)}
+                >
+                  <option value="asc">Ascending</option>
+                  <option value="desc">Descending</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="card p-0 overflow-hidden">
@@ -81,14 +216,28 @@ export default function AdminQuotasPage() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={6} className="py-12 text-center"><LoadingSpinner className="mx-auto" /></td></tr>
-              ) : quotas.length === 0 ? (
-                <tr><td colSpan={6} className="py-12 text-center text-gray-400">No quotas found</td></tr>
-              ) : quotas.map((q) => {
+              ) : processedQuotas.length === 0 ? (
+                <tr><td colSpan={6} className="py-12 text-center text-gray-400">
+                  {search || statusFilter ? 'No quotas match your search criteria' : 'No quotas found'}
+                </td></tr>
+              ) : processedQuotas.map((q) => {
                 const pct = Math.round((q.usedLiters / q.limitLiters) * 100)
+                const isLowQuota = pct >= 90
+                const isMediumQuota = pct >= 60 && pct < 90
+
                 return (
-                  <tr key={q.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                  <tr key={q.id} className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+                    isLowQuota ? 'bg-red-50/30' : ''
+                  }`}>
                     <td className="px-4 py-3">
-                      <p className="font-mono font-semibold text-brand-700">{q.registrationNumber}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono font-semibold text-brand-700">{q.registrationNumber}</p>
+                        {isLowQuota && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
+                            Low
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-400">{q.ownerName}</p>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
@@ -100,23 +249,45 @@ export default function AdminQuotasPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-gray-100 rounded-full h-1.5 max-w-[80px]">
-                          <div className={`h-1.5 rounded-full ${pct >= 90 ? 'bg-red-500' : pct >= 60 ? 'bg-yellow-400' : 'bg-green-500'}`}
-                            style={{ width: `${Math.min(pct, 100)}%` }} />
+                          <div
+                            className={`h-1.5 rounded-full transition-all ${
+                              isLowQuota ? 'bg-red-500' : isMediumQuota ? 'bg-yellow-400' : 'bg-green-500'
+                            }`}
+                            style={{ width: `${Math.min(pct, 100)}%` }}
+                          />
                         </div>
-                        <span className="text-xs text-gray-500">{pct}%</span>
+                        <span className={`text-xs font-medium ${
+                          isLowQuota ? 'text-red-600' : isMediumQuota ? 'text-yellow-600' : 'text-gray-500'
+                        }`}>
+                          {pct}%
+                        </span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">{formatLitres(q.usedLiters)} used · {formatLitres(q.remainingLiters)} left</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {formatLitres(q.usedLiters)} used · {formatLitres(q.remainingLiters)} left
+                      </p>
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell text-gray-500 text-xs">{formatDateTime(q.resetTimestamp)}</td>
+                    <td className="px-4 py-3 hidden md:table-cell text-gray-500 text-xs">
+                      {formatDateTime(q.resetTimestamp)}
+                    </td>
                     <td className="px-4 py-3"><StatusBadge status={q.status} /></td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button title="Adjust Quota" onClick={() => { setAdjustModal(q); setNewLimit(String(q.limitLiters)); setReasonText('') }}
-                          className="p-1.5 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors">
+                        <button
+                          title="Adjust Quota"
+                          onClick={() => {
+                            setAdjustModal(q);
+                            setNewLimit(String(q.limitLiters));
+                            setReasonText('')
+                          }}
+                          className="p-1.5 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                        >
                           <SlidersHorizontal className="h-4 w-4" />
                         </button>
-                        <button title="Reset Quota" onClick={() => handleReset(q)}
-                          className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button
+                          title="Reset Quota"
+                          onClick={() => handleReset(q)}
+                          className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           <RotateCcw className="h-4 w-4" />
                         </button>
                       </div>
@@ -162,4 +333,6 @@ export default function AdminQuotasPage() {
       </Modal>
     </div>
   )
-}
+})
+
+export default AdminQuotasPage

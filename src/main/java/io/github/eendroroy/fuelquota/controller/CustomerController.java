@@ -426,7 +426,7 @@ public class CustomerController {
             @Valid @RequestBody io.github.eendroroy.fuelquota.dto.request.AssignDriverRequest req,
             HttpServletRequest request) {
         UUID userId = (UUID) request.getAttribute("userId");
-        return ResponseEntity.ok(customerService.assignDriver(userId, vehicleId, req.getDriverEmail()));
+        return ResponseEntity.ok(customerService.assignDriver(userId, vehicleId, req.getDriverMobile()));
     }
 
     /**

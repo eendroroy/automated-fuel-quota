@@ -47,10 +47,10 @@ The **frontend-maven-plugin** automatically handles Node.js installation and Rea
 - **Backward Compatible**: Existing registration flow with vehicle information remains unchanged
 
 ### Driver Assignment
-- **Vehicle-Driver Relationship**: Owners can assign registered customers as drivers for their vehicles
+- **Vehicle-Driver Relationship**: Owners can assign registered customers as drivers for their vehicles **by mobile number**
 - **Driver Authorization**: Both vehicle owner and assigned driver can generate QR codes for fuel authorization
 - **Multi-User Access**: A single vehicle can have one owner and one assigned driver
-- **Driver Management**: Owners can assign/remove drivers via customer portal API endpoints
+- **Driver Management**: Owners can assign/remove drivers via customer portal API endpoints using mobile number lookup
 
 ### Vehicle Workflow States
 ```java
@@ -82,9 +82,9 @@ DEREGISTERED → soft-deleted; history preserved
 ### Pump Representative Portal Flow
 1. Rep navigates to `/pump`, enters their **employee ID** → `POST /api/pump/login`.
 2. Session saved to `localStorage` (`pumpRepSession` key) via helpers in `PumpRepLayout.tsx`.
-3. Rep is shown scan page; tab switcher selects between camera QR scanner and manual entry.
+3. Rep is shown mobile-optimized scan page; tab switcher selects between camera QR scanner and manual entry.
 4. After authorization → navigates to `/pump/dispense` with `AuthorizationResult` in router state.
-5. Dispense page shows vehicle info panel + color-coded quota bar + fuel type dropdown + on-screen numeric keypad.
+5. Mobile-friendly dispense page shows vehicle info panel + color-coded quota bar + fuel type dropdown + on-screen numeric keypad.
 6. Rep confirms → `POST /api/pump/confirm` → receipt shown with transaction reference.
 
 ## Field Naming Conventions
@@ -124,7 +124,7 @@ DEREGISTERED → soft-deleted; history preserved
   - `POST /api/pump/confirm` — dispense confirmation (`qrToken` optional; use `registrationNumber` for manual path)
 - `/api/customer/*` - **CUSTOMER role required** (JWT protected)
   - Driver assignment:
-    - `POST /api/customer/vehicles/{vehicleId}/driver` — assign driver by email
+    - `POST /api/customer/vehicles/{vehicleId}/driver` — assign driver by mobile number
     - `DELETE /api/customer/vehicles/{vehicleId}/driver` — remove driver
     - `GET /api/customer/vehicles-as-driver` — list vehicles where user is driver
 - `/api/admin/*` - **ADMIN role required** (JWT protected)
@@ -137,13 +137,15 @@ DEREGISTERED → soft-deleted; history preserved
 
 ### Frontend Architecture
 - **Layout-based routing**: `PublicLayout`, `CustomerLayout`, `AdminLayout`, `PumpRepLayout` with nested routes
+- **Mobile-first responsive design**: Customer portal has bottom tab navigation on mobile; Pump portal optimized for touch interfaces
 - **API client pattern**: Centralized axios instance with interceptors for auth/errors; **separate** `pumpAxios` instance (no JWT) in `api/pumpApi.ts`
 - **Type definitions**: Shared TypeScript interfaces in `frontend/src/types/index.ts`
+- **Language toggle**: Pill-style toggle with persistent localStorage preference (English ↔ বাংলা)
 - **Pump portal pages**: `pages/pump/PumpLoginPage.tsx`, `PumpScanPage.tsx`, `PumpDispensePage.tsx`
 - **New admin pages**: 
   - `pages/admin/AdminQuotaConfigByCodePage.tsx` — Manage quota configs by registration code
 - **New customer components**: 
-  - `components/customer/DriverManagementModal.tsx` — Assign/remove drivers for vehicles
+  - `components/customer/DriverManagementModal.tsx` — Assign/remove drivers by mobile number
 - **Updated customer pages**:
   - `pages/customer/CustomerRegisterPage.tsx` — Now supports driver-only registration (vehicle fields optional)
   - `pages/customer/CustomerVehiclesPage.tsx` — Shows driver info, driver management, and vehicles where user is driver
@@ -202,6 +204,21 @@ QuotaConfigByRegistrationCode (1) -> (*) Vehicle (via registration code)
 
 ## Configuration & Environment
 
+### OTP Generation System
+The system uses the [kotp](https://github.com/eendroroy/kotp) library for TOTP-based OTP generation:
+- **Per-mobile TOTP secrets**: Each mobile number gets a derived secret from `app.otp.secret + "." + mobile`
+- **5-minute validity window**: OTP codes refresh every 5 minutes with 1 previous window tolerance
+- **Dummy bypass**: The code `000000` is always accepted when an OTP request exists (for testing)
+- **Memory storage**: Active OTP requests tracked in `ConcurrentHashMap` with 10-minute TTL
+- **Production ready**: Replace debug logging with SMS gateway integration
+
+```java
+// OtpService generates real TOTP codes but accepts dummy bypass
+String realOtp = totpFor(mobileNumber).now(); // e.g., "428391"
+boolean isValid = otpService.verifyOtp(mobileNumber, "000000"); // true (dummy)
+boolean isValid2 = otpService.verifyOtp(mobileNumber, realOtp); // true (real TOTP)
+```
+
 ### Development Database Setup
 ```sql
 CREATE DATABASE automated_fuel_quota;
@@ -212,6 +229,7 @@ CREATE DATABASE automated_fuel_quota;
 ```yaml
 app.jwt.secret: # Long JWT signing secret
 app.jwt.qr-expiration-ms: 3600000  # 1 hour QR tokens
+app.otp.secret: # Base secret for TOTP derivation (override in production)
 app.quota.weekly-limit-litres: 24.0
 app.quota.reset-cron-expression: "0 0 0 ? * SUN"
 app.quota.geofence-radius-meters: 100

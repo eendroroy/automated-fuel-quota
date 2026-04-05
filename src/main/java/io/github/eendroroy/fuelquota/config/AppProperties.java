@@ -10,6 +10,7 @@ public class AppProperties {
 
     private final Jwt jwt = new Jwt();
     private final Quota quota = new Quota();
+    private final Otp otp = new Otp();
 
     public static class Jwt {
         private String secret = "automated-fuel-quota-system-secret-key-2026";
@@ -40,6 +41,15 @@ public class AppProperties {
         public void setPeriod(QuotaPeriod period) { this.period = period; }
     }
 
+    public static class Otp {
+        /** Shared base secret used to derive per-mobile TOTP secrets. Override in production. */
+        private String secret = "fuel-quota-otp-shared-secret-2026";
+
+        public String getSecret() { return secret; }
+        public void setSecret(String secret) { this.secret = secret; }
+    }
+
     public Jwt getJwt() { return jwt; }
     public Quota getQuota() { return quota; }
+    public Otp getOtp() { return otp; }
 }

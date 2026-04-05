@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Car, MapPin, Droplets, Users, Activity, Clock } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getAdminStats } from '@/api/adminStatsApi'
 import StatsCard from '@/components/common/StatsCard'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
@@ -10,6 +11,7 @@ import {
 import type { AdminStats } from '@/types'
 
 export default function AdminDashboardPage() {
+  const { t } = useTranslation()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -33,19 +35,19 @@ export default function AdminDashboardPage() {
   ]
 
   const cards = [
-    { title: 'Total Vehicles', value: (stats?.totalVehicles ?? 24_850).toLocaleString(), icon: Car, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
-    { title: 'Unverified Vehicles', value: stats?.unverifiedVehicles ?? 0, icon: Clock, iconBg: 'bg-yellow-50', iconColor: 'text-yellow-600' },
-    { title: 'Transactions Today', value: (stats?.transactionsToday ?? 2_134).toLocaleString(), icon: Activity, iconBg: 'bg-green-50', iconColor: 'text-green-600' },
-    { title: 'Active Stations', value: stats?.activeStations ?? 428, icon: MapPin, iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
-    { title: 'Avg. Quota Used', value: `${stats?.averageQuotaUsedPercent?.toFixed(1) ?? '64.3'}%`, icon: Droplets, iconBg: 'bg-orange-50', iconColor: 'text-orange-600' },
-    { title: 'Transactions This Week', value: (stats?.totalTransactionsThisWeek ?? 14_820).toLocaleString(), icon: Users, iconBg: 'bg-pink-50', iconColor: 'text-pink-600' },
+    { title: t('adminDashboard.totalVehicles'), value: (stats?.totalVehicles ?? 24_850).toLocaleString(), icon: Car, iconBg: 'bg-blue-50', iconColor: 'text-blue-600' },
+    { title: t('adminDashboard.unverifiedVehicles'), value: stats?.unverifiedVehicles ?? 0, icon: Clock, iconBg: 'bg-yellow-50', iconColor: 'text-yellow-600' },
+    { title: t('adminDashboard.transactionsToday'), value: (stats?.transactionsToday ?? 2_134).toLocaleString(), icon: Activity, iconBg: 'bg-green-50', iconColor: 'text-green-600' },
+    { title: t('adminDashboard.activeStations'), value: stats?.activeStations ?? 428, icon: MapPin, iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
+    { title: t('adminDashboard.avgQuotaUsed'), value: `${stats?.averageQuotaUsedPercent?.toFixed(1) ?? '64.3'}%`, icon: Droplets, iconBg: 'bg-orange-50', iconColor: 'text-orange-600' },
+    { title: t('adminDashboard.totalTxWeek'), value: (stats?.totalTransactionsThisWeek ?? 14_820).toLocaleString(), icon: Users, iconBg: 'bg-pink-50', iconColor: 'text-pink-600' },
   ]
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-0.5">System overview and analytics</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('adminDashboard.title')}</h1>
+        <p className="text-gray-500 text-sm mt-0.5">{t('common.loading').replace('...', '')} </p>
       </div>
 
       {/* Stats grid */}
@@ -59,7 +61,7 @@ export default function AdminDashboardPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Daily transactions */}
         <div className="card">
-          <h3 className="font-semibold text-gray-900 mb-5">Daily Transactions (Last 7 Days)</h3>
+          <h3 className="font-semibold text-gray-900 mb-5">{t('adminDashboard.dailyTrend')}</h3>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={dailyTx} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -73,7 +75,7 @@ export default function AdminDashboardPage() {
 
         {/* Quota usage by class */}
         <div className="card">
-          <h3 className="font-semibold text-gray-900 mb-5">Avg. Quota Used by Vehicle Class (L)</h3>
+          <h3 className="font-semibold text-gray-900 mb-5">{t('adminDashboard.quotaUsageByClass')}</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={quotaByClass} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />

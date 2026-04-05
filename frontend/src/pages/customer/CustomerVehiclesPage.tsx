@@ -299,7 +299,7 @@ export default function CustomerVehiclesPage() {
                   <div className="col-span-2">
                     <p className="text-xs text-gray-400">Assigned Driver</p>
                     <p className="font-medium text-gray-700">{v.driverName}</p>
-                    <p className="text-xs text-gray-500">{v.driverEmail}</p>
+                    <p className="text-xs text-gray-500">{v.driverMobile}</p>
                   </div>
                 )}
               </div>

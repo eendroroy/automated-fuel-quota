@@ -300,15 +300,15 @@ public class CustomerService {
      * Assigns a driver to a vehicle owned by the authenticated customer.
      * The driver must have a registered customer account.
      *
-     * @param userId    owner's user ID
-     * @param vehicleId vehicle ID
-     * @param driverEmail email of the driver to assign
+     * @param userId       owner's user ID
+     * @param vehicleId    vehicle ID
+     * @param driverMobile mobile number of the driver to assign
      * @return updated vehicle response
      * @throws ResourceNotFoundException if vehicle or driver not found
      * @throws BadRequestException if vehicle doesn't belong to user or driver is not a customer
      */
     @Transactional
-    public VehicleResponse assignDriver(UUID userId, UUID vehicleId, String driverEmail) {
+    public VehicleResponse assignDriver(UUID userId, UUID vehicleId, String driverMobile) {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
@@ -316,8 +316,8 @@ public class CustomerService {
             throw new BadRequestException("Vehicle does not belong to this user");
         }
 
-        User driver = userRepository.findByEmail(driverEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("Driver not found with email: " + driverEmail));
+        User driver = userRepository.findByMobileNumber(driverMobile)
+                .orElseThrow(() -> new ResourceNotFoundException("Driver not found with mobile: " + driverMobile));
 
         if (driver.getRole() != User.UserRole.CUSTOMER) {
             throw new BadRequestException("Driver must have a customer account");
