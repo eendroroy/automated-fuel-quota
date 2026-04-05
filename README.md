@@ -1,15 +1,209 @@
 # Automated Fuel Quota System
 
-A comprehensive **QR-code-driven fuel quota management platform** built with **Spring Boot 4.0.5** and **React 18** that ensures fair, transparent fuel distribution based on a configurable weekly quota policy.
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Java 25](https://img.shields.io/badge/Java-25-orange)](https://www.oracle.com/java/)
+[![Spring Boot 4.0.5](https://img.shields.io/badge/Spring%20Boot-4.0.5-brightgreen)](https://spring.io/projects/spring-boot)
+[![React 18](https://img.shields.io/badge/React-18-61dafb)](https://react.dev)
 
-> **📄 Documentation:**
-> [`documentation/BRD.md`](documentation/BRD.md) (requirements) |
-> [`documentation/SRS.md`](documentation/SRS.md) (technical spec) |
-> [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md) (user journeys)
+> Fair, transparent fuel distribution through QR-code-driven quota management
+>
+> A complete fuel quota platform that combines customer convenience with administrative control, enabling vehicles to access their allocated fuel quota through secure QR code authorization at registered fuel stations.
 
 ---
 
-## 🏗️ System Architecture
+## Overview
+
+The **Automated Fuel Quota System** is a modern web application that manages fuel distribution for vehicles based on configurable quota policies. It enables vehicle owners and operators to generate secure QR codes for fuel authorization, while pump attendants scan these codes for quick authorization and dispensing. The system provides administrators with comprehensive dashboards to manage quotas, track transactions, and enforce fair fuel allocation.
+
+**Key Use Cases:**
+- **Vehicle owners** register their vehicles and generate secure, time-limited QR codes for fuel authorization
+- **Pump representatives** use a browser-based portal to scan QR codes (or manually enter registration numbers) and dispense fuel with instant quota validation
+- **Administrators** manage fuel stations, configure quota policies, adjust individual quotas, and view detailed transaction history and analytics
+- **Drivers** can be assigned to vehicles and generate QR codes independently for fuel refueling
+
+---
+
+## 🚀 Key Features
+
+### For Vehicle Owners
+- **Flexible Registration** - Register as a vehicle owner or driver-only (with optional vehicles)
+- **Multi-Vehicle Management** - Manage multiple registered vehicles with individual quota tracking
+- **Driver Assignment** - Authorize trusted drivers to generate QR codes for your vehicles
+- **QR Code Generation** - Create secure, time-limited QR codes for fuel authorization
+- **Primary & Secondary Fuel Types** - Support for multiple fuel types (petrol, diesel, CNG) with fuel-type-specific QR codes
+- **Quota Dashboard** - Visual display of fuel usage and remaining quota with transaction history
+- **Transaction Records** - Complete history of fuel dispensing activities with vehicle filtering
+
+### For Pump Representatives
+- **Browser-Based Portal** - Mobile-optimized pump rep portal with no installation required
+- **Quick QR Scanning** - Camera-based QR code scanning for rapid authorization
+- **Manual Fallback** - Enter vehicle registration number directly when QR scanning is unavailable
+- **Real-Time Validation** - Instant verification of vehicle eligibility and quota availability
+- **Mobile-Friendly Interface** - Numeric keypad and optimized layout for touch interaction
+- **Transaction Receipts** - Confirmation with reference number, amount dispensed, and remaining quota
+
+### For Administrators
+- **Dashboard Analytics** - Overview of system metrics, active vehicles, transaction volume, and quota utilization
+- **User Management** - Manage customer and admin accounts with suspend/activate functionality
+- **Vehicle Approvals** - Monitor vehicle registrations with BRTA verification status
+- **Fuel Station Network** - Add, configure, and manage fuel stations with GPS coordinates
+- **Quota Configuration** - Set global defaults, create quota sets for registration codes, and override individual quotas
+- **Bulk Operations** - Sync quota configurations to multiple vehicles with one action
+- **Pump Rep Management** - Create and manage pump representative accounts
+- **Audit Trail** - Comprehensive logging of all administrative actions and system events
+
+---
+
+## Getting Started
+
+### For Users
+1. Visit the landing page and choose your role (vehicle owner or pump representative)
+2. **Vehicle Owners**: Register your account, add your vehicle, and generate a QR code
+3. **Pump Reps**: Login with your employee ID to access the scanning portal
+4. **Admins**: Login with admin credentials to access management dashboards
+
+### For Developers & Contributors
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/eendroroy/automated-fuel-quota.git
+   cd automated-fuel-quota
+   ```
+
+2. **System Requirements**
+   - Java 25 or compatible JDK
+   - Node.js 20+ and npm
+   - PostgreSQL 15+
+   - Maven 3.9+
+
+3. **Setup & Development**
+   - See `documentation/SRS.md` for detailed setup instructions
+   - Frontend development: `cd frontend && npm run dev`
+   - Backend development: `./mvnw spring-boot:run`
+
+4. **Building for Production**
+   ```bash
+   ./mvnw clean package
+   ```
+
+---
+
+## How to Use
+
+### Vehicle Owners: Get Fuel
+1. Register on the platform with your personal details
+2. Add your vehicle(s) and receive automatic BRTA verification
+3. Generate a QR code in the app (select fuel type if needed)
+4. Visit any registered fuel station and show the QR code
+5. Pump attendant scans and confirms the amount
+6. Receive confirmation with remaining quota
+
+### Pump Representatives: Dispense Fuel
+1. Login with your employee ID
+2. Scan the customer's QR code OR manually enter registration number
+3. Verify vehicle details and quota availability
+4. Enter the fuel amount (system suggests available quota)
+5. Confirm transaction
+6. Provide receipt to customer
+
+### Administrators: Manage the System
+1. **Monitor**: View dashboard with active users, vehicles, and transactions
+2. **Configure**: Set up fuel stations and quota policies (daily, weekly, monthly, etc.)
+3. **Manage**: Create pump rep accounts, adjust individual quotas, manage users
+4. **Analyze**: Review audit logs and transaction history for compliance
+
+---
+
+## What to Do Next
+
+### I Want to...
+
+- **Learn about the system** → Read [`documentation/BRD.md`](documentation/BRD.md) for business requirements
+- **Understand the technical architecture** → Check [`documentation/SRS.md`](documentation/SRS.md)
+- **See user flows** → Visit [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md)
+- **Set up for development** → See setup instructions in the SRS document
+- **Contribute code** → Open an issue or pull request following the contribution guidelines
+- **Report a bug** → Create an issue with clear reproduction steps
+- **Suggest a feature** → Start a discussion in the issues section
+
+### Find Help
+
+- **Documentation** - See the `documentation/` folder for detailed guides
+- **Issues** - Search existing issues or create a new one
+- **Discussions** - Join the conversation in project discussions
+- **Code Examples** - Check user journey maps for step-by-step flows
+
+---
+
+## Project Status
+
+**Status:** ✅ **Active & Maintained**
+
+This is a production-ready fuel quota management system with:
+- ✅ Complete implementation of all business requirements
+- ✅ Comprehensive test coverage
+- ✅ Security features (JWT, RBAC, audit logging)
+- ✅ Performance optimization and monitoring
+- ✅ Multi-language support (English & Bangla)
+- ✅ Mobile optimization for pump portal
+
+### Maintenance Commitment
+- Regular security updates and dependency management
+- Bug fixes and performance improvements
+- Feature enhancements based on user feedback
+- Documentation updates with each release
+
+---
+
+## Contributing
+
+We welcome contributions! Whether you're fixing bugs, adding features, or improving documentation:
+
+1. **Fork** the repository
+2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
+3. **Make your changes** with clear commit messages
+4. **Write or update tests** for your changes
+5. **Submit a Pull Request** with a detailed description
+
+### Development Guidelines
+- Follow existing code style and patterns
+- Add tests for new functionality
+- Update documentation as needed
+- Ensure all tests pass before submitting PR
+
+For more details, see `documentation/SRS.md` and the contributing guide in the repository.
+
+---
+
+## License
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — a free, copyleft license that ensures the software remains free and open-source.
+
+**Key Points:**
+- ✅ You can use, modify, and distribute the software freely
+- ✅ If you run a modified version as a network service, you must provide access to the source code
+- ✅ All modifications must be released under the same AGPL-3.0 license
+- 📄 Full license text available in the [`LICENSE`](LICENSE) file
+
+For more information, visit: https://www.gnu.org/licenses/agpl-3.0.html
+
+---
+
+## Links & Contacts
+
+- **GitHub Repository** - https://github.com/eendroroy/automated-fuel-quota
+- **Project Issues** - https://github.com/eendroroy/automated-fuel-quota/issues
+- **Documentation** - See `documentation/` folder in repository
+- **Author** - [@eendroroy](https://github.com/eendroroy)
+
+---
+
+## Additional Resources
+
+---
+
+## Technical Architecture
+
+### System Design
 
 ```mermaid
 graph TD
@@ -42,381 +236,37 @@ graph TD
 ```
 
 
-### Complete Implementation Status ✅
+### Implementation Highlights
 
-This project is a **fully functional** fuel quota management system implementing all BRD requirements plus additional features:
+This project implements all business requirements with:
+- **Complete Backend** - Spring Boot REST API with security and scheduling
+- **Frontend Application** - React SPA with customer, admin, and pump representative portals
+- **Database** - PostgreSQL with optimized schema and indexes
+- **Security** - JWT authentication, role-based access control, and audit logging
+- **Advanced Features** - Quota config sets, bulk operations, automatic BRTA verification, driver assignment
+- **Mobile Support** - Responsive design optimized for pump rep QR scanning portal
 
-- ✅ **Backend API** - Complete Spring Boot application with security and scheduling
-- ✅ **Frontend SPA** - React/TypeScript customer and admin portals
-- ✅ **Pump Rep Web Portal** - Browser-based portal for pump representatives with QR scanning and manual lookup
-- ✅ **Database Schema** - PostgreSQL with proper relationships and indexes
-- ✅ **Business Logic** - Configurable quota management with partial dispense support
-- ✅ **Security** - JWT authentication with role-based access control
-- ✅ **Scheduled Jobs** - Automatic quota reset based on configurable period
-- ✅ **Automatic Ownership Transfer** — When a customer adds a vehicle already registered under another account, BRTA verification runs automatically; on success the vehicle transfers immediately (no admin approval step)
-- ✅ **Quota Config Sets** - Group multiple registration codes into shared quota sets (e.g. GA/KHA/BHA → 30L/week)
-- ✅ **Bulk Quota Sync** - Push config-set limits to all non-individually-overridden vehicles with one action
-- ✅ **Custom Quota Marker** - Vehicles with admin-overridden quotas are visually flagged and excluded from sync
-- ✅ **Driver-Only Registration** — Users can register without owning vehicles
-- ✅ **Driver Assignment** — Vehicle owners can assign drivers with full authorization
-- ✅ **Multi-language Support** - English and Bangla translations across all views
-- ✅ **Mobile Optimization** - Responsive design for QR code and pump rep portal
-- ✅ **User Management** - Admin panel to manage customer and admin user accounts
-- ✅ **Primary + Secondary Fuel Types** - Vehicles support one primary and optional secondary fuel types
-- ✅ **Fuel-Type QR Generation** - Customers can generate QR codes for secondary fuel types
+## Documentation
 
-### Core Business Logic (Per BRD Requirements)
+Complete technical documentation is available in the `documentation/` folder:
 
-- ✅ **Configurable Quota** - Flexible limit enforcement per vehicle (default 24L weekly)
-- ✅ **Quota Config Sets** - Group vehicle registration codes (GA, KHA, BHA…) into named sets with a shared limit and period
-- ✅ **Custom Quota Override** - Admin can individually adjust a vehicle's limit; it is then excluded from bulk sync operations
-- ✅ **QR Code Authentication** - Encrypted JWT tokens with 1-hour expiration
-- ✅ **GPS Geofencing** - Location-based validation for authorized stations
-- ✅ **Partial Dispense Support** - Smart authorization when requested > remaining quota
-- ✅ **Configurable Period Reset** - Scheduled quota restoration (DAILY/WEEKLY/MONTHLY/QUARTERLY/YEARLY)
-- ✅ **Real-time Validation** - Instant vehicle status and quota checking
-- ✅ **Idempotent Transactions** - Prevents double-deducting from quota on QR path
-- ✅ **Complete Audit Trail** - Every action logged with timestamp and user
-
-## 🚀 Key Features
-
-### Vehicle Owner App (Customer Portal)
-- **Flexible Registration** - Register as vehicle owner OR driver-only account (optional vehicle)
-- **Multi-step Registration** - Personal info → Vehicle details (optional) → Review & submit
-- **Primary + Secondary Fuel Types** - Assign a primary fuel type and optional secondary fuel types per vehicle
-- **QR Code Management** - Generate, regenerate, and download fuel QR codes with fuel type selection (mobile-optimized)
-- **Secondary Fuel QR** - Select a secondary fuel type when generating a QR code for refueling with an alternate fuel
-- **Driver Management** - Assign registered drivers to vehicles; both owner and driver can generate QR codes
-- **Quota Dashboard** - Visual gauge showing used vs. remaining fuel allocation
-- **Transaction History** - Complete record of fuel dispensing activities with vehicle filtering
-- **Vehicles as Driver** - View and manage vehicles where user is assigned as driver
-
-### Admin Dashboard
-- **User Management** - View, search, suspend, and activate customer and admin user accounts
-- **Vehicle Management** - Approve, reject, or suspend vehicle registrations
-- **Fuel Station Management** - CRUD operations with GPS coordinate validation
-- **Quota Administration** - Adjust limits, manual resets, and bulk operations
-- **Quota Config Sets** - Create named sets grouping multiple registration codes with a shared fuel limit and period
-- **Bulk Quota Sync** - One-click sync of config-set limits to all eligible vehicles (skips individually overridden quotas)
-- **Pump Representative Management** - Create and manage pump rep accounts
-- **Analytics & Reporting** - Usage charts, transaction trends, and system metrics
-- **Audit Log Viewer** - Searchable, filterable administrative action history
-
-### Pump Representative Web Portal (`/pump`) — Mobile-Optimized
-- **Employee ID Login** - Authenticate with employee code; station info shown after login
-- **QR Code Scanner** - Camera-based scanning via `html5-qrcode` library
-- **Manual Fallback** - Enter vehicle registration number directly when QR is unavailable
-- **Vehicle Verification Panel** - Shows registration number, BRTA status badge, fuel type highlighted, owner name, vehicle make/color
-- **Quota Progress Bar** - Color-coded remaining/total quota display (green → yellow → red)
-- **On-screen Numeric Keypad** - Mobile-friendly fuel amount entry (4 digits + 2 decimals)
-- **Fuel Type Display** - Read-only highlighted fuel type from vehicle registration
-- **Full-Width Amount Entry** - Optimized layout for mobile touch interaction
-- **Transaction Receipt** - Reference number, dispensed amount, and remaining quota shown after confirmation
-
-## 🛠️ Technology Stack
-
-### Backend
-- **Spring Boot 4.0.5** with Java 25
-- **Spring Security** with JWT authentication
-- **Spring Data JPA** with PostgreSQL
-- **Spring Scheduler** for quota reset jobs
-- **Bean Validation** for request validation
-
-### Frontend
-- **React 18** with TypeScript
-- **Vite** for build tooling and HMR
-- **Tailwind CSS** for responsive styling
-- **React Router v6** for client-side routing
-- **Axios** for API communication
-- **React QR Code** for QR generation (customer portal)
-- **html5-qrcode** for QR scanning (pump rep portal)
-- **Recharts** for admin analytics
-
-### Infrastructure
-- **PostgreSQL 15+** - Primary database
-- **Maven** - Java dependency management
-- **npm** - Node.js package management
-
-## 📋 Quick Start
-
-> For complete user journey maps, see [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md).
-
-### Prerequisites
-- Java 25 (or compatible JDK)
-- Node.js 20+ and npm
-- PostgreSQL 15+
-- Maven 3.9+
-
-### 1. Database Setup
-
-```sql
-CREATE DATABASE automated_fuel_quota;
-CREATE USER fuel_user WITH PASSWORD 'fuel_password';
-GRANT ALL PRIVILEGES ON DATABASE automated_fuel_quota TO fuel_user;
-```
-
-### 2. Configure Application
-
-Update `src/main/resources/application.yaml`:
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/automated_fuel_quota
-    username: fuel_user
-    password: fuel_password
-```
-
-### 3. Run the Application
-
-```bash
-# Build and run the complete application
-./mvnw clean install
-./mvnw spring-boot:run
-
-# Access the application
-# Frontend: http://localhost:8080
-# API: http://localhost:8080/api
-```
-
-### 4. Default Login Credentials
-
-**Admin Portal**: http://localhost:8080/admin/login
-- Email: `admin@fuelquota.gov`
-- Password: `admin123`
-
-**Customer Registration**: http://localhost:8080/register
-- Register new vehicle owners through the self-service portal
-
-**Pump Representative Portal**: http://localhost:8080/pump
-- Enter the employee ID of any active pump representative (created via Admin → Pump Reps)
-
-## 🔧 API Endpoints
-
-All REST endpoints are versioned under `/api/{role}/v1/`.
-
-### Authentication
-```
-POST /api/auth/v1/customer/login     - Customer login
-POST /api/auth/v1/admin/login        - Admin login
-POST /api/auth/v1/customer/register  - Vehicle registration
-POST /api/auth/v1/customer/send-otp  - Send OTP for mobile verification
-```
-
-### Customer API (`/api/customer/v1/`, JWT Required)
-```
-GET    /api/customer/v1/vehicles                              - List own vehicles
-POST   /api/customer/v1/vehicles                              - Add vehicle; transfers ownership if already registered and BRTA passes
-GET    /api/customer/v1/vehicles-as-driver                    - List vehicles where user is driver
-POST   /api/customer/v1/vehicles/{id}/driver                  - Assign driver to vehicle
-DELETE /api/customer/v1/vehicles/{id}/driver                  - Remove driver from vehicle
-PUT    /api/customer/v1/vehicles/{id}/fuel-types              - Update secondary fuel types
-GET    /api/customer/v1/quota                                 - Get quota status
-GET    /api/customer/v1/vehicles/{id}/qr-code                 - Generate QR (?fuelType for secondary fuel)
-POST   /api/customer/v1/vehicles/{id}/qr-code/regenerate      - Regenerate QR (?fuelType for secondary fuel)
-GET    /api/customer/v1/transactions                          - Transaction history
-```
-
-### Pump Representative API (`/api/pump-rep/v1/`, Public — Core BRD)
-```
-POST /api/pump-rep/v1/login              - Employee ID login → session details ⭐
-POST /api/pump-rep/v1/authorize          - Authorize via QR token ⭐
-POST /api/pump-rep/v1/authorize-manual   - Authorize via registration number ⭐
-POST /api/pump-rep/v1/confirm            - Confirm fuel dispensed ⭐
-```
-
-### Admin API (`/api/admin/v1/`, JWT + Admin Role Required)
-```
-GET    /api/admin/v1/stats                        - Dashboard statistics
-GET    /api/admin/v1/users                        - List users (customers + admins, paginated, filterable)
-PUT    /api/admin/v1/users/{id}/status            - Update user status (suspend/activate)
-GET    /api/admin/v1/vehicles                     - List vehicles (paginated)
-PUT    /api/admin/v1/vehicles/{id}/reverify        - Re-verify vehicle
-GET    /api/admin/v1/stations                     - List fuel stations
-POST   /api/admin/v1/stations                     - Create station
-PUT    /api/admin/v1/stations/{id}                - Update station
-DELETE /api/admin/v1/stations/{id}                - Delete station
-GET    /api/admin/v1/pump-representatives         - List pump reps
-POST   /api/admin/v1/pump-representatives         - Create pump rep
-PUT    /api/admin/v1/pump-representatives/{id}    - Update pump rep
-GET    /api/admin/v1/quotas                       - List all quotas (paginated)
-PUT    /api/admin/v1/quotas/{vehicleId}/adjust    - Adjust individual quota (marks as overridden)
-POST   /api/admin/v1/quotas/{vehicleId}/reset     - Reset individual quota
-POST   /api/admin/v1/quotas/bulk-reset            - Bulk reset all quotas
-GET    /api/admin/v1/quota-config                 - Get global quota configuration
-PUT    /api/admin/v1/quota-config                 - Update global quota configuration
-GET    /api/admin/v1/quota-config-sets            - List all quota config sets
-POST   /api/admin/v1/quota-config-sets            - Create quota config set
-PUT    /api/admin/v1/quota-config-sets/{id}       - Update quota config set
-DELETE /api/admin/v1/quota-config-sets/{id}       - Delete quota config set
-POST   /api/admin/v1/quota-config/sync            - Sync config set limits to vehicles
-GET    /api/admin/v1/audit-logs                   - Audit log (paginated)
-GET    /api/admin/v1/transactions                 - All transactions (paginated)
-```
-
-### Public Reference Data (`/api/public/v1/`, No Auth)
-```
-GET /api/public/v1/registration-codes  - Vehicle registration codes
-GET /api/public/v1/brta-offices        - BRTA regional office codes
-```
-
-## 🔄 Core Business Process Flow
-
-### 1. Vehicle Registration & Approval
-```
-Customer Registration → Auto-VERIFIED → Quota Created → QR Code Ready
-```
-
-### 2. Fuel Dispensing — QR Path (Primary)
-```
-Rep Login (employee ID) → QR Code Scan → Token Validation →
-Vehicle Verification → Geofence Check → Quota Authorization →
-Enter Amount (numeric keypad) → Confirm → Transaction Recorded → Receipt
-```
-
-### 3. Fuel Dispensing — Manual Path (Fallback)
-```
-Rep Login (employee ID) → Enter Registration Number → Vehicle Lookup →
-Vehicle Verification → Quota Authorization →
-Enter Amount (numeric keypad) → Confirm → Transaction Recorded → Receipt
-```
-
-### 4. Weekly Quota Reset (Automated)
-```
-Sunday 00:00 Trigger → Reset All Quotas →
-Audit Logging → System Ready for New Week
-```
-
-## 📊 System Capabilities
-
-### Performance Targets
-- **Authorization Response Time**: < 2 seconds
-- **Concurrent Users**: 10,000+
-- **Transaction Throughput**: 1000+ TPS
-- **System Uptime**: 99.9%
-- **Weekly Reset Success**: 100%
-
-### Security Features  
-- ✅ HTTPS/TLS encryption required
-- ✅ JWT tokens with secure 256-bit secrets
-- ✅ QR tokens expire after 1 hour
-- ✅ SQL injection prevention via JPA
-- ✅ Input validation on all endpoints
-- ✅ Role-based access control
-- ✅ Complete audit logging
-
-### Monitoring & Observability
-- **Spring Boot Actuator** - Health checks and metrics
-- **Centralized Logging** - Structured application logs  
-- **Database Monitoring** - Connection pool and query performance
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-./mvnw test
-
-# Run integration tests  
-./mvnw verify
-
-# Frontend tests
-cd frontend && npm test
-```
-
-## 🏭 Production Deployment
-
-The application is containerizable and cloud-ready:
-
-```bash
-# Build production build
-./mvnw clean package -Pprod
-
-# Frontend production build (embedded in Spring Boot)
-cd frontend && npm run copy-to-static
-
-# Run production JAR
-java -jar target/automated-fuel-quota-0.0.1-SNAPSHOT.jar
-```
-
-## 📚 Project Structure
-
-```
-automated-fuel-quota/
-├── Dockerfile                    # Multi-stage Docker build (JDK build → JRE runtime)
-├── documentation/
-│   ├── BRD.md                    # Business Requirements Document
-│   ├── SRS.md                    # Software Requirements Specification
-│   └── USER_JOURNEY.md           # User journey maps (all actor types)
-├── src/main/java/io/github/eendroroy/fuelquota/
-│   ├── config/          # Security, OpenAPI, DataInitializer
-│   ├── controller/
-│   │   └── v1/
-│   │       ├── admin/   # V1AdminDashboardController, V1AdminVehicleController,
-│   │       │            # V1AdminQuotaController, V1AdminStationController,
-│   │       │            # V1AdminPumpRepController, V1AdminAuditController,
-│   │       │            # V1AdminTransactionController
-│   │       ├── customer/ # V1CustomerController
-│   │       ├── pump/     # V1PumpRepController
-│   │       ├── auth/     # V1AuthController
-│   │       └── pub/      # V1ReferenceDataController
-│   ├── dto/             # Request/Response DTOs (incl. QuotaConfigSetRequest/Response)
-│   ├── entity/          # JPA entities (incl. QuotaConfigSet, Quota.individuallyOverridden)
-│   ├── enums/           # Domain enumerations
-│   ├── exception/       # Global exception handling
-│   ├── repository/      # JPA repositories
-│   ├── security/        # JWT provider and filter
-│   └── service/         # Business logic (incl. QuotaConfigSetService, QuotaService.syncQuotaConfigs)
-├── src/main/resources/
-│   ├── application.yaml # Application configuration
-│   └── static/          # Frontend build output (served by Spring Boot)
-├── frontend/            # React 18 / TypeScript SPA
-│   └── src/
-│       ├── api/         # Versioned Axios API clients
-│       │   ├── authApi.ts            # /auth/v1/**
-│       │   ├── vehicleApi.ts         # /customer/v1/**, /admin/v1/vehicles/**
-│       │   ├── quotaApi.ts           # /customer/v1/quota, /admin/v1/quotas/**
-│       │   ├── quotaConfigApi.ts     # /admin/v1/quota-config, /quota-config-sets/**, sync
-│       │   ├── stationApi.ts         # /admin/v1/stations/**
-│       │   ├── pumpApi.ts            # /pump-rep/v1/**
-│       │   └── ...
-│       ├── components/  # Reusable UI components
-│       ├── layouts/     # PublicLayout, CustomerLayout, AdminLayout, PumpRepLayout
-│       ├── pages/
-│       │   ├── customer/    # Customer portal pages
-│       │   ├── admin/       # Admin portal pages (incl. unified AdminQuotaConfigPage)
-│       │   └── pump/        # Pump rep portal (Login, Scan, Dispense)
-│       └── types/           # Shared TypeScript interfaces
-└── AGENTS.md            # AI coding agent guide
-```
-
-## 🎯 Implementation Highlights
-
-This implementation fully satisfies all **Business Requirements Document (BRD)** specifications:
-
-### Functional Requirements Implemented ✅
-- **FR-01 through FR-10** — All vehicle owner portal requirements
-- **FR-11 through FR-20** — Full pump representative web portal (login, scan, manual entry, dispense, receipt)
-- **FR-21 through FR-30** — Complete admin portal
-- **FR-31 through FR-33** — Backend infrastructure (scheduler, transactions, audit)
-
-### Non-Functional Requirements Met ✅
-- **NFR-01 through NFR-13** — Security, performance, reliability, and observability
-
-### Business Rules Enforced ✅
-- **BR-1 through BR-9** — Weekly quota limits, partial dispense, automatic reset, eligibility checks, pump rep login, manual authorization
+| Document | Purpose |
+|----------|---------|
+| [BRD.md](documentation/BRD.md) | **Business Requirements Document** - Detailed requirements, business rules, and acceptance criteria |
+| [SRS.md](documentation/SRS.md) | **Software Requirements Specification** - Technical architecture, API contracts, entity schemas, and setup guide |
+| [USER_JOURNEY.md](documentation/USER_JOURNEY.md) | **User Journey Maps** - Step-by-step flows for vehicle owners, pump representatives, and administrators |
 
 ---
 
-**🎉 Ready for Production Use** - Complete fuel quota management system implementing all BRD requirements with modern technology stack and best practices.
+## Technology Stack
+
+**Backend:** Spring Boot 4.0.5 | Java 25 | Spring Security | Spring Data JPA | PostgreSQL 15+
+
+**Frontend:** React 18 | TypeScript | Vite | Tailwind CSS | Axios
+
+**DevOps:** Maven | Docker | npm
 
 ---
 
-## 📖 Documentation Index
-
-| Document | Description |
-|----------|-------------|
-| [`documentation/BRD.md`](documentation/BRD.md) | Business Requirements Document — requirements, rules, acceptance tests |
-| [`documentation/SRS.md`](documentation/SRS.md) | Software Requirements Specification — API contracts, entity schemas |
-| [`documentation/USER_JOURNEY.md`](documentation/USER_JOURNEY.md) | Detailed user journey maps for Customer, Pump Rep, Admin, and System |
-| [`AGENTS.md`](AGENTS.md) | AI coding agent guide — patterns, conventions, and domain model |
+**Questions?** Check the [documentation](documentation/) folder or open an issue on GitHub.
 
