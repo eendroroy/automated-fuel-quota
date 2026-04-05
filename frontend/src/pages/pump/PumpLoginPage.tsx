@@ -7,23 +7,23 @@ import { savePumpSession } from '@/layouts/PumpRepLayout'
 
 export default function PumpLoginPage() {
   const navigate = useNavigate()
-  const [employeeId, setEmployeeId] = useState('')
+  const [mobileNumber, setMobileNumber] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!employeeId.trim()) {
-      toast.error('Please enter your employee code')
+    if (!mobileNumber.trim()) {
+      toast.error('Please enter your mobile number')
       return
     }
     setLoading(true)
     try {
-      const session = await pumpRepLogin({ employeeId: employeeId.trim() })
+      const session = await pumpRepLogin({ mobileNumber: mobileNumber.trim() })
       savePumpSession(session)
       toast.success(`Welcome, ${session.name}!`)
       navigate('/pump/scan')
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.response?.data ?? 'Login failed. Check your employee code.'
+      const msg = err?.response?.data?.message ?? err?.response?.data ?? 'Login failed. Check your mobile number.'
       toast.error(typeof msg === 'string' ? msg : 'Login failed')
     } finally {
       setLoading(false)
@@ -38,30 +38,30 @@ export default function PumpLoginPage() {
           <Fuel className="h-8 w-8 text-white" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900">Pump Representative</h1>
-        <p className="text-gray-500 text-sm">Sign in with your employee code to start dispensing fuel</p>
+        <p className="text-gray-500 text-sm">Sign in with your mobile number to start dispensing fuel</p>
       </div>
 
       {/* Login card */}
       <div className="card w-full max-w-sm space-y-5">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="label" htmlFor="emp-code">
-              Employee Code
+            <label className="label" htmlFor="mobile">
+              Mobile Number
             </label>
             <input
-              id="emp-code"
-              type="text"
-              className="input-field text-center text-lg tracking-widest font-mono uppercase"
-              placeholder="e.g. EMP-001"
-              value={employeeId}
-              onChange={(e) => setEmployeeId(e.target.value)}
+              id="mobile"
+              type="tel"
+              className="input-field text-center text-lg tracking-widest font-mono"
+              placeholder="+8801711123456"
+              value={mobileNumber}
+              onChange={(e) => setMobileNumber(e.target.value)}
               autoFocus
-              autoComplete="off"
+              autoComplete="tel"
             />
           </div>
           <button
             type="submit"
-            disabled={loading || !employeeId.trim()}
+            disabled={loading || !mobileNumber.trim()}
             className="btn-primary w-full py-3 text-base gap-2"
           >
             {loading ? (
@@ -75,7 +75,7 @@ export default function PumpLoginPage() {
       </div>
 
       <p className="text-xs text-gray-400 text-center max-w-xs">
-        Your employee code was issued by your station manager. Contact admin if you have trouble logging in.
+        Your mobile number is registered with your station. Contact admin if you have trouble logging in.
       </p>
     </div>
   )

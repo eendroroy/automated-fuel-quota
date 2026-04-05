@@ -9,13 +9,13 @@ import LoadingSpinner from '@/components/common/LoadingSpinner'
 export default function CustomerLoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ mobileNumber: '', password: '' })
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.email || !form.password) {
+    if (!form.mobileNumber || !form.password) {
       toast.error('Please fill in all fields')
       return
     }
@@ -40,21 +40,21 @@ export default function CustomerLoginPage() {
           <div className="inline-flex items-center justify-center h-14 w-14 bg-brand-50 rounded-2xl mb-4">
             <Fuel className="h-7 w-7 text-brand-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Vehicle Owner Login</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Customer Login</h1>
           <p className="text-gray-500 text-sm mt-1">Access your fuel quota dashboard</p>
         </div>
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="label">Email address</label>
+              <label className="label">Mobile Number</label>
               <input
-                type="email"
+                type="tel"
                 className="input-field"
-                placeholder="owner@example.com"
-                value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                autoComplete="email"
+                placeholder="+8801711123456"
+                value={form.mobileNumber}
+                onChange={(e) => setForm((f) => ({ ...f, mobileNumber: e.target.value }))}
+                autoComplete="tel"
               />
             </div>
 
@@ -88,7 +88,7 @@ export default function CustomerLoginPage() {
           <p className="text-center text-sm text-gray-500 mt-5">
             Don't have an account?{' '}
             <Link to="/register" className="text-brand-600 font-medium hover:underline">
-              Register your vehicle
+              Register now
             </Link>
           </p>
         </div>

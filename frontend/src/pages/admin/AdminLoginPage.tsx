@@ -9,13 +9,13 @@ import LoadingSpinner from '@/components/common/LoadingSpinner'
 export default function AdminLoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ mobileNumber: '', password: '' })
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.email || !form.password) { toast.error('Please fill in all fields'); return }
+    if (!form.mobileNumber || !form.password) { toast.error('Please fill in all fields'); return }
     setLoading(true)
     try {
       const res = await adminLogin(form)
@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
             <div>
               <label className="label">Admin Email</label>
               <input type="email" className="input-field" placeholder="admin@fuelquota.gov"
-                value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} autoComplete="email" />
+                value={form.mobileNumber} onChange={(e) => setForm((f) => ({ ...f, mobileNumber: e.target.value }))} autoComplete="email" />
             </div>
             <div>
               <label className="label">Password</label>

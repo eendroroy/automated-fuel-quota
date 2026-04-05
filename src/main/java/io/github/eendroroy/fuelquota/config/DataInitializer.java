@@ -415,9 +415,10 @@ public class DataInitializer {
                           Vehicle.VehicleStatus vehicleStatus,
                           BigDecimal weeklyLimit, String usedLitersStr,
                           boolean userEnabled) {
-        if (userRepo.existsByEmail(email)) return;
+        if (userRepo.existsByMobileNumber(ownerMobile)) return;
 
         User user = new User(email, encodedPw, name, User.UserRole.CUSTOMER);
+        user.setMobileNumber(ownerMobile);
         user.setEnabled(userEnabled);
         user = userRepo.save(user);
 

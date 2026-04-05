@@ -48,15 +48,15 @@ public class PumpController {
     private final PumpService pumpService;
 
     /**
-     * Authenticates a pump representative by employee ID.
+     * Authenticates a pump representative by mobile number.
      *
-     * @param request login request containing the employee ID
+     * @param request login request containing the mobile number
      * @return representative session details and assigned station info
      */
     @PostMapping("/login")
     @Operation(
         summary = "Pump representative login",
-        description = "Authenticates a pump representative by employee ID and returns session details"
+        description = "Authenticates a pump representative by mobile number and returns session details"
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -66,11 +66,11 @@ public class PumpController {
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "Employee ID not found or account not active"
+            description = "Mobile number not found or account not active"
         )
     })
     public ResponseEntity<PumpRepLoginResponse> pumpRepLogin(@Valid @RequestBody PumpRepLoginRequest request) {
-        logger.info("Pump rep login attempt for employee ID: {}", request.getEmployeeId());
+        logger.info("Pump rep login attempt for mobile number: {}", request.getMobileNumber());
         PumpRepLoginResponse response = pumpService.pumpRepLogin(request);
         logger.info("Pump rep login successful: {} at station {}", response.getName(), response.getStationName());
         return ResponseEntity.ok(response);

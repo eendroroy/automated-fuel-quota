@@ -22,12 +22,17 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-        
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Try loading by email first (for admin login)
+        User user = userRepository.findByEmail(username)
+                .orElseGet(() ->
+                    // Fall back to mobile number lookup (for customer/driver login)
+                    userRepository.findByMobileNumber(username)
+                            .orElseThrow(() -> new UsernameNotFoundException("User not found with email or mobile: " + username))
+                );
+
         return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())
+                .username(user.getEmail() != null ? user.getEmail() : user.getMobileNumber())
                 .password(user.getPassword())
                 .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
                 .accountExpired(!user.getEnabled())

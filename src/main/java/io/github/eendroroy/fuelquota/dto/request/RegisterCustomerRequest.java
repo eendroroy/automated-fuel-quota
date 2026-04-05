@@ -47,11 +47,10 @@ public class RegisterCustomerRequest {
     @Schema(description = "Owner's mobile number in international format", example = "+8801711123456", requiredMode = Schema.RequiredMode.REQUIRED)
     private String ownerMobile;
 
-    /** E-mail address used for login and notifications. Must be unique. */
-    @NotBlank(message = "Owner email is required")
+    /** E-mail address used for notifications (optional). Must be unique if provided. */
     @Email(message = "Please provide a valid email address")
     @Size(max = 100, message = "Email cannot exceed 100 characters")
-    @Schema(description = "Owner's email address (used for login)", example = "john.doe@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Owner's email address (optional, used for notifications)", example = "john.doe@example.com", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String ownerEmail;
 
     /** Initial account password. Minimum 8 characters. */

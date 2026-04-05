@@ -33,15 +33,15 @@ public class AuthController {
     private final AuthService authService;
 
     /**
-     * Authenticates a customer user and returns a JWT access token.
+     * Authenticates a customer user by mobile number and returns a JWT access token.
      *
-     * @param request login credentials (email and password)
+     * @param request login credentials (mobileNumber and password)
      * @return JWT token and user details on successful authentication
      */
     @PostMapping("/customer/login")
     @Operation(
         summary = "Customer login",
-        description = "Authenticates a customer and returns a JWT access token valid for 24 hours"
+        description = "Authenticates a customer by mobile number and returns a JWT access token valid for 24 hours"
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -64,7 +64,7 @@ public class AuthController {
     }
 
     /**
-     * Authenticates an admin user and returns a JWT access token.
+     * Authenticates an admin user by email and returns a JWT access token.
      *
      * @param request login credentials (email and password)
      * @return JWT token and user details on successful authentication
@@ -72,7 +72,7 @@ public class AuthController {
     @PostMapping("/admin/login")
     @Operation(
         summary = "Admin login",
-        description = "Authenticates an admin user and returns a JWT access token valid for 24 hours"
+        description = "Authenticates an admin user by email and returns a JWT access token valid for 24 hours"
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -95,10 +95,13 @@ public class AuthController {
     }
 
     /**
-     * Registers a new customer with vehicle details.
+     * Registers a new customer with optional vehicle details.
      *
      * <p>Creates a {@code User} account and {@code Vehicle} record in {@code VERIFIED} status
-     * with an active quota. Login is immediately available.
+     * with an active quota. Login is immediately available using the mobile number.
+     *
+     * <p><strong>Email is optional:</strong> Customers can register without providing an email address.
+     * If provided, the email must be unique.
      *
      * <p><strong>Future scope:</strong> OTP verification and BRTA ownership check will
      * be required before account activation.
@@ -109,7 +112,7 @@ public class AuthController {
     @PostMapping("/customer/register")
     @Operation(
         summary = "Customer self-registration",
-        description = "Registers a new customer with vehicle details. Vehicle is automatically verified. Login is available immediately."
+        description = "Registers a new customer with vehicle details (optional). Vehicle is automatically verified. Login is available immediately via mobile number."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -122,7 +125,7 @@ public class AuthController {
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "Email, registration number, or NID already exists, or validation failed"
+            description = "Mobile number already exists, or registration/NID duplicate"
         )
     })
     public ResponseEntity<Map<String, String>> registerCustomer(@Valid @RequestBody RegisterCustomerRequest request) {

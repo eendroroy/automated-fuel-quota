@@ -14,7 +14,7 @@ export interface AuthResponse {
 }
 
 export interface LoginRequest {
-  email: string
+  mobileNumber: string
   password: string
 }
 
@@ -169,7 +169,7 @@ export interface StationFormData {
   status: StationStatus
 }
 
-// ─── Pump Representative ──────────────────────────────────────────────────────
+// ─── Pump Representative Demo App ─────────────────────────────────────────────
 export type RepStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 
 export interface PumpRepresentative {
@@ -178,7 +178,7 @@ export interface PumpRepresentative {
   stationName: string
   name: string
   mobileNumber: string
-  email: string
+  email?: string
   employeeId: string
   username: string
   status: RepStatus
@@ -190,7 +190,7 @@ export interface PumpRepFormData {
   stationId: string
   name: string
   mobileNumber: string
-  email: string
+  email?: string
   employeeId: string
   username: string
   password: string
@@ -317,7 +317,7 @@ export interface PagedResponse<T> {
 
 // ─── Pump Representative Demo App ─────────────────────────────────────────────
 export interface PumpRepLoginRequest {
-  employeeId: string
+  mobileNumber: string
 }
 
 export interface PumpRepSession {

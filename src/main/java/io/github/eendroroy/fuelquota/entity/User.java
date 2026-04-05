@@ -46,8 +46,11 @@ public class User implements Serializable {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    /** Unique e-mail address, also used as the Spring Security username. */
-    @Column(unique = true, nullable = false, length = 100)
+    /**
+     * Unique e-mail address (optional for customers/drivers, required for admin).
+     * Only used for admin login. For customers and drivers, login is via mobileNumber.
+     */
+    @Column(unique = true, nullable = true, length = 100)
     private String email;
 
     /** BCrypt-hashed password. Excluded from JSON serialisation. */
@@ -60,12 +63,11 @@ public class User implements Serializable {
     private String name;
 
     /**
-     * Mobile phone number used for contact and future OTP-based authentication.
-     *
-     * <p><strong>Future scope:</strong> OTP verification will be required to authenticate
-     * this mobile number during customer registration to prevent impersonation.
+     * Mobile phone number used for customer/driver login and contact.
+     * Unique identifier for CUSTOMER and PUMP_REPRESENTATIVE roles.
+     * Required for customers and drivers; optional for admin.
      */
-    @Column(name = "mobile_number", length = 20)
+    @Column(name = "mobile_number", unique = true, nullable = true, length = 20)
     private String mobileNumber;
 
     /**
@@ -111,7 +113,7 @@ public class User implements Serializable {
      * Convenience constructor used by {@link DataInitializer}
      * and {@link AuthService#registerCustomer}.
      *
-     * @param email    unique e-mail address
+     * @param email    optional e-mail address (required for admin, optional for customers)
      * @param password BCrypt-encoded password
      * @param name     display name
      * @param role     authorization role

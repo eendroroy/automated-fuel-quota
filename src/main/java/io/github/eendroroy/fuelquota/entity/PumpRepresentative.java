@@ -53,12 +53,12 @@ public class PumpRepresentative implements Serializable {
     @Column(nullable = false, length = 100)
     private String name;
 
-    /** Contact mobile number. */
-    @Column(name = "mobile_number", nullable = false, length = 20)
+    /** Contact mobile number. Used as unique login identifier. */
+    @Column(name = "mobile_number", unique = true, nullable = false, length = 20)
     private String mobileNumber;
 
-    /** Work e-mail address. Unique across all representatives. */
-    @Column(unique = true, nullable = false, length = 100)
+    /** Work e-mail address. Optional but unique across all representatives. */
+    @Column(unique = true, nullable = true, length = 100)
     private String email;
 
     /** Internal employee identifier assigned by the station management. Unique. */

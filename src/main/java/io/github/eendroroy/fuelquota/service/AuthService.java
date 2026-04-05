@@ -58,18 +58,19 @@ public class AuthService {
     private final AuthMapper authMapper;
 
     /**
-     * Authenticates a customer user and returns a JWT access token.
+     * Authenticates a customer user by mobile number and returns a JWT access token.
      *
-     * @param request login credentials
+     * @param request login credentials (mobileNumber and password)
      * @return {@link AuthResponse} containing the JWT token and user details
      * @throws BadRequestException if the user is not a customer or credentials are invalid
      */
     public AuthResponse customerLogin(LoginRequest request) {
+        // Authenticate using Spring Security (mobileNumber as username)
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            new UsernamePasswordAuthenticationToken(request.getMobileNumber(), request.getPassword())
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByMobileNumber(request.getMobileNumber())
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (user.getRole() != User.UserRole.CUSTOMER) {
@@ -81,18 +82,21 @@ public class AuthService {
     }
 
     /**
-     * Authenticates an admin user and returns a JWT access token.
+     * Authenticates an admin user by email and returns a JWT access token.
      *
-     * @param request login credentials
+     * @param request login credentials (email and password)
      * @return {@link AuthResponse} containing the JWT token and user details
      * @throws BadRequestException if the user is not an admin or credentials are invalid
      */
     public AuthResponse adminLogin(LoginRequest request) {
+        // Admin login uses email
+        String adminEmail = request.getMobileNumber(); // Contains email for admin login
+
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            new UsernamePasswordAuthenticationToken(adminEmail, request.getPassword())
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(adminEmail)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (user.getRole() != User.UserRole.ADMIN) {
@@ -123,17 +127,23 @@ public class AuthService {
      * ownership before finalising registration.
      *
      * @param request customer registration details
-     * @throws BadRequestException if email already exists, or if vehicle info is provided but incomplete/duplicate
+     * @throws BadRequestException if mobile number already exists, or if vehicle info is provided but incomplete/duplicate
      */
     public void registerCustomer(RegisterCustomerRequest request) {
-        // Validation - email must always be unique
-        if (userRepository.existsByEmail(request.getOwnerEmail())) {
+        // Validation - mobile number must always be unique
+        if (userRepository.existsByMobileNumber(request.getOwnerMobile())) {
+            throw new BadRequestException("Mobile number already exists");
+        }
+
+        // Validation - email must be unique if provided
+        if (request.getOwnerEmail() != null && !request.getOwnerEmail().isBlank() &&
+            userRepository.existsByEmail(request.getOwnerEmail())) {
             throw new BadRequestException("Email already exists");
         }
 
-        // Create user account — mobile number stored for future OTP verification
+        // Create user account with mobile number as unique identifier
         User user = new User(
-            request.getOwnerEmail(),
+            request.getOwnerEmail(), // Can be null for customer-only accounts
             passwordEncoder.encode(request.getPassword()),
             request.getOwnerName(),
             User.UserRole.CUSTOMER

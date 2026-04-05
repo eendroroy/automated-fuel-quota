@@ -8,19 +8,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Login request for pump representative demo app.
- * The representative identifies themselves by their employee ID.
+ * Login request for pump representative app.
+ * The representative identifies themselves by their mobile number.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Schema(description = "Pump representative login using employee ID")
+@Schema(description = "Pump representative login using mobile number")
 public class PumpRepLoginRequest {
 
-    @NotBlank(message = "Employee ID is required")
-    @Schema(description = "Unique employee ID assigned by the station management", example = "EMP-001",
+    @NotBlank(message = "Mobile number is required")
+    @Schema(description = "Pump representative's mobile number", example = "+8801711123456",
             requiredMode = Schema.RequiredMode.REQUIRED)
-    private String employeeId;
+    private String mobileNumber;
 }
 

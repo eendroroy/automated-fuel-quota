@@ -17,10 +17,13 @@ public interface PumpRepresentativeRepository extends JpaRepository<PumpRepresen
     boolean existsByEmail(String email);
     boolean existsByUsername(String username);
     boolean existsByEmployeeId(String employeeId);
+    boolean existsByMobileNumber(String mobileNumber);
 
     Optional<PumpRepresentative> findByUsername(String username);
 
     Optional<PumpRepresentative> findByEmployeeId(String employeeId);
+
+    Optional<PumpRepresentative> findByMobileNumber(String mobileNumber);
 
     @Query("SELECT p FROM PumpRepresentative p WHERE p.station.id = :stationId")
     Page<PumpRepresentative> findByStationId(@Param("stationId") UUID stationId, Pageable pageable);

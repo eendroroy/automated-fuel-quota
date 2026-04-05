@@ -62,14 +62,14 @@ public class PumpService {
     private final QuotaService quotaService;
 
     /**
-     * Authenticates a pump representative by employee ID (demo login — no password required).
+     * Authenticates a pump representative by mobile number (no password required for demo).
      *
-     * @param request login request containing the employee ID
+     * @param request login request containing the mobile number
      * @return session details including representative info and assigned station
      */
     public PumpRepLoginResponse pumpRepLogin(PumpRepLoginRequest request) {
-        PumpRepresentative rep = pumpRepRepository.findByEmployeeId(request.getEmployeeId())
-                .orElseThrow(() -> new BadRequestException("No representative found with employee ID: " + request.getEmployeeId()));
+        PumpRepresentative rep = pumpRepRepository.findByMobileNumber(request.getMobileNumber())
+                .orElseThrow(() -> new BadRequestException("No representative found with mobile number: " + request.getMobileNumber()));
 
         if (rep.getStatus() != PumpRepresentative.RepStatus.ACTIVE) {
             throw new BadRequestException("Representative account is not active");
