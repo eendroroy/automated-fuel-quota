@@ -30,9 +30,9 @@ graph TD
         PG[("PostgreSQL 15+")]
     end
 
-    C -->"JWT — /api/customer/*" SEC
-    A -->"JWT — /api/admin/*" SEC
-    P -->"Public — /api/pump/*" API
+    C -->|JWT /api/customer/*| SEC
+    A -->|JWT /api/admin/*| SEC
+    P -->|Public /api/pump/*| API
     SEC --> API
     API --> PG
     SCHED --> PG
