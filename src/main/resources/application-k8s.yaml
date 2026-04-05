@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: automated-fuel-quota
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${SPRING_DATASOURCE_MAX_POOL_SIZE:10}
+      minimum-idle: ${SPRING_DATASOURCE_MIN_IDLE:2}
+      connection-timeout: ${SPRING_DATASOURCE_CONNECTION_TIMEOUT:30000}
+      max-lifetime: ${SPRING_DATASOURCE_MAX_LIFETIME:1800000}
+      idle-timeout: ${SPRING_DATASOURCE_IDLE_TIMEOUT:600000}
+      leak-detection-threshold: ${SPRING_DATASOURCE_LEAK_DETECTION_THRESHOLD:0}
+      pool-name: ${SPRING_DATASOURCE_POOL_NAME:automated-fuel-quota-pool}
+
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: ${SPRING_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        format_sql: ${SPRING_HIBERNATE_FORMAT_SQL:true}
+    defer-datasource-initialization: ${SPRING_DEFER_DATASOURCE_INITIALIZATION:true}
+
+  security:
+    require-ssl: ${SPRING_SECURITY_REQUIRE_SSL:false}
+
+# Application specific configuration — read from environment variables in k8s
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET}
+    expiration-ms: ${APP_JWT_EXPIRATION_MS}
+    qr-expiration-ms: ${APP_JWT_QR_EXPIRATION_MS}
+
+  otp:
+    secret: ${APP_OTP_SECRET}
+
+  quota:
+    limit-litres: ${APP_QUOTA_LIMIT_LITRES:24.0}
+    geofence-radius-meters: ${APP_QUOTA_GEOFENCE_RADIUS_METERS:100}
+    period: ${APP_QUOTA_PERIOD:WEEKLY}
+    reset-cron-expression: ${APP_QUOTA_RESET_CRON_EXPRESSION:0 0 0 ? * SUN}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_INCLUDE:health,info,metrics,prometheus}
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: ${MANAGEMENT_INFO_ENV_ENABLED:true}
+
+logging:
+  level:
+    io.github.eendroroy.fuelquota: ${LOG_LEVEL_APP:DEBUG}
+    org.springframework.security: ${LOG_LEVEL_SECURITY:DEBUG}
+    org.springframework.web: ${LOG_LEVEL_SPRING_WEB:INFO}
+    org.hibernate.SQL: ${LOG_LEVEL_HIBERNATE_SQL:DEBUG}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_HIBERNATE_BINDER:TRACE}
+    org.springframework.web.servlet.resource: ${LOG_LEVEL_STATIC:WARN}
+    org.springframework.web.servlet.DispatcherServlet: ${LOG_LEVEL_DISPATCHER:WARN}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# End of application-k8s.yaml — all runtime values should be provided by k8s via
+# environment variables (ConfigMap/Secrets). Defaults above are for convenience
+# and local testing only and SHOULD be overridden in production.
+
