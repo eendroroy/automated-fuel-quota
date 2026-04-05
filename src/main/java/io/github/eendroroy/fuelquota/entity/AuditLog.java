@@ -100,14 +100,23 @@ public class AuditLog implements Serializable {
         /** Weekly or manual quota reset. */
         QUOTA_RESET,
         /**
-         * Vehicle ownership claim approved (legacy: vehicle approval workflow removed).
-         * Kept for claim approval audit entries.
+         * Bulk quota sync triggered from admin quota config UI.
+         * A single entry is written for the entire batch operation.
          */
+        QUOTA_SYNC,
+        /**
+         * Vehicle ownership transferred to a new customer via BRTA-verified second-hand purchase flow.
+         */
+        VEHICLE_TRANSFERRED,
+        /**
+         * @deprecated Legacy claim approval workflow removed. Kept for historical audit entries.
+         */
+        @Deprecated
         VEHICLE_APPROVED,
         /**
-         * Vehicle ownership claim rejected (legacy: vehicle rejection workflow removed).
-         * Kept for claim rejection audit entries.
+         * @deprecated Legacy claim rejection workflow removed. Kept for historical audit entries.
          */
+        @Deprecated
         VEHICLE_REJECTED,
         /**
          * @deprecated Vehicle suspension workflow removed. Kept for historical audit entries.

@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -56,8 +57,57 @@ public interface QuotaRepository extends JpaRepository<Quota, UUID>,
     List<Object[]> getQuotaUsageByVehicleClass();
 
     /**
-     * Returns all quotas not individually overridden (eligible for bulk sync).
+     * Bulk-updates quota limit and period for all non-overridden, non-suspended vehicles
+     * whose registration code is covered by a quota config set entry.
+     * Uses a native JOIN across quota_config_set_codes and vehicles tables.
+     *
+     * @param now timestamp to set as updated_at
+     * @return number of rows updated
      */
-    @Query("SELECT q FROM Quota q WHERE q.individuallyOverridden = false AND q.status <> 'SUSPENDED'")
-    List<Quota> findSyncableQuotas();
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+        UPDATE quotas q
+        SET weekly_limit_liters = cs.limit_litres,
+            quota_period = cs.quota_period,
+            remaining_liters = LEAST(q.remaining_liters, cs.limit_litres),
+            updated_at = :now
+        FROM quota_config_set_codes csrc
+        JOIN quota_config_sets cs ON cs.id = csrc.config_set_id
+        JOIN vehicles v ON v.id = q.vehicle_id
+        WHERE v.vehicle_registration_code = csrc.registration_code
+          AND q.individually_overridden = false
+          AND q.status <> 'SUSPENDED'
+          AND v.status <> 'DEREGISTERED'
+        """, nativeQuery = true)
+    int bulkSyncFromConfigSets(@Param("now") LocalDateTime now);
+
+    /**
+     * Bulk-updates quota limit and period for all non-overridden, non-suspended vehicles
+     * that are NOT covered by any quota config set (global default fallback).
+     *
+     * @param defaultLimit  global default fuel limit (litres)
+     * @param defaultPeriod global default reset period (e.g. 'WEEKLY')
+     * @param now           timestamp to set as updated_at
+     * @return number of rows updated
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+        UPDATE quotas q
+        SET weekly_limit_liters = :defaultLimit,
+            quota_period = :defaultPeriod,
+            remaining_liters = LEAST(q.remaining_liters, :defaultLimit),
+            updated_at = :now
+        FROM vehicles v
+        WHERE v.id = q.vehicle_id
+          AND q.individually_overridden = false
+          AND q.status <> 'SUSPENDED'
+          AND v.status <> 'DEREGISTERED'
+          AND NOT EXISTS (
+              SELECT 1 FROM quota_config_set_codes csrc
+              WHERE csrc.registration_code = v.vehicle_registration_code
+          )
+        """, nativeQuery = true)
+    int bulkSyncDefault(@Param("defaultLimit") BigDecimal defaultLimit,
+                        @Param("defaultPeriod") String defaultPeriod,
+                        @Param("now") LocalDateTime now);
 }

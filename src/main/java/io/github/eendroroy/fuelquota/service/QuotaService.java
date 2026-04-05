@@ -2,7 +2,6 @@ package io.github.eendroroy.fuelquota.service;
 
 import io.github.eendroroy.fuelquota.config.AppProperties;
 import io.github.eendroroy.fuelquota.entity.Quota;
-import io.github.eendroroy.fuelquota.entity.QuotaConfigSet;
 import io.github.eendroroy.fuelquota.entity.Vehicle;
 import io.github.eendroroy.fuelquota.enums.AuthorizationDecision;
 import io.github.eendroroy.fuelquota.repository.QuotaRepository;
@@ -249,43 +248,31 @@ public class QuotaService {
     }
 
     /**
-     * Syncs quota limits and periods from QuotaConfigSets to all eligible vehicles.
+     * Syncs quota limits and periods from QuotaConfigSets to all eligible vehicles
+     * using bulk database UPDATE operations for performance at scale.
      *
-     * <p>Vehicles with {@code individuallyOverridden = true} are skipped.
-     * Vehicles not covered by any config set receive the global default.
+     * <p>Two bulk queries are executed:
+     * <ol>
+     *   <li>Update quotas whose vehicle registration code matches a config set entry.</li>
+     *   <li>Update remaining quotas (not covered by any set) with the global default.</li>
+     * </ol>
      *
-     * @return number of quotas updated
+     * <p>Vehicles with {@code individuallyOverridden = true} or status {@code DEREGISTERED}
+     * or {@code SUSPENDED} quotas are excluded by the bulk queries.
+     *
+     * @return total number of quota rows updated
      */
     public int syncQuotaConfigs() {
-        List<Quota> quotas = quotaRepository.findSyncableQuotas();
-        int updatedCount = 0;
-        for (Quota quota : quotas) {
-            Vehicle vehicle = quota.getVehicle();
-            if (vehicle.getStatus() == Vehicle.VehicleStatus.DEREGISTERED) continue;
-
-            BigDecimal newLimit;
-            QuotaPeriod newPeriod;
-
-            var configSet = quotaConfigSetRepository
-                    .findByRegistrationCode(vehicle.getVehicleRegistrationCode());
-            if (configSet.isPresent()) {
-                newLimit = configSet.get().getLimitLitres();
-                newPeriod = configSet.get().getQuotaPeriod();
-            } else {
-                newLimit = quotaConfigService.getDefaultLimitLitres();
-                newPeriod = quotaConfigService.getDefaultPeriod();
-            }
-
-            boolean changed = !quota.getLimitLiters().equals(newLimit) || quota.getPeriod() != newPeriod;
-            if (changed) {
-                quota.setLimitLiters(newLimit);
-                quota.setPeriod(newPeriod);
-                quotaRepository.save(quota);
-                updatedCount++;
-            }
-        }
-        logger.info("Quota sync completed: {} quotas updated out of {} eligible", updatedCount, quotas.size());
-        return updatedCount;
+        LocalDateTime now = LocalDateTime.now();
+        int fromConfigSets = quotaRepository.bulkSyncFromConfigSets(now);
+        int fromDefault = quotaRepository.bulkSyncDefault(
+                quotaConfigService.getDefaultLimitLitres(),
+                quotaConfigService.getDefaultPeriod().name(),
+                now);
+        int total = fromConfigSets + fromDefault;
+        logger.info("Quota sync completed: {} from config sets + {} from default = {} total updated",
+                fromConfigSets, fromDefault, total);
+        return total;
     }
 
     /**

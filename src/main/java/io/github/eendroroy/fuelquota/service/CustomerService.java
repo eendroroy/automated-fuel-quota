@@ -22,6 +22,8 @@ import io.github.eendroroy.fuelquota.exception.BadRequestException;
 import io.github.eendroroy.fuelquota.config.AppProperties;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,8 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CustomerService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CustomerService.class);
 
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
@@ -85,29 +89,77 @@ public class CustomerService {
     // ── Add / Remove vehicle ───────────────────────────────────────────────────
 
     /**
-     * Adds a new vehicle to the authenticated customer's account.
-     * The vehicle is immediately set to VERIFIED status with an ACTIVE quota.
+     * Adds a vehicle to the authenticated customer's account.
      *
-     * <p>If {@code ownerNid} or {@code ownerMobile} are not supplied in the request
-     * they are derived from the user's account: mobile from {@link User#getMobileNumber()},
-     * NID from the user's first registered vehicle (established at sign-up).
+     * <p><strong>New vehicle:</strong> The vehicle is immediately set to VERIFIED
+     * status with an ACTIVE quota (BRTA API integration is future scope).
      *
-     * <p><strong>Future scope:</strong> BRTA API verification of ownership
-     * documents will be required before setting VERIFIED status.
+     * <p><strong>Second-hand transfer:</strong> If the vehicle is already registered
+     * under a different owner and the BRTA ownership check passes (currently always
+     * succeeds — live BRTA API is future scope), the vehicle is transferred to the
+     * requesting customer. The previous owner's quota is deleted and a fresh quota is
+     * created for the new owner.
+     *
+     * <p><strong>Future scope:</strong> SMS notification to the previous owner after
+     * a successful ownership transfer.
      */
     @Transactional
-    // ...existing code...
     public VehicleResponse addVehicle(UUID userId, AddVehicleRequest request) {
         String registrationNumber = request.assembleRegistrationNumber();
 
-        if (vehicleRepository.existsByRegistrationNumber(registrationNumber)) {
-            throw new BadRequestException("Vehicle registration number already exists");
+        // ── Second-hand transfer path ─────────────────────────────────────────
+        var existingVehicle = vehicleRepository.findByRegistrationNumber(registrationNumber);
+        if (existingVehicle.isPresent()) {
+            Vehicle vehicle = existingVehicle.get();
+
+            if (vehicle.getUser() != null && vehicle.getUser().getId().equals(userId)) {
+                throw new BadRequestException("Vehicle is already registered in your account");
+            }
+
+            // BRTA ownership verification (live API integration is future scope — always passes)
+            logger.info("BRTA ownership check for vehicle {} → PASSED (mock)", registrationNumber);
+
+            User newOwner = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            // TODO: Send SMS notification to previous owner (future scope)
+            // String previousOwnerMobile = vehicle.getOwnerMobile();
+
+            // Transfer ownership
+            vehicle.setUser(newOwner);
+            vehicle.setOwnerName(newOwner.getName());
+            vehicle.setOwnerEmail(newOwner.getEmail());
+            String ownerNid = (request.getOwnerNid() != null && !request.getOwnerNid().isBlank())
+                    ? request.getOwnerNid()
+                    : vehicleRepository.findByUserId(userId).stream()
+                            .map(Vehicle::getOwnerNid)
+                            .filter(nid -> nid != null && !nid.isBlank())
+                            .findFirst()
+                            .orElse(vehicle.getOwnerNid());
+            vehicle.setOwnerNid(ownerNid);
+            String ownerMobile = (request.getOwnerMobile() != null && !request.getOwnerMobile().isBlank())
+                    ? request.getOwnerMobile()
+                    : (newOwner.getMobileNumber() != null ? newOwner.getMobileNumber() : vehicle.getOwnerMobile());
+            vehicle.setOwnerMobile(ownerMobile);
+            vehicle.setStatus(Vehicle.VehicleStatus.VERIFIED);
+            vehicle = vehicleRepository.save(vehicle);
+
+            // Reset quota — delete old and create fresh for new owner
+            quotaRepository.findByVehicleId(vehicle.getId()).ifPresent(quotaRepository::delete);
+            quotaRepository.flush();
+
+            Quota newQuota = quotaService.createQuotaForVehicle(vehicle);
+            newQuota.setStatus(Quota.QuotaStatus.ACTIVE);
+            quotaRepository.save(newQuota);
+
+            logger.info("Ownership of vehicle {} transferred to user {}", registrationNumber, userId);
+            return vehicleMapper.toResponse(vehicle);
         }
 
+        // ── New vehicle registration path ─────────────────────────────────────
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Resolve ownerNid — fall back to the NID from the user's first registered vehicle
         String ownerNid = (request.getOwnerNid() != null && !request.getOwnerNid().isBlank())
                 ? request.getOwnerNid()
                 : vehicleRepository.findByUserId(userId).stream()
@@ -116,12 +168,10 @@ public class CustomerService {
                         .findFirst()
                         .orElse("");
 
-        // Resolve ownerMobile — fall back to the mobile stored on the user account
         String ownerMobile = (request.getOwnerMobile() != null && !request.getOwnerMobile().isBlank())
                 ? request.getOwnerMobile()
                 : (user.getMobileNumber() != null ? user.getMobileNumber() : "");
 
-        // Resolve vehicle class description from registration code lookup
         String vehicleClass = registrationCodeRepository
                 .findByCode(request.getVehicleRegistrationCode().toUpperCase().trim())
                 .map(rc -> rc.getDescription())
