@@ -1,4 +1,3 @@
-- combine usage of tools whenever possible to reduce the number of tools you need to use and maintain
 - use a single tool to perform multiple related tasks instead of using separate tools for each task
 - read files directly from the filesystem instead of using a separate tool to read them and pass them in as arguments
 - never create additional document files unless specifically instructed to do so
