@@ -35,7 +35,6 @@ public class DataInitializer {
                                    AuditLogRepository auditLogRepository,
                                    QuotaConfigByRegistrationCodeRepository quotaConfigByRegistrationCodeRepository,
                                    QuotaConfigSetRepository quotaConfigSetRepository,
-                                   VehicleClaimRepository vehicleClaimRepository,
                                    PasswordEncoder passwordEncoder) {
         return args -> {
 
@@ -126,13 +125,7 @@ public class DataInitializer {
                 logger.info("Seeded QuotaConfigSets");
             }
 
-            // ── 10. Vehicle claims ─────────────────────────────────────────────
-            if (vehicleClaimRepository.count() == 0) {
-                seedVehicleClaims(vehicleClaimRepository, vehicleRepository, userRepository);
-                logger.info("Seeded VehicleClaims");
-            }
-
-            // ── 11. Edge cases ─────────────────────────────────────────────────
+            // ── 10. Edge cases ─────────────────────────────────────────────────
             seedEdgeCases(userRepository, vehicleRepository, quotaRepository, passwordEncoder);
             logger.info("Seeded edge cases");
         };
@@ -792,50 +785,6 @@ public class DataInitializer {
         repo.save(commercial);
 
         logger.info("Seeded 3 QuotaConfigSet records (Private Cars, Motorcycles, Commercial Vehicles)");
-    }
-
-    // ── Vehicle Claims Seeder ────────────────────────────────────────────
-    private void seedVehicleClaims(
-            VehicleClaimRepository repo,
-            VehicleRepository vRepo,
-            UserRepository uRepo) {
-        // Use first 3 vehicles and users for claims
-        var vehicles = vRepo.findAll();
-        var users = uRepo.findAll();
-        if (vehicles.size() < 3 || users.size() < 3) return;
-        var v1 = vehicles.get(0);
-        var v2 = vehicles.get(1);
-        var v3 = vehicles.get(2);
-        var owner1 = users.stream().filter(u -> u.getRole() == User.UserRole.CUSTOMER).findFirst().orElse(null);
-        var owner2 = users.stream().filter(u -> u.getRole() == User.UserRole.CUSTOMER && !u.getEmail().equals(owner1 != null ? owner1.getEmail() : "")).findFirst().orElse(null);
-        var driver1 = users.stream().filter(u -> u.getRole() == User.UserRole.CUSTOMER && u != owner1 && u != owner2).findFirst().orElse(null);
-
-        if (owner1 == null || owner2 == null || driver1 == null) return;
-
-        repo.save(VehicleClaim.builder()
-                .vehicle(v2)
-                .claimant(owner2)
-                .claimantNid("NID-CLAIM-123")
-                .reason("Purchased second-hand vehicle")
-                .status(VehicleClaim.ClaimStatus.PENDING)
-                .build());
-        repo.save(VehicleClaim.builder()
-                .vehicle(v1)
-                .claimant(driver1)
-                .claimantNid("NID-CLAIM-456")
-                .reason("Family transfer - inherited vehicle")
-                .status(VehicleClaim.ClaimStatus.APPROVED)
-                .adminNotes("Ownership verified against BRTA records")
-                .build());
-        repo.save(VehicleClaim.builder()
-                .vehicle(v3)
-                .claimant(owner1)
-                .claimantNid("NID-CLAIM-789")
-                .reason("Duplicate registration claim")
-                .status(VehicleClaim.ClaimStatus.REJECTED)
-                .adminNotes("NID mismatch with vehicle registration")
-                .build());
-        logger.info("Seeded 3 VehicleClaim records (PENDING, APPROVED, REJECTED)");
     }
 
     // ── Edge Cases Seeder ────────────────────────────────────────────────
