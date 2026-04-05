@@ -1,24 +1,27 @@
 import { Link, Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { Fuel, LayoutDashboard, QrCode, History, LogOut, User, Car, FileCheck } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { useTranslation } from 'react-i18next'
 import ThemeToggle from '@/components/common/ThemeToggle'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher'
 import toast from 'react-hot-toast'
-
-const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/vehicles', icon: Car, label: 'My Vehicles' },
-  { to: '/claims', icon: FileCheck, label: 'Claims' },
-  { to: '/qr-code', icon: QrCode, label: 'My QR Code' },
-  { to: '/transactions', icon: History, label: 'Transactions' },
-]
 
 export default function CustomerLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
+
+  const navItems = [
+    { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/vehicles', icon: Car, label: t('nav.myVehicles') },
+    { to: '/claims', icon: FileCheck, label: t('nav.claims') },
+    { to: '/qr-code', icon: QrCode, label: t('nav.myQrCode') },
+    { to: '/transactions', icon: History, label: t('nav.transactions') },
+  ]
 
   const handleLogout = () => {
     logout()
-    toast.success('Logged out successfully')
+    toast.success(t('common.signOut'))
     navigate('/login')
   }
 
@@ -29,7 +32,7 @@ export default function CustomerLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2 font-bold text-brand-700 dark:text-brand-400 text-lg">
             <Fuel className="h-6 w-6 text-brand-600" />
-            <span>Fuel Quota</span>
+            <span>{t('common.appNameShort')}</span>
           </Link>
 
           <nav className="hidden sm:flex items-center gap-1">
@@ -58,13 +61,14 @@ export default function CustomerLayout() {
               </div>
               <span className="hidden sm:inline font-medium">{user?.name}</span>
             </div>
+            <LanguageSwitcher />
             <ThemeToggle />
             <button
               onClick={handleLogout}
               className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 px-2 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
             >
               <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Logout</span>
+              <span className="hidden sm:inline">{t('common.logout')}</span>
             </button>
           </div>
         </div>
@@ -94,4 +98,3 @@ export default function CustomerLayout() {
     </div>
   )
 }
-

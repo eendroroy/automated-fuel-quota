@@ -2,29 +2,31 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Fuel, Loader2, BadgeCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import { pumpRepLogin } from '@/api/pumpApi'
 import { savePumpSession } from '@/layouts/PumpRepLayout'
 
 export default function PumpLoginPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [mobileNumber, setMobileNumber] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!mobileNumber.trim()) {
-      toast.error('Please enter your mobile number')
+      toast.error(t('errors.mobileRequired'))
       return
     }
     setLoading(true)
     try {
       const session = await pumpRepLogin({ mobileNumber: mobileNumber.trim() })
       savePumpSession(session)
-      toast.success(`Welcome, ${session.name}!`)
+      toast.success(t('dashboard.welcomeBack', { name: session.name }))
       navigate('/pump/scan')
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.response?.data ?? 'Login failed. Check your mobile number.'
-      toast.error(typeof msg === 'string' ? msg : 'Login failed')
+      const msg = err?.response?.data?.message ?? err?.response?.data ?? t('errors.loginFailed')
+      toast.error(typeof msg === 'string' ? msg : t('errors.loginFailed'))
     } finally {
       setLoading(false)
     }
@@ -37,8 +39,8 @@ export default function PumpLoginPage() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 shadow-lg mb-2">
           <Fuel className="h-8 w-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Pump Representative</h1>
-        <p className="text-gray-500 text-sm">Sign in with your mobile number to start dispensing fuel</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('pumpLogin.title')}</h1>
+        <p className="text-gray-500 text-sm">{t('pumpLogin.subtitle')}</p>
       </div>
 
       {/* Login card */}
@@ -46,13 +48,13 @@ export default function PumpLoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="label" htmlFor="mobile">
-              Mobile Number
+              {t('pumpLogin.mobileLabel')}
             </label>
             <input
               id="mobile"
               type="tel"
               className="input-field text-center text-lg tracking-widest font-mono"
-              placeholder="+8801711123456"
+              placeholder={t('pumpLogin.mobilePlaceholder')}
               value={mobileNumber}
               onChange={(e) => setMobileNumber(e.target.value)}
               autoFocus
@@ -69,15 +71,14 @@ export default function PumpLoginPage() {
             ) : (
               <BadgeCheck className="h-5 w-5" />
             )}
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? t('pumpLogin.signingIn') : t('pumpLogin.signIn')}
           </button>
         </form>
       </div>
 
       <p className="text-xs text-gray-400 text-center max-w-xs">
-        Your mobile number is registered with your station. Contact admin if you have trouble logging in.
+        {t('pumpLogin.helpText')}
       </p>
     </div>
   )
 }
-

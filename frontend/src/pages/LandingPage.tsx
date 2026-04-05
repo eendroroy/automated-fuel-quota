@@ -1,27 +1,30 @@
 import { Link } from 'react-router-dom'
 import { Car, Shield, QrCode, BarChart3, CheckCircle, Fuel } from 'lucide-react'
-
-const features = [
-  { icon: QrCode, title: 'QR-Based Verification', desc: 'Unique encrypted QR codes for every vehicle' },
-  { icon: Shield, title: 'Fraud Prevention', desc: 'JWT tokens + GPS geofencing eliminate spoofing' },
-  { icon: BarChart3, title: 'Real-time Analytics', desc: 'Live quota tracking and consumption analytics' },
-  { icon: CheckCircle, title: '24L Weekly Quota', desc: 'Automatic weekly reset every Sunday at 00:00' },
-]
+import { useTranslation } from 'react-i18next'
 
 export default function LandingPage() {
+  const { t } = useTranslation()
+
+  const features = [
+    { icon: QrCode, title: t('landing.features.qrVerification'), desc: t('landing.features.qrVerificationDesc') },
+    { icon: Shield, title: t('landing.features.fraudPrevention'), desc: t('landing.features.fraudPreventionDesc') },
+    { icon: BarChart3, title: t('landing.features.realTimeAnalytics'), desc: t('landing.features.realTimeAnalyticsDesc') },
+    { icon: CheckCircle, title: t('landing.features.weeklyQuota'), desc: t('landing.features.weeklyQuotaDesc') },
+  ]
+
   return (
     <div>
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-28 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 text-white/90 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
-            <Fuel className="h-4 w-4" /> National Fuel Management Platform
+            <Fuel className="h-4 w-4" /> {t('nav.nationalFuelPlatform')}
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-            Automated Fuel Quota System
+            {t('landing.heroTitle')}
           </h1>
           <p className="text-xl text-blue-100 max-w-2xl mx-auto mb-10">
-            A QR-code-driven platform ensuring fair, transparent fuel distribution for every registered vehicle.
+            {t('landing.heroSubtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -29,13 +32,13 @@ export default function LandingPage() {
               className="inline-flex items-center justify-center gap-2 bg-white text-brand-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-50 transition-colors shadow-lg"
             >
               <Car className="h-5 w-5" />
-              Register Your Vehicle
+              {t('landing.registerVehicle')}
             </Link>
             <Link
               to="/login"
               className="inline-flex items-center justify-center gap-2 bg-brand-500/30 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-brand-500/50 transition-colors border border-white/20"
             >
-              Vehicle Owner Login
+              {t('landing.vehicleOwnerLogin')}
             </Link>
           </div>
         </div>
@@ -43,7 +46,7 @@ export default function LandingPage() {
 
       {/* Portal Cards */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">Access Your Portal</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">{t('landing.accessPortal')}</h2>
         <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {/* Customer Portal */}
           <div className="card border-2 border-brand-100 hover:border-brand-300 transition-colors group">
@@ -52,18 +55,18 @@ export default function LandingPage() {
                 <Car className="h-7 w-7 text-brand-600" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 text-lg">Vehicle Owner Portal</h3>
-                <p className="text-sm text-gray-500">For registered vehicle owners</p>
+                <h3 className="font-bold text-gray-900 text-lg">{t('landing.vehicleOwnerPortal')}</h3>
+                <p className="text-sm text-gray-500">{t('landing.vehicleOwnerPortalDesc')}</p>
               </div>
             </div>
             <ul className="space-y-2 text-sm text-gray-600 mb-6">
-              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> View & manage your fuel quota</li>
-              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> Download your unique QR code</li>
-              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> Track transaction history</li>
+              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.viewManageQuota')}</li>
+              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.downloadQrCode')}</li>
+              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.trackHistory')}</li>
             </ul>
             <div className="flex gap-2">
-              <Link to="/login" className="btn-primary flex-1 text-center text-sm py-2">Sign In</Link>
-              <Link to="/register" className="btn-secondary flex-1 text-center text-sm py-2">Register</Link>
+              <Link to="/login" className="btn-primary flex-1 text-center text-sm py-2">{t('common.signIn')}</Link>
+              <Link to="/register" className="btn-secondary flex-1 text-center text-sm py-2">{t('common.register')}</Link>
             </div>
           </div>
 
@@ -74,17 +77,17 @@ export default function LandingPage() {
                 <Shield className="h-7 w-7 text-gray-600" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 text-lg">Admin Dashboard</h3>
-                <p className="text-sm text-gray-500">For system administrators</p>
+                <h3 className="font-bold text-gray-900 text-lg">{t('landing.adminDashboard')}</h3>
+                <p className="text-sm text-gray-500">{t('landing.adminDashboardDesc')}</p>
               </div>
             </div>
             <ul className="space-y-2 text-sm text-gray-600 mb-6">
-              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> Manage vehicles & quotas</li>
-              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> Oversee fuel stations & reps</li>
-              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> Analytics & audit logs</li>
+              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.manageVehiclesQuotas')}</li>
+              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.overseeStations')}</li>
+              <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" /> {t('landing.analyticsAudit')}</li>
             </ul>
             <Link to="/admin/login" className="btn-secondary w-full text-center text-sm py-2">
-              Admin Login
+              {t('landing.adminLogin')}
             </Link>
           </div>
         </div>
@@ -93,7 +96,7 @@ export default function LandingPage() {
       {/* Features */}
       <section className="bg-gray-50 border-t border-gray-100 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <h2 className="text-2xl font-bold text-center text-gray-900 mb-10">How It Works</h2>
+          <h2 className="text-2xl font-bold text-center text-gray-900 mb-10">{t('landing.howItWorks')}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="card text-center">
@@ -110,4 +113,3 @@ export default function LandingPage() {
     </div>
   )
 }
-

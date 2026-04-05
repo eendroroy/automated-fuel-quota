@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Fuel, LogIn } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import { customerLogin } from '@/api/authApi'
 import { useAuth } from '@/context/AuthContext'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
@@ -9,6 +10,7 @@ import LoadingSpinner from '@/components/common/LoadingSpinner'
 export default function CustomerLoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [form, setForm] = useState({ mobileNumber: '', password: '' })
   const [showPwd, setShowPwd] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -16,18 +18,18 @@ export default function CustomerLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.mobileNumber || !form.password) {
-      toast.error('Please fill in all fields')
+      toast.error(t('errors.fillAllFields'))
       return
     }
     setLoading(true)
     try {
       const res = await customerLogin(form)
       login(res.token, res.user)
-      toast.success(`Welcome back, ${res.user.name}!`)
+      toast.success(t('dashboard.welcomeBack', { name: res.user.name.split(' ')[0] }))
       navigate('/dashboard')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      toast.error(msg ?? 'Invalid credentials. Please try again.')
+      toast.error(msg ?? t('errors.invalidCredentials'))
     } finally {
       setLoading(false)
     }
@@ -40,18 +42,18 @@ export default function CustomerLoginPage() {
           <div className="inline-flex items-center justify-center h-14 w-14 bg-brand-50 rounded-2xl mb-4">
             <Fuel className="h-7 w-7 text-brand-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Customer Login</h1>
-          <p className="text-gray-500 text-sm mt-1">Access your fuel quota dashboard</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('customerLogin.title')}</h1>
+          <p className="text-gray-500 text-sm mt-1">{t('customerLogin.subtitle')}</p>
         </div>
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="label">Mobile Number</label>
+              <label className="label">{t('customerLogin.mobileLabel')}</label>
               <input
                 type="tel"
                 className="input-field"
-                placeholder="+8801711123456"
+                placeholder={t('customerLogin.mobilePlaceholder')}
                 value={form.mobileNumber}
                 onChange={(e) => setForm((f) => ({ ...f, mobileNumber: e.target.value }))}
                 autoComplete="tel"
@@ -59,12 +61,12 @@ export default function CustomerLoginPage() {
             </div>
 
             <div>
-              <label className="label">Password</label>
+              <label className="label">{t('customerLogin.passwordLabel')}</label>
               <div className="relative">
                 <input
                   type={showPwd ? 'text' : 'password'}
                   className="input-field pr-10"
-                  placeholder="Enter your password"
+                  placeholder={t('customerLogin.passwordPlaceholder')}
                   value={form.password}
                   onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
                   autoComplete="current-password"
@@ -81,14 +83,14 @@ export default function CustomerLoginPage() {
 
             <button type="submit" disabled={loading} className="btn-primary w-full gap-2 py-2.5">
               {loading ? <LoadingSpinner size="sm" /> : <LogIn className="h-4 w-4" />}
-              Sign In
+              {t('common.signIn')}
             </button>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-5">
-            Don't have an account?{' '}
+            {t('customerLogin.noAccount')}{' '}
             <Link to="/register" className="text-brand-600 font-medium hover:underline">
-              Register now
+              {t('customerLogin.registerNow')}
             </Link>
           </p>
         </div>
@@ -96,4 +98,3 @@ export default function CustomerLoginPage() {
     </div>
   )
 }
-

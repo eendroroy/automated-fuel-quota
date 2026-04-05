@@ -1,7 +1,9 @@
 import { Outlet, useNavigate } from 'react-router-dom'
 import { Fuel, LogOut, User } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { PumpRepSession } from '@/types'
 import ThemeToggle from '@/components/common/ThemeToggle'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher'
 
 const PUMP_SESSION_KEY = 'pumpRepSession'
 
@@ -24,6 +26,7 @@ export function clearPumpSession() {
 
 export default function PumpRepLayout() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const session = getPumpSession()
 
   const handleLogout = () => {
@@ -38,24 +41,28 @@ export default function PumpRepLayout() {
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-brand-700 dark:text-brand-400 text-base">
             <Fuel className="h-5 w-5 text-brand-600" />
-            <span>Pump Rep Portal</span>
+            <span>{t('pumpRepLayout.portalTitle')}</span>
           </div>
-          {session && (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">{session.name}</span>
-              </div>
-              <ThemeToggle />
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1 text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            {session && (
+              <>
+                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">{session.name}</span>
+                </div>
+                <ThemeToggle />
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1 text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t('pumpRepLayout.logout')}</span>
+                </button>
+              </>
+            )}
+            {!session && <ThemeToggle />}
+          </div>
         </div>
       </header>
 
@@ -65,9 +72,8 @@ export default function PumpRepLayout() {
       </main>
 
       <footer className="py-3 text-center text-xs text-gray-400 border-t border-gray-100">
-        © {new Date().getFullYear()} Automated Fuel Quota System
+        {t('footer.copyright', { year: new Date().getFullYear() })}
       </footer>
     </div>
   )
 }
-

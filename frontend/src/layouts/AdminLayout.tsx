@@ -1,44 +1,36 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
-  Fuel,
-  LayoutDashboard,
-  Car,
-  MapPin,
-  Droplets,
-  Users,
-  ClipboardList,
-  LogOut,
-  Menu,
-  X,
-  ChevronRight,
-  Settings,
-  FileCheck,
+  Fuel, LayoutDashboard, Car, MapPin, Droplets, Users, ClipboardList,
+  LogOut, Menu, ChevronRight, Settings, FileCheck,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import ThemeToggle from '@/components/common/ThemeToggle'
-
-const navItems = [
-  { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/admin/vehicles', icon: Car, label: 'Vehicles' },
-  { to: '/admin/vehicle-claims', icon: FileCheck, label: 'Ownership Claims' },
-  { to: '/admin/stations', icon: MapPin, label: 'Fuel Stations' },
-  { to: '/admin/quotas', icon: Droplets, label: 'Quota Management' },
-  { to: '/admin/quota-config', icon: Settings, label: 'Quota Config' },
-  { to: '/admin/quota-config-by-code', icon: Settings, label: 'Quota by Code' },
-  { to: '/admin/pump-reps', icon: Users, label: 'Pump Representatives' },
-  { to: '/admin/audit-logs', icon: ClipboardList, label: 'Audit Logs' },
-]
+import LanguageSwitcher from '@/components/common/LanguageSwitcher'
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const navItems = [
+    { to: '/admin/dashboard', icon: LayoutDashboard, label: t('adminNav.dashboard') },
+    { to: '/admin/vehicles', icon: Car, label: t('adminNav.vehicles') },
+    { to: '/admin/vehicle-claims', icon: FileCheck, label: t('adminNav.ownershipClaims') },
+    { to: '/admin/stations', icon: MapPin, label: t('adminNav.fuelStations') },
+    { to: '/admin/quotas', icon: Droplets, label: t('adminNav.quotaManagement') },
+    { to: '/admin/quota-config', icon: Settings, label: t('adminNav.quotaConfig') },
+    { to: '/admin/quota-config-by-code', icon: Settings, label: t('adminNav.quotaByCode') },
+    { to: '/admin/pump-reps', icon: Users, label: t('adminNav.pumpRepresentatives') },
+    { to: '/admin/audit-logs', icon: ClipboardList, label: t('adminNav.auditLogs') },
+  ]
 
   const handleLogout = () => {
     logout()
-    toast.success('Logged out')
+    toast.success(t('common.signOut'))
     navigate('/admin/login')
   }
 
@@ -49,8 +41,8 @@ export default function AdminLayout() {
         <div className="flex items-center gap-2">
           <Fuel className="h-7 w-7 text-brand-400" />
           <div>
-            <p className="text-white font-bold text-base leading-tight">Fuel Quota</p>
-            <p className="text-gray-400 text-xs">Admin Portal</p>
+            <p className="text-white font-bold text-base leading-tight">{t('common.appNameShort')}</p>
+            <p className="text-gray-400 text-xs">{t('adminNav.adminPortal')}</p>
           </div>
         </div>
       </div>
@@ -64,9 +56,7 @@ export default function AdminLayout() {
             onClick={() => setSidebarOpen(false)}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group ${
-                isActive
-                  ? 'bg-brand-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                isActive ? 'bg-brand-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`
             }
           >
@@ -90,7 +80,8 @@ export default function AdminLayout() {
             <p className="text-gray-400 text-xs truncate">{user?.email}</p>
           </div>
         </div>
-        <div className="px-3 py-2">
+        <div className="px-3 py-2 flex items-center gap-2">
+          <LanguageSwitcher />
           <ThemeToggle />
         </div>
         <button
@@ -98,7 +89,7 @@ export default function AdminLayout() {
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-red-600/20 hover:text-red-400 transition-colors"
         >
           <LogOut className="h-5 w-5" />
-          Sign out
+          {t('common.signOut')}
         </button>
       </div>
     </>
@@ -145,4 +136,3 @@ export default function AdminLayout() {
     </div>
   )
 }
-
