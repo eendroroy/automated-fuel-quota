@@ -1,0 +1,10 @@
+- combine usage of tools whenever possible to reduce the number of tools you need to use and maintain
+- use a single tool to perform multiple related tasks instead of using separate tools for each task
+- read files directly from the filesystem instead of using a separate tool to read them and pass them in as arguments
+- never create additional document files unless specifically instructed to do so
+- maintain existing document files and update them as needed instead of creating new ones
+- don't create migration files unless specifically instructed to do so, and if you do
+- keep README.md professional as per github standard and don't add technical system details
+- always add necessary indexes in entities to improve query performance and avoid full table scans
+- if asked to update docs, update all existing docs with current project status and don't create new docs
+- don't verify if application starts successfully or not, only verify that the codebase compiles when necessary
