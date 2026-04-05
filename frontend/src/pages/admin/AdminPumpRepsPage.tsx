@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, Pencil, Trash2, Users } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getAllPumpReps, createPumpRep, updatePumpRep, deletePumpRep } from '@/api/pumpRepApi'
 import { getAllStations } from '@/api/stationApi'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
@@ -15,7 +16,9 @@ const emptyForm: PumpRepFormData = {
 }
 
 export default function AdminPumpRepsPage() {
+  const { t } = useTranslation()
   const [reps, setReps] = useState<PumpRepresentative[]>([])
+  // ...existing code...
   const [stations, setStations] = useState<FuelStation[]>([])
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
@@ -86,11 +89,11 @@ export default function AdminPumpRepsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pump Representatives</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{totalElements} representatives</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('adminPumpReps.title')}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{totalElements} {t('adminPumpReps.representativesCount')}</p>
         </div>
         <button onClick={openCreate} className="btn-primary gap-2 text-sm">
-          <Plus className="h-4 w-4" /> Add Representative
+          <Plus className="h-4 w-4" /> {t('adminPumpReps.addRep')}
         </button>
       </div>
 
@@ -99,19 +102,19 @@ export default function AdminPumpRepsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Representative</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Station</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Employee ID</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">Last Login</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('adminPumpReps.representative')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">{t('adminPumpReps.station')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">{t('adminPumpReps.employeeId')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">{t('adminPumpReps.lastLogin')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('common.status')}</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr><td colSpan={6} className="py-12 text-center"><LoadingSpinner className="mx-auto" /></td></tr>
               ) : reps.length === 0 ? (
-                <tr><td colSpan={6} className="py-12 text-center text-gray-400">No representatives found</td></tr>
+                <tr><td colSpan={6} className="py-12 text-center text-gray-400">{t('adminPumpReps.noReps')}</td></tr>
               ) : reps.map((rep) => (
                 <tr key={rep.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
@@ -148,28 +151,28 @@ export default function AdminPumpRepsPage() {
       </div>
 
       {/* Create/Edit Modal */}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Edit Representative' : 'Add Pump Representative'} size="lg">
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? t('adminPumpReps.editRepTitle') : t('adminPumpReps.addRepTitle')} size="lg">
         <div className="grid sm:grid-cols-2 gap-4">
-          <div><label className="label">Station *</label>
+          <div><label className="label">{t('adminPumpReps.stationLabel')} *</label>
             <select className="input-field" value={form.stationId} onChange={set('stationId')}>
-              <option value="">Select Station</option>
+              <option value="">{t('adminPumpReps.selectStation')}</option>
               {stations.map((s) => <option key={s.id} value={s.id}>{s.stationName} ({s.stationCode})</option>)}
             </select>
           </div>
-          <div><label className="label">Full Name *</label><input className="input-field" value={form.name} onChange={set('name')} placeholder="John Doe" /></div>
-          <div><label className="label">Mobile Number *</label><input className="input-field" value={form.mobileNumber} onChange={set('mobileNumber')} placeholder="01711123456" /></div>
-          <div><label className="label">Email *</label><input className="input-field" type="email" value={form.email} onChange={set('email')} placeholder="john@example.com" /></div>
-          <div><label className="label">Employee ID *</label><input className="input-field" value={form.employeeId} onChange={set('employeeId')} placeholder="EMP-001" /></div>
-          <div><label className="label">Username *</label><input className="input-field" value={form.username} onChange={set('username')} placeholder="john.doe" /></div>
-          <div className="sm:col-span-2"><label className="label">Password {editing ? '(leave empty to keep current)' : '*'}</label>
-            <input className="input-field" type="password" value={form.password} onChange={set('password')} placeholder={editing ? 'New password' : 'Password'} />
+          <div><label className="label">{t('common.name')} *</label><input className="input-field" value={form.name} onChange={set('name')} placeholder="John Doe" /></div>
+          <div><label className="label">{t('common.mobile')} *</label><input className="input-field" value={form.mobileNumber} onChange={set('mobileNumber')} placeholder="01711123456" /></div>
+          <div><label className="label">{t('common.email')} *</label><input className="input-field" type="email" value={form.email} onChange={set('email')} placeholder="john@example.com" /></div>
+          <div><label className="label">{t('adminPumpReps.employeeId')} *</label><input className="input-field" value={form.employeeId} onChange={set('employeeId')} placeholder="EMP-001" /></div>
+          <div><label className="label">{t('adminPumpReps.username')} *</label><input className="input-field" value={form.username} onChange={set('username')} placeholder="john.doe" /></div>
+          <div className="sm:col-span-2"><label className="label">{t('common.password')} {editing ? t('adminPumpReps.passwordOptional') : '*'}</label>
+            <input className="input-field" type="password" value={form.password} onChange={set('password')} placeholder={editing ? t('adminPumpReps.newPassword') : t('common.password')} />
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={() => setModalOpen(false)} className="btn-secondary">Cancel</button>
+          <button onClick={() => setModalOpen(false)} className="btn-secondary">{t('common.cancel')}</button>
           <button onClick={handleSave} disabled={saving} className="btn-primary gap-2">
             {saving && <LoadingSpinner size="sm" />}
-            {editing ? 'Update Representative' : 'Create Representative'}
+            {editing ? t('adminPumpReps.updateRep') : t('adminPumpReps.createRep')}
           </button>
         </div>
       </Modal>

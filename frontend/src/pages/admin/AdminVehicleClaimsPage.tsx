@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { CheckCircle, XCircle, ChevronDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getAllClaims, approveClaim, rejectClaim } from '@/api/vehicleClaimApi'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import StatusBadge from '@/components/common/StatusBadge'
@@ -18,6 +19,8 @@ const STATUS_OPTIONS = [
 ]
 
 export default function AdminVehicleClaimsPage() {
+  const { t } = useTranslation()
+  // ...existing code...
   const [claims, setClaims] = useState<VehicleClaim[]>([])
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
@@ -80,12 +83,9 @@ export default function AdminVehicleClaimsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Vehicle Ownership Claims</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('adminVehicleClaims.title')}</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          {totalElements.toLocaleString()} claim{totalElements !== 1 ? 's' : ''} ·{' '}
-          <span className="text-amber-600">
-            BRTA verification will be required in a future release
-          </span>
+          {totalElements.toLocaleString()} {t('adminVehicleClaims.claimCount', { count: totalElements })}
         </p>
       </div>
 
@@ -97,9 +97,10 @@ export default function AdminVehicleClaimsPage() {
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(0) }}
           >
-            {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
+            <option value="">{t('adminVehicleClaims.allStatuses')}</option>
+            <option value="PENDING">{t('status.PENDING')}</option>
+            <option value="APPROVED">{t('status.APPROVED')}</option>
+            <option value="REJECTED">{t('status.REJECTED')}</option>
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
         </div>
@@ -110,19 +111,19 @@ export default function AdminVehicleClaimsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Vehicle</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Claimant</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Reason</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">Submitted</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('adminVehicleClaims.vehicle')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">{t('adminVehicleClaims.claimant')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">{t('adminVehicleClaims.reason')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('common.status')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">{t('adminVehicleClaims.submittedOn')}</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr><td colSpan={6} className="py-12 text-center"><LoadingSpinner className="mx-auto" /></td></tr>
               ) : claims.length === 0 ? (
-                <tr><td colSpan={6} className="py-12 text-center text-gray-400">No claims found</td></tr>
+                <tr><td colSpan={6} className="py-12 text-center text-gray-400">{t('adminVehicleClaims.noClaims')}</td></tr>
               ) : claims.map((c) => (
                 <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
@@ -136,7 +137,7 @@ export default function AdminVehicleClaimsPage() {
                     <p className="truncate" title={c.reason}>{c.reason}</p>
                     {c.adminNotes && (
                       <p className="text-xs text-gray-400 truncate mt-0.5" title={c.adminNotes}>
-                        Admin: {c.adminNotes}
+                        {t('adminVehicleClaims.adminNotes')}: {c.adminNotes}
                       </p>
                     )}
                   </td>
@@ -180,52 +181,50 @@ export default function AdminVehicleClaimsPage() {
       <Modal
         isOpen={!!actionModal}
         onClose={() => setActionModal(null)}
-        title={actionModal?.type === 'approve' ? 'Approve Ownership Claim' : 'Reject Ownership Claim'}
+        title={actionModal?.type === 'approve' ? t('adminVehicleClaims.approveTitle') : t('adminVehicleClaims.rejectTitle')}
       >
         {actionModal && (
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
               {actionModal.type === 'approve' ? (
                 <>
-                  Approve the ownership claim for{' '}
-                  <span className="font-semibold font-mono">{actionModal.claim.registrationNumber}</span>?
-                  The vehicle will be transferred to{' '}
-                  <span className="font-semibold">{actionModal.claim.claimantName}</span> and
-                  reset to <strong>PENDING</strong> for re-verification.
+                  {t('adminVehicleClaims.approveConfirm')}{' '}
+                  <span className="font-semibold font-mono">{actionModal.claim.registrationNumber}</span>?{' '}
+                  {t('adminVehicleClaims.approveWarning')}
                 </>
               ) : (
                 <>
-                  Reject the ownership claim for{' '}
-                  <span className="font-semibold font-mono">{actionModal.claim.registrationNumber}</span>?
-                  The vehicle will remain with the current owner.
+                  {t('adminVehicleClaims.rejectConfirm')}{' '}
+                  <span className="font-semibold font-mono">{actionModal.claim.registrationNumber}</span>?{' '}
+                  {t('adminVehicleClaims.rejectWarning')}
                 </>
               )}
             </p>
             <div>
               <label className="label">
-                Admin Notes {actionModal.type === 'reject' && <span className="text-red-500">*</span>}
+                {t('adminVehicleClaims.adminNotes')} {actionModal.type === 'reject' && <span className="text-red-500">*</span>}
               </label>
               <textarea
                 className="input-field resize-none"
                 rows={3}
                 placeholder={
                   actionModal.type === 'approve'
-                    ? 'Optional notes for the record…'
-                    : 'Reason for rejection (required)…'
+                    ? t('adminVehicleClaims.adminNotesPlaceholder')
+                    : t('adminVehicleClaims.rejectReasonPlaceholder')
                 }
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
               />
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setActionModal(null)} className="btn-secondary">Cancel</button>
+              <button onClick={() => setActionModal(null)} className="btn-secondary">{t('common.cancel')}</button>
               {actionModal.type === 'approve' ? (
                 <button onClick={handleAction} disabled={actionLoading} className="btn-primary gap-2">
-                  {actionLoading && <LoadingSpinner size="sm" />} Approve Transfer
+                  {actionLoading && <LoadingSpinner size="sm" />} {t('adminVehicleClaims.approveButton')}
                 </button>
               ) : (
                 <button onClick={handleAction} disabled={actionLoading} className="btn-danger gap-2">
-                  {actionLoading && <LoadingSpinner size="sm" />} Reject Claim
+                  {actionLoading && <LoadingSpinner size="sm" />} {t('adminVehicleClaims.rejectButton')}
                 </button>
               )}
             </div>

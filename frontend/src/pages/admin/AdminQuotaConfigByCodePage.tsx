@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Save, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import {
   getAllQuotaConfigsByCode,
@@ -19,7 +20,9 @@ import type {
 const QUOTA_PERIODS: QuotaPeriod[] = ['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']
 
 export default function AdminQuotaConfigByCodePage() {
+  const { t } = useTranslation()
   const [configs, setConfigs] = useState<QuotaConfigByRegistrationCode[]>([])
+  // ...existing code...
   const [regCodes, setRegCodes] = useState<RegistrationCode[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<string | null>(null)
@@ -140,15 +143,15 @@ export default function AdminQuotaConfigByCodePage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quota Configuration by Registration Code</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('adminQuotaByCode.title')}</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Set different quota limits and periods for different vehicle categories
+            {t('adminQuotaByCode.subtitle')}
           </p>
         </div>
         {!creating && (
           <button onClick={() => setCreating(true)} className="btn-primary gap-2">
             <Plus className="h-4 w-4" />
-            Add Configuration
+            {t('adminQuotaByCode.addConfig')}
           </button>
         )}
       </div>
@@ -156,16 +159,16 @@ export default function AdminQuotaConfigByCodePage() {
       {/* Create Form */}
       {creating && (
         <div className="card">
-          <h3 className="font-semibold text-gray-900 mb-4">Create New Configuration</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">{t('adminQuotaByCode.addTitle')}</h3>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="label">Registration Code *</label>
+              <label className="label">{t('adminQuotaByCode.code')} *</label>
               <select
                 className="input-field"
                 value={form.registrationCode}
                 onChange={(e) => setForm({ ...form, registrationCode: e.target.value })}
               >
-                <option value="">Select a code</option>
+                <option value="">{t('adminQuotaByCode.selectCode')}</option>
                 {getAvailableCodes().map((rc) => (
                   <option key={rc.code} value={rc.code}>
                     {rc.code} - {rc.description}
@@ -174,7 +177,7 @@ export default function AdminQuotaConfigByCodePage() {
               </select>
             </div>
             <div>
-              <label className="label">Quota Period *</label>
+              <label className="label">{t('adminQuotaByCode.period')} *</label>
               <select
                 className="input-field"
                 value={form.quotaPeriod}
@@ -182,13 +185,13 @@ export default function AdminQuotaConfigByCodePage() {
               >
                 {QUOTA_PERIODS.map((p) => (
                   <option key={p} value={p}>
-                    {p}
+                    {t(`adminQuotaConfig.${p}`)}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="label">Limit (Litres) *</label>
+              <label className="label">{t('adminQuotaByCode.limit')} *</label>
               <input
                 type="number"
                 className="input-field"
@@ -199,10 +202,10 @@ export default function AdminQuotaConfigByCodePage() {
               />
             </div>
             <div>
-              <label className="label">Description (optional)</label>
+              <label className="label">{t('adminQuotaByCode.description')} ({t('common.optional')})</label>
               <input
                 className="input-field"
-                placeholder="e.g., Daily quota for light automobiles"
+                placeholder={t('adminQuotaByCode.descriptionPlaceholder')}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
@@ -211,7 +214,7 @@ export default function AdminQuotaConfigByCodePage() {
           <div className="flex gap-2 mt-4">
             <button onClick={handleCreate} className="btn-primary gap-2">
               <Save className="h-4 w-4" />
-              Save Configuration
+              {t('adminQuotaByCode.saveConfig')}
             </button>
             <button
               onClick={() => {
@@ -221,7 +224,7 @@ export default function AdminQuotaConfigByCodePage() {
               className="btn-secondary gap-2"
             >
               <X className="h-4 w-4" />
-              Cancel
+              {t('common.cancel')}
             </button>
           </div>
         </div>
@@ -233,19 +236,19 @@ export default function AdminQuotaConfigByCodePage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Limit</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('adminQuotaByCode.code')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('adminQuotaByCode.description')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('adminQuotaByCode.limit')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('adminQuotaByCode.period')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.notes')}</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {configs.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    No configurations yet. Click "Add Configuration" to create one.
+                    {t('adminQuotaByCode.noConfigs')}
                   </td>
                 </tr>
               ) : (
@@ -273,7 +276,7 @@ export default function AdminQuotaConfigByCodePage() {
                           >
                             {QUOTA_PERIODS.map((p) => (
                               <option key={p} value={p}>
-                                {p}
+                                {t(`adminQuotaConfig.${p}`)}
                               </option>
                             ))}
                           </select>
@@ -301,7 +304,7 @@ export default function AdminQuotaConfigByCodePage() {
                         <td className="px-6 py-4 whitespace-nowrap font-semibold">{config.limitLitres} L</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                            {config.quotaPeriod}
+                            {t(`adminQuotaConfig.${config.quotaPeriod}`)}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">{config.description || '-'}</td>

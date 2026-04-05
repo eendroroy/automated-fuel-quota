@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Search, Filter, ChevronDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getAuditLogs } from '@/api/auditApi'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import Pagination from '@/components/common/Pagination'
@@ -21,7 +22,9 @@ const ACTION_OPTIONS = [
 ]
 
 export default function AdminAuditLogsPage() {
+  const { t } = useTranslation()
   const [logs, setLogs] = useState<AuditLog[]>([])
+  // ...existing code...
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
   const [page, setPage] = useState(0)
@@ -58,28 +61,37 @@ export default function AdminAuditLogsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{totalElements.toLocaleString()} audit records</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('adminAuditLogs.title')}</h1>
+        <p className="text-sm text-gray-500 mt-0.5">{totalElements.toLocaleString()} {t('adminAuditLogs.auditRecords')}</p>
       </div>
 
       {/* Filters */}
       <div className="card py-4 flex flex-col md:flex-row gap-3">
         <div className="flex-1">
-          <label className="block text-xs text-gray-500 mb-1">Action Type</label>
+          <label className="block text-xs text-gray-500 mb-1">{t('adminAuditLogs.filterAction')}</label>
           <div className="relative">
             <select className="input-field pr-8 appearance-none"
               value={actionTypeFilter} onChange={(e) => { setActionTypeFilter(e.target.value); setPage(0) }}>
-              {ACTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <option value="">{t('adminAuditLogs.allActions')}</option>
+              <option value="QUOTA_ADJUSTMENT">{t('adminAuditLogs.quotaAdjustment')}</option>
+              <option value="QUOTA_RESET">{t('adminAuditLogs.quotaReset')}</option>
+              <option value="VEHICLE_APPROVED">{t('adminAuditLogs.vehicleApproved')}</option>
+              <option value="VEHICLE_REJECTED">{t('adminAuditLogs.vehicleRejected')}</option>
+              <option value="VEHICLE_SUSPENDED">{t('adminAuditLogs.vehicleSuspended')}</option>
+              <option value="STATION_CREATED">{t('adminAuditLogs.stationCreated')}</option>
+              <option value="STATION_UPDATED">{t('adminAuditLogs.stationUpdated')}</option>
+              <option value="USER_SUSPENDED">{t('adminAuditLogs.userSuspended')}</option>
+              <option value="USER_ACTIVATED">{t('adminAuditLogs.userActivated')}</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+          <label className="block text-xs text-gray-500 mb-1">{t('adminAuditLogs.startDate')}</label>
           <input className="input-field" type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(0) }} />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">End Date</label>
+          <label className="block text-xs text-gray-500 mb-1">{t('adminAuditLogs.endDate')}</label>
           <input className="input-field" type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(0) }} />
         </div>
       </div>
@@ -89,18 +101,18 @@ export default function AdminAuditLogsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Timestamp</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Admin</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Action</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">Target Entity</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden xl:table-cell">Reason</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('adminAuditLogs.timestamp')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('adminAuditLogs.admin')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">{t('adminAuditLogs.action')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">{t('adminAuditLogs.target')}</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden xl:table-cell">{t('adminAuditLogs.reason')}</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr><td colSpan={5} className="py-12 text-center"><LoadingSpinner className="mx-auto" /></td></tr>
               ) : logs.length === 0 ? (
-                <tr><td colSpan={5} className="py-12 text-center text-gray-400">No audit logs found</td></tr>
+                <tr><td colSpan={5} className="py-12 text-center text-gray-400">{t('adminAuditLogs.noLogs')}</td></tr>
               ) : logs.map((log) => (
                 <tr key={log.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 text-gray-500 text-xs">{formatDateTime(log.actionTimestamp)}</td>
