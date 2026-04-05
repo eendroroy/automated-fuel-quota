@@ -7,3 +7,4 @@
 - always add necessary indexes in entities to improve query performance and avoid full table scans
 - if asked to update docs, update all existing docs with current project status and don't create new docs
 - don't verify if application starts successfully or not, only verify that the codebase compiles when necessary
+- always translate any new frontend view into both English and Bangla languages, and maintain the existing translations in the project
