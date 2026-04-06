@@ -16,6 +16,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,13 +42,17 @@ public class VehicleService {
     private final VehicleMapper vehicleMapper;
 
     /**
-     * Returns a paginated list of vehicles, optionally filtered by search term and status.
+     * Returns a paginated list of vehicles, optionally filtered by search term, status,
+     * BRTA office code, registration code, and registration date range.
      *
-     * <p>Uses {@link Specification} to build the WHERE clause dynamically — avoids the
-     * PostgreSQL {@code ? IS NULL OR column = ?} type-inference failure.
+     * <p>Default sort is registration date descending.
+     * Uses {@link Specification} to build the WHERE clause dynamically.
      */
     @Transactional(readOnly = true)
-    public Page<VehicleResponse> getAllVehicles(String search, Vehicle.VehicleStatus status, Pageable pageable) {
+    public Page<VehicleResponse> getAllVehicles(String search, Vehicle.VehicleStatus status,
+                                                String brtaCode, String registrationCode,
+                                                LocalDate registrationDateFrom, LocalDate registrationDateTo,
+                                                Pageable pageable) {
         Specification<Vehicle> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (search != null && !search.isBlank()) {
@@ -59,6 +64,20 @@ public class VehicleService {
             }
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (brtaCode != null && !brtaCode.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("brtaOfficeCode")),
+                        "%" + brtaCode.toLowerCase() + "%"));
+            }
+            if (registrationCode != null && !registrationCode.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("vehicleRegistrationCode")),
+                        "%" + registrationCode.toLowerCase() + "%"));
+            }
+            if (registrationDateFrom != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("registrationDate"), registrationDateFrom));
+            }
+            if (registrationDateTo != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("registrationDate"), registrationDateTo));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };

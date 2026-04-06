@@ -7,6 +7,8 @@ export const getAuditLogs = (params?: {
   actionType?: string
   startDate?: string
   endDate?: string
+  adminSearch?: string
+  targetEntity?: string
 }) =>
   axiosInstance
     .get<PagedResponse<AuditLog>>('/admin/v1/audit-logs', { params })

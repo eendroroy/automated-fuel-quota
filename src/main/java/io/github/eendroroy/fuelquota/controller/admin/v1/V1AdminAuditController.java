@@ -30,7 +30,7 @@ public class V1AdminAuditController {
 
     @GetMapping("/audit-logs")
     @Operation(summary = "Get audit logs",
-            description = "Returns paginated audit log entries with optional filtering by action type and date range")
+            description = "Returns paginated audit log entries with optional filtering")
     public ResponseEntity<Page<AuditLogResponse>> getAuditLogs(
             @Parameter(description = "Filter by audit action type")
             @RequestParam(required = false) String actionType,
@@ -38,8 +38,13 @@ public class V1AdminAuditController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @Parameter(description = "End date filter")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @Parameter(description = "Filter by admin name (partial match)")
+            @RequestParam(required = false) String adminSearch,
+            @Parameter(description = "Filter by target entity type (partial match)")
+            @RequestParam(required = false) String targetEntity,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(auditLogService.getAuditLogs(actionType, startDate, endDate, pageable));
+        return ResponseEntity.ok(auditLogService.getAuditLogs(actionType, startDate, endDate,
+                adminSearch, targetEntity, pageable));
     }
 }
 

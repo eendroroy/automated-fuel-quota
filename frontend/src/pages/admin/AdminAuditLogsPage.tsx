@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Search, Filter, ChevronDown } from 'lucide-react'
+import { Search, Filter, ChevronDown, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getAuditLogs } from '@/api/auditApi'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
@@ -30,6 +30,8 @@ export default function AdminAuditLogsPage() {
   const [actionTypeFilter, setActionTypeFilter] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [adminSearch, setAdminSearch] = useState('')
+  const [targetEntity, setTargetEntity] = useState('')
   const [loading, setLoading] = useState(true)
 
   const fetchLogs = () => {
@@ -38,6 +40,8 @@ export default function AdminAuditLogsPage() {
     if (actionTypeFilter) params.actionType = actionTypeFilter
     if (startDate) params.startDate = startDate + 'T00:00:00'
     if (endDate) params.endDate = endDate + 'T23:59:59'
+    if (adminSearch) params.adminSearch = adminSearch
+    if (targetEntity) params.targetEntity = targetEntity
 
     getAuditLogs(params)
       .then((d) => { setLogs(d.content); setTotalPages(d.totalPages); setTotalElements(d.totalElements) })
@@ -45,15 +49,15 @@ export default function AdminAuditLogsPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchLogs() }, [page, actionTypeFilter, startDate, endDate])
+  useEffect(() => { fetchLogs() }, [page, actionTypeFilter, startDate, endDate, adminSearch, targetEntity])
 
   const formatActionType = (action: string) =>
     action.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')
 
   const getActionColor = (action: string) => {
-    if (action.includes('APPROVED') || action.includes('CREATED')) return 'text-green-600 dark:text-green-400'
-    if (action.includes('REJECTED') || action.includes('SUSPENDED') || action.includes('DELETED')) return 'text-red-600 dark:text-red-400'
-    if (action.includes('UPDATED') || action.includes('ADJUSTMENT')) return 'text-blue-600 dark:text-blue-400'
+    if (action.includes('APPROVED') || action.includes('CREATED') || action.includes('ACTIVATED')) return 'text-green-600 dark:text-green-400'
+    if (action.includes('REJECTED') || action.includes('SUSPENDED') || action.includes('DELETED') || action.includes('DEACTIVATED')) return 'text-red-600 dark:text-red-400'
+    if (action.includes('UPDATED') || action.includes('ADJUSTMENT') || action.includes('SYNC')) return 'text-blue-600 dark:text-blue-400'
     return 'text-gray-600 dark:text-gray-400'
   }
 
@@ -65,33 +69,59 @@ export default function AdminAuditLogsPage() {
       </div>
 
       {/* Filters */}
-      <div className="card py-4 flex flex-col md:flex-row gap-3">
-        <div className="flex-1">
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('adminAuditLogs.filterAction')}</label>
-          <div className="relative">
-            <select className="input-field pr-8 appearance-none"
-              value={actionTypeFilter} onChange={(e) => { setActionTypeFilter(e.target.value); setPage(0) }}>
-              <option value="">{t('adminAuditLogs.allActions')}</option>
-              <option value="QUOTA_ADJUSTMENT">{t('adminAuditLogs.quotaAdjustment')}</option>
-              <option value="QUOTA_RESET">{t('adminAuditLogs.quotaReset')}</option>
-              <option value="VEHICLE_APPROVED">{t('adminAuditLogs.vehicleApproved')}</option>
-              <option value="VEHICLE_REJECTED">{t('adminAuditLogs.vehicleRejected')}</option>
-              <option value="VEHICLE_SUSPENDED">{t('adminAuditLogs.vehicleSuspended')}</option>
-              <option value="STATION_CREATED">{t('adminAuditLogs.stationCreated')}</option>
-              <option value="STATION_UPDATED">{t('adminAuditLogs.stationUpdated')}</option>
-              <option value="USER_SUSPENDED">{t('adminAuditLogs.userSuspended')}</option>
-              <option value="USER_ACTIVATED">{t('adminAuditLogs.userActivated')}</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+      <div className="card py-4 space-y-3">
+        {/* Row 1: admin search + target entity */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input className="input-field pl-9 text-sm" placeholder={t('adminAuditLogs.adminSearchPlaceholder')}
+              value={adminSearch} onChange={(e) => { setAdminSearch(e.target.value); setPage(0) }} />
+            {adminSearch && (
+              <button onClick={() => { setAdminSearch(''); setPage(0) }} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded">
+                <X className="h-3 w-3 text-gray-400" />
+              </button>
+            )}
+          </div>
+          <div className="relative flex-1">
+            <input className="input-field text-sm" placeholder={t('adminAuditLogs.targetEntityPlaceholder')}
+              value={targetEntity} onChange={(e) => { setTargetEntity(e.target.value); setPage(0) }} />
+            {targetEntity && (
+              <button onClick={() => { setTargetEntity(''); setPage(0) }} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded">
+                <X className="h-3 w-3 text-gray-400" />
+              </button>
+            )}
           </div>
         </div>
-        <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('adminAuditLogs.startDate')}</label>
-          <input className="input-field" type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(0) }} />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('adminAuditLogs.endDate')}</label>
-          <input className="input-field" type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(0) }} />
+
+        {/* Row 2: action type + date range */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative min-w-[200px]">
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('adminAuditLogs.filterAction')}</label>
+            <div className="relative">
+              <select className="input-field pr-8 appearance-none"
+                value={actionTypeFilter} onChange={(e) => { setActionTypeFilter(e.target.value); setPage(0) }}>
+                <option value="">{t('adminAuditLogs.allActions')}</option>
+                <option value="QUOTA_ADJUSTMENT">{t('adminAuditLogs.quotaAdjustment')}</option>
+                <option value="QUOTA_RESET">{t('adminAuditLogs.quotaReset')}</option>
+                <option value="VEHICLE_APPROVED">{t('adminAuditLogs.vehicleApproved')}</option>
+                <option value="VEHICLE_REJECTED">{t('adminAuditLogs.vehicleRejected')}</option>
+                <option value="VEHICLE_SUSPENDED">{t('adminAuditLogs.vehicleSuspended')}</option>
+                <option value="STATION_CREATED">{t('adminAuditLogs.stationCreated')}</option>
+                <option value="STATION_UPDATED">{t('adminAuditLogs.stationUpdated')}</option>
+                <option value="USER_SUSPENDED">{t('adminAuditLogs.userSuspended')}</option>
+                <option value="USER_ACTIVATED">{t('adminAuditLogs.userActivated')}</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('adminAuditLogs.startDate')}</label>
+            <input className="input-field" type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(0) }} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">{t('adminAuditLogs.endDate')}</label>
+            <input className="input-field" type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(0) }} />
+          </div>
         </div>
       </div>
 

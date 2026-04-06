@@ -10,10 +10,14 @@ import io.github.eendroroy.fuelquota.repository.VehicleRepository;
 import io.github.eendroroy.fuelquota.exception.ResourceNotFoundException;
 import io.github.eendroroy.fuelquota.exception.BadRequestException;
 
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +26,7 @@ import io.github.eendroroy.fuelquota.enums.QuotaPeriod;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -239,6 +244,63 @@ public class QuotaService {
     }
 
     /**
+     * Returns a paginated list of all quotas, optionally filtered by registration number,
+     * owner name, BRTA office code, vehicle registration code, and quota status.
+     *
+     * @param search           optional free-text (registration number / owner name)
+     * @param brtaCode         optional BRTA office code filter
+     * @param registrationCode optional vehicle registration code filter
+     * @param status           optional quota status filter
+     * @param pageable         pagination / sort parameters
+     * @return paginated {@link Quota} results
+     */
+    @Transactional(readOnly = true)
+    public Page<Quota> getAllQuotas(String search, String brtaCode, String registrationCode,
+                                    String status, Pageable pageable) {
+        Specification<Quota> spec = (root, query, cb) -> {
+            Join<Quota, Vehicle> vehicle = root.join("vehicle", JoinType.INNER);
+            List<Predicate> predicates = new ArrayList<>();
+            if (search != null && !search.isBlank()) {
+                String pattern = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(vehicle.get("registrationNumber")), pattern),
+                        cb.like(cb.lower(vehicle.get("ownerName")), pattern)
+                ));
+            }
+            if (brtaCode != null && !brtaCode.isBlank()) {
+                predicates.add(cb.like(cb.lower(vehicle.get("brtaOfficeCode")),
+                        "%" + brtaCode.toLowerCase() + "%"));
+            }
+            if (registrationCode != null && !registrationCode.isBlank()) {
+                predicates.add(cb.like(cb.lower(vehicle.get("vehicleRegistrationCode")),
+                        "%" + registrationCode.toLowerCase() + "%"));
+            }
+            if (status != null && !status.isBlank()) {
+                try {
+                    predicates.add(cb.equal(root.get("status"), Quota.QuotaStatus.valueOf(status)));
+                } catch (IllegalArgumentException ignored) { /* invalid status is silently ignored */ }
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return quotaRepository.findAll(spec, pageable);
+    }
+
+    /**
+     * Removes the individual override flag from a quota, allowing it to participate
+     * in future bulk config-set sync operations.
+     *
+     * @param vehicleId UUID of the vehicle whose quota override should be cleared
+     * @throws ResourceNotFoundException if no quota exists for the vehicle
+     */
+    @Transactional
+    public Quota clearQuotaOverride(UUID vehicleId) {
+        Quota quota = quotaRepository.findByVehicleId(vehicleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quota not found for vehicle"));
+        quota.setIndividuallyOverridden(false);
+        return quotaRepository.save(quota);
+    }
+
+    /**
      * Returns all quotas whose reset timestamp is in the past.
      *
      * @return list of expired quotas
@@ -249,9 +311,6 @@ public class QuotaService {
 
     /**
      * Syncs quota limits and periods from QuotaConfigSets to all eligible vehicles
-     * using bulk database UPDATE operations for performance at scale.
-     *
-     * <p>Two bulk queries are executed:
      * <ol>
      *   <li>Update quotas whose vehicle registration code matches a config set entry.</li>
      *   <li>Update remaining quotas (not covered by any set) with the global default.</li>
@@ -264,10 +323,13 @@ public class QuotaService {
      */
     public int syncQuotaConfigs() {
         LocalDateTime now = LocalDateTime.now();
+        QuotaPeriod defaultPeriod = quotaConfigService.getDefaultPeriod();
+        LocalDateTime nextResetTime = Quota.calculateNextResetTime(defaultPeriod);
         int fromConfigSets = quotaRepository.bulkSyncFromConfigSets(now);
         int fromDefault = quotaRepository.bulkSyncDefault(
                 quotaConfigService.getDefaultLimitLitres(),
-                quotaConfigService.getDefaultPeriod().name(),
+                defaultPeriod.name(),
+                nextResetTime,
                 now);
         int total = fromConfigSets + fromDefault;
         logger.info("Quota sync completed: {} from config sets + {} from default = {} total updated",
@@ -313,10 +375,7 @@ public class QuotaService {
      */
     @Transactional(readOnly = true)
     public Page<Quota> getAllQuotas(String search, Pageable pageable) {
-        if (search == null || search.isBlank()) {
-            return quotaRepository.findAll(pageable);
-        }
-        return quotaRepository.findQuotasWithSearch(search, pageable);
+        return getAllQuotas(search, null, null, null, pageable);
     }
 
     // ── Inner result type ─────────────────────────────────────────────────────

@@ -352,7 +352,13 @@
     "confirmReverify": "Re-verify this vehicle?",
     "reverifySuccess": "Vehicle re-verified",
     "noVehicles": "No vehicles found",
-    "customQuota": "Custom Quota"
+    "customQuota": "Custom Quota",
+    "brtaCode": "BRTA Code",
+    "brtaCodePlaceholder": "e.g. DHAKA METRO",
+    "registrationCode": "Registration Code",
+    "registrationCodePlaceholder": "e.g. GA",
+    "regDateFrom": "Reg. Date From",
+    "regDateTo": "Reg. Date To"
   },
   "adminStations": {
     "title": "Fuel Station Management",
@@ -397,6 +403,10 @@
     "left": "left",
     "adjustQuota": "Adjust Quota",
     "resetQuota": "Reset Quota",
+    "removeOverride": "Remove Custom Override",
+    "customOverride": "Custom Override",
+    "confirmRemoveOverride": "Remove manual override for {{reg}}? It will be included in future bulk syncs.",
+    "overrideRemoved": "Custom override removed",
     "noQuotas": "No quotas found",
     "noQuotasMatch": "No quotas match your search criteria",
     "adjustingQuotaFor": "Adjusting quota for",
@@ -516,6 +526,8 @@
     "title": "Audit Logs",
     "auditRecords": "audit records",
     "searchPlaceholder": "Search logs...",
+    "adminSearchPlaceholder": "Search by admin name...",
+    "targetEntityPlaceholder": "Filter by target entity (e.g. Vehicle, Quota)...",
     "filterAction": "Action Type",
     "allActions": "All Actions",
     "admin": "Admin",
@@ -636,6 +648,7 @@
     "role": "Role",
     "vehicles": "Vehicles",
     "lastLogin": "Last Login",
+    "registeredOn": "Registered On",
     "noUsers": "No users found",
     "suspendUser": "Suspend User",
     "activateUser": "Activate User",
@@ -650,7 +663,14 @@
     "customer": "Customer",
     "admin": "Admin",
     "never": "Never",
-    "joinedOn": "Joined"
+    "joinedOn": "Joined",
+    "selfNote": "You (current admin)",
+    "createAdmin": "Create Admin",
+    "createAdminTitle": "Create New Admin User",
+    "createAdminValidation": "Name and email required; password must be at least 8 characters.",
+    "adminCreated": "Admin user created successfully",
+    "adminNamePlaceholder": "Full name",
+    "passwordHint": "Minimum 8 characters"
   },
   "footer": {
     "copyright": "© {{year}} Automated Fuel Quota System"

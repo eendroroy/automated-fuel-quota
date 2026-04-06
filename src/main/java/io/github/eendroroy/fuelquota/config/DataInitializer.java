@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,7 +34,6 @@ public class DataInitializer {
                                    PumpRepresentativeRepository pumpRepRepository,
                                    TransactionRepository transactionRepository,
                                    AuditLogRepository auditLogRepository,
-                                   QuotaConfigByRegistrationCodeRepository quotaConfigByRegistrationCodeRepository,
                                    QuotaConfigSetRepository quotaConfigSetRepository,
                                    PasswordEncoder passwordEncoder) {
         return args -> {
@@ -348,6 +348,18 @@ public class DataInitializer {
         String[] colors = {"White", "Red", "Silver", "Blue", "Black", "Grey", "Green"};
         String[] fuelTypes = {"Petrol", "Diesel", "Octane", "CNG"};
 
+        // Per-customer usedLiters overrides — must match the amounts seeded by createSampleTransactions.
+        // Keys are loop indices; values are [usedLiters].
+        // i=0 John Doe: 5+3=8L; i=1 Fatima Begum: 10+10=20L; i=2 Mohammed Karim: 4.5L;
+        // i=3 Priya Sharma: 24L (exhausted); i=5 Sadia Islam: 6+6=12L.
+        Map<Integer, String> transactionUsedLiters = Map.of(
+                0, "8.00",
+                1, "20.00",
+                2, "4.50",
+                3, "24.00",
+                5, "12.00"
+        );
+
         for (int i = 0; i < names.length; i++) {
             String email = names[i].toLowerCase().replace(" ", ".") + "@example.com";
             String nidBase = String.format("%04d%03d", i + 1001, i + 1);
@@ -362,14 +374,17 @@ public class DataInitializer {
             String fuelType = fuelTypes[i % fuelTypes.length];
             String vehicleClass = getVehicleClass(code);
 
-            // Vary quota usage
-            String usedLiters = switch (i % 5) {
-                case 0 -> "0.00";
-                case 1 -> "8.00";
-                case 2 -> "16.00";
-                case 3 -> "20.00";
-                default -> "24.00";
-            };
+            // Use transaction-aligned usedLiters for customers that have seeded transactions;
+            // fall back to the rolling pattern for remaining customers.
+            String usedLiters = transactionUsedLiters.containsKey(i)
+                    ? transactionUsedLiters.get(i)
+                    : switch (i % 5) {
+                        case 0 -> "0.00";
+                        case 1 -> "8.00";
+                        case 2 -> "16.00";
+                        case 3 -> "20.00";
+                        default -> "24.00";
+                    };
 
             // Make last 3 UNVERIFIED
             Vehicle.VehicleStatus status = (i >= names.length - 3) ?
@@ -563,7 +578,7 @@ public class DataInitializer {
         PumpRepresentative rep3 = findRep(reps, "iqbal.hassan@portcityfuel.com");
         PumpRepresentative rep4 = findRep(reps, "sumaiya.akter@greenvalley.com");
 
-        // John Doe – 2 fill-ups → 5 + 3 = 8 L used
+        // John Doe (i=0) – 2 fill-ups → 5 + 3 = 8 L used  [DHAKA METRO GA 10-1001]
         findVehicle(vehicles, "DHAKA METRO GA 10-1001").ifPresent(v -> {
             tx(txRepo, v, s1, "5.00", rep1, s1.getLatitude(), s1.getLongitude(),
                     "PUMP-01", "19.00", LocalDateTime.now().minusDays(3).withHour(9));
@@ -571,31 +586,31 @@ public class DataInitializer {
                     "PUMP-01", "16.00", LocalDateTime.now().minusDays(1).withHour(11));
         });
 
-        // Fatima Begum – 2 fill-ups → 10 + 10 = 20 L used
-        findVehicle(vehicles, "DHAKA METRO HA 20-2001").ifPresent(v -> {
-            tx(txRepo, v, s1, "10.00", rep1, s1.getLatitude(), s1.getLongitude(),
-                    "PUMP-02", "14.00", LocalDateTime.now().minusDays(5).withHour(14));
-            tx(txRepo, v, s2, "10.00", rep2, s2.getLatitude(), s2.getLongitude(),
+        // Fatima Begum (i=1) – 2 fill-ups → 10 + 10 = 20 L used  [CHATTOGRAM METRO HA 11-1002]
+        findVehicle(vehicles, "CHATTOGRAM METRO HA 11-1002").ifPresent(v -> {
+            tx(txRepo, v, s3, "10.00", rep3, s3.getLatitude(), s3.getLongitude(),
+                    "PUMP-01", "14.00", LocalDateTime.now().minusDays(5).withHour(14));
+            tx(txRepo, v, s3, "10.00", rep3, s3.getLatitude(), s3.getLongitude(),
                     "PUMP-01", "4.00", LocalDateTime.now().minusDays(2).withHour(16));
         });
 
-        // Mohammed Karim – 1 fill-up → 4.5 L used
-        findVehicle(vehicles, "CHATTOGRAM METRO CHA 30-3001").ifPresent(v ->
-                tx(txRepo, v, s3, "4.50", rep3, s3.getLatitude(), s3.getLongitude(),
+        // Mohammed Karim (i=2) – 1 fill-up → 4.5 L used  [SYLHET METRO KA 12-1003]
+        findVehicle(vehicles, "SYLHET METRO KA 12-1003").ifPresent(v ->
+                tx(txRepo, v, s4, "4.50", rep4, s4.getLatitude(), s4.getLongitude(),
                         "PUMP-01", "19.50", LocalDateTime.now().minusDays(2).withHour(10))
         );
 
-        // Priya Sharma – quota exhausted in one fill-up (24 L)
-        findVehicle(vehicles, "DHAKA METRO KA 40-4001").ifPresent(v ->
+        // Priya Sharma (i=3) – quota exhausted in one fill-up (24 L)  [RAJSHAHI METRO BHA 13-1004]
+        findVehicle(vehicles, "RAJSHAHI METRO BHA 13-1004").ifPresent(v ->
                 tx(txRepo, v, s2, "24.00", rep2, s2.getLatitude(), s2.getLongitude(),
                         "PUMP-02", "0.00", LocalDateTime.now().minusDays(4).withHour(8))
         );
 
-        // Sadia Islam – 2 fill-ups → 6 + 6 = 12 L used
-        findVehicle(vehicles, "CHATTOGRAM METRO GA 50-5002").ifPresent(v -> {
-            tx(txRepo, v, s3, "6.00", rep3, s3.getLatitude(), s3.getLongitude(),
+        // Sadia Islam (i=5) – 2 fill-ups → 6 + 6 = 12 L used  [DHAKA METRO BHA 15-1006]
+        findVehicle(vehicles, "DHAKA METRO BHA 15-1006").ifPresent(v -> {
+            tx(txRepo, v, s1, "6.00", rep1, s1.getLatitude(), s1.getLongitude(),
                     "PUMP-01", "18.00", LocalDateTime.now().minusDays(6).withHour(13));
-            tx(txRepo, v, s3, "6.00", rep3, s3.getLatitude(), s3.getLongitude(),
+            tx(txRepo, v, s1, "6.00", rep1, s1.getLatitude(), s1.getLongitude(),
                     "PUMP-01", "12.00", LocalDateTime.now().minusDays(3).withHour(15));
         });
     }

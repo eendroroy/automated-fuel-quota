@@ -352,7 +352,13 @@
     "confirmReverify": "এই যানবাহনটি পুনরায় যাচাই করবেন?",
     "reverifySuccess": "পুনরায় যাচাই হয়েছে",
     "noVehicles": "কোনো যানবাহন পাওয়া যায়নি",
-    "customQuota": "কাস্টম কোটা"
+    "customQuota": "কাস্টম কোটা",
+    "brtaCode": "বিআরটিএ কোড",
+    "brtaCodePlaceholder": "যেমন: DHAKA METRO",
+    "registrationCode": "নিবন্ধন কোড",
+    "registrationCodePlaceholder": "যেমন: GA",
+    "regDateFrom": "নিবন্ধন তারিখ থেকে",
+    "regDateTo": "নিবন্ধন তারিখ পর্যন্ত"
   },
   "adminStations": {
     "title": "জ্বালানি স্টেশন ব্যবস্থাপনা",
@@ -397,6 +403,10 @@
     "left": "বাকি",
     "adjustQuota": "কোটা সমন্বয় করুন",
     "resetQuota": "কোটা রিসেট করুন",
+    "removeOverride": "কাস্টম ওভাররাইড সরান",
+    "customOverride": "কাস্টম ওভাররাইড",
+    "confirmRemoveOverride": "{{reg}} এর ম্যানুয়াল ওভাররাইড সরাবেন? এটি ভবিষ্যৎ বাল্ক সিঙ্কে অন্তর্ভুক্ত হবে।",
+    "overrideRemoved": "কাস্টম ওভাররাইড সরানো হয়েছে",
     "noQuotas": "কোনো কোটা পাওয়া যায়নি",
     "noQuotasMatch": "আপনার অনুসন্ধান মাপদণ্ডের সাথে কোনো কোটা মিলছে না",
     "adjustingQuotaFor": "কোটা সমন্বয় করা হচ্ছে",
@@ -516,6 +526,8 @@
     "title": "অডিট লগ",
     "auditRecords": "অডিট রেকর্ড",
     "searchPlaceholder": "লগ অনুসন্ধান...",
+    "adminSearchPlaceholder": "অ্যাডমিনের নাম দিয়ে অনুসন্ধান...",
+    "targetEntityPlaceholder": "লক্ষ্য সত্তা দিয়ে ফিল্টার (যেমন: Vehicle, Quota)...",
     "filterAction": "কার্যক্রমের ধরন",
     "allActions": "সব কার্যক্রম",
     "admin": "অ্যাডমিন",
@@ -636,6 +648,7 @@
     "role": "ভূমিকা",
     "vehicles": "যানবাহন",
     "lastLogin": "সর্বশেষ লগইন",
+    "registeredOn": "নিবন্ধন তারিখ",
     "noUsers": "কোনো ব্যবহারকারী পাওয়া যায়নি",
     "suspendUser": "ব্যবহারকারী স্থগিত",
     "activateUser": "ব্যবহারকারী সক্রিয়",
@@ -650,7 +663,14 @@
     "customer": "গ্রাহক",
     "admin": "অ্যাডমিন",
     "never": "কখনো না",
-    "joinedOn": "যোগ দিয়েছেন"
+    "joinedOn": "যোগ দিয়েছেন",
+    "selfNote": "আপনি (বর্তমান অ্যাডমিন)",
+    "createAdmin": "অ্যাডমিন তৈরি করুন",
+    "createAdminTitle": "নতুন অ্যাডমিন তৈরি করুন",
+    "createAdminValidation": "নাম ও ইমেইল আবশ্যিক; পাসওয়ার্ড কমপক্ষে ৮ অক্ষর হতে হবে।",
+    "adminCreated": "অ্যাডমিন ব্যবহারকারী সফলভাবে তৈরি হয়েছে",
+    "adminNamePlaceholder": "পূর্ণ নাম",
+    "passwordHint": "কমপক্ষে ৮ অক্ষর"
   },
   "footer": {
     "copyright": "© {{year}} স্বয়ংক্রিয় জ্বালানি কোটা সিস্টেম"

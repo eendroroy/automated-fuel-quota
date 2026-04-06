@@ -50,6 +50,10 @@ export const getAllVehicles = (params: {
   size?: number
   status?: string
   search?: string
+  brtaCode?: string
+  registrationCode?: string
+  registrationDateFrom?: string
+  registrationDateTo?: string
 }) =>
   axiosInstance
     .get<PagedResponse<Vehicle>>('/admin/v1/vehicles', { params })

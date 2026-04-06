@@ -1,6 +1,7 @@
 package io.github.eendroroy.fuelquota.controller.admin.v1;
 
 import io.github.eendroroy.fuelquota.config.OpenApiConfig;
+import io.github.eendroroy.fuelquota.dto.request.CreateAdminUserRequest;
 import io.github.eendroroy.fuelquota.dto.request.UserStatusUpdateRequest;
 import io.github.eendroroy.fuelquota.dto.response.AppUserResponse;
 import io.github.eendroroy.fuelquota.service.AdminUserService;
@@ -12,16 +13,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
  * Admin user management endpoints.
  *
- * <p>Provides paginated listing, individual look-up, and status management
+ * <p>Provides paginated listing, individual look-up, creation, and status management
  * of CUSTOMER and ADMIN accounts. PUMP_REPRESENTATIVE accounts are excluded.
  */
 @RestController
@@ -37,11 +41,13 @@ public class V1AdminUserController {
     /**
      * Returns a paginated, filterable list of customer and admin users.
      *
-     * @param page   zero-based page index (default 0)
-     * @param size   number of records per page (default 20)
-     * @param role   optional role filter: CUSTOMER | ADMIN
-     * @param status optional status filter: ACTIVE | SUSPENDED | INACTIVE
-     * @param search optional free-text search on name, email, or mobile
+     * @param page            zero-based page index (default 0)
+     * @param size            number of records per page (default 20)
+     * @param role            optional role filter: CUSTOMER | ADMIN
+     * @param status          optional status filter: ACTIVE | SUSPENDED | INACTIVE
+     * @param search          optional free-text search on name, email, or mobile
+     * @param createdAtFrom   optional lower bound on registration date
+     * @param createdAtTo     optional upper bound on registration date
      */
     @GetMapping("/users")
     @Operation(summary = "List all users (paginated)",
@@ -51,8 +57,12 @@ public class V1AdminUserController {
             @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
             @Parameter(description = "Role filter (CUSTOMER or ADMIN)") @RequestParam(required = false) String role,
             @Parameter(description = "Status filter (ACTIVE, SUSPENDED, INACTIVE)") @RequestParam(required = false) String status,
-            @Parameter(description = "Search term for name, email, or mobile") @RequestParam(required = false) String search) {
-        return ResponseEntity.ok(adminUserService.getUsers(page, size, role, status, search));
+            @Parameter(description = "Search term for name, email, or mobile") @RequestParam(required = false) String search,
+            @Parameter(description = "Registration date from (inclusive)")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdAtFrom,
+            @Parameter(description = "Registration date to (inclusive)")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdAtTo) {
+        return ResponseEntity.ok(adminUserService.getUsers(page, size, role, status, search, createdAtFrom, createdAtTo));
     }
 
     /**
@@ -64,6 +74,23 @@ public class V1AdminUserController {
     @Operation(summary = "Get user by ID")
     public ResponseEntity<AppUserResponse> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(adminUserService.getUserById(id));
+    }
+
+    /**
+     * Creates a new ADMIN user account.
+     *
+     * @param request new admin details (name, email, password)
+     */
+    @PostMapping("/users")
+    @Operation(summary = "Create a new admin user",
+            description = "Creates a new ADMIN account. Email must be unique.")
+    public ResponseEntity<AppUserResponse> createAdminUser(
+            @Valid @RequestBody CreateAdminUserRequest request,
+            HttpServletRequest httpRequest) {
+        UUID adminId = (UUID) httpRequest.getAttribute("userId");
+        String adminName = (String) httpRequest.getAttribute("userName");
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(adminUserService.createAdminUser(request, adminId, adminName));
     }
 
     /**
@@ -84,4 +111,3 @@ public class V1AdminUserController {
         return ResponseEntity.ok(adminUserService.updateUserStatus(id, request, adminId, adminName));
     }
 }
-

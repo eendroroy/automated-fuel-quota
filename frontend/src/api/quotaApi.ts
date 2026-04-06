@@ -11,6 +11,8 @@ export const getAllQuotas = (params: {
   page?: number;
   size?: number;
   search?: string;
+  brtaCode?: string;
+  registrationCode?: string;
   status?: string;
   sortBy?: string;
   sortOrder?: string;
@@ -25,3 +27,7 @@ export const manualResetQuota = (vehicleId: string) =>
 
 export const bulkResetQuotas = () =>
   axiosInstance.post('/admin/v1/quotas/bulk-reset').then((r) => r.data)
+
+export const removeQuotaOverride = (vehicleId: string) =>
+  axiosInstance.delete<Quota>(`/admin/v1/quotas/${vehicleId}/override`).then((r) => r.data)
+

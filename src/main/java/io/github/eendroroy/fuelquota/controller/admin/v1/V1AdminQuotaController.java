@@ -22,8 +22,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -52,10 +53,18 @@ public class V1AdminQuotaController {
     @GetMapping("/quotas")
     @Operation(summary = "Get all quotas")
     public ResponseEntity<Page<QuotaResponse>> getAllQuotas(
-            @Parameter(description = "Search term for vehicle registration number")
+            @Parameter(description = "Search term for vehicle registration number or owner name")
             @RequestParam(required = false) String search,
-            @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(quotaService.getAllQuotas(search, pageable).map(quotaMapper::toResponse));
+            @Parameter(description = "Filter by BRTA office code") @RequestParam(required = false) String brtaCode,
+            @Parameter(description = "Filter by vehicle registration code") @RequestParam(required = false) String registrationCode,
+            @Parameter(description = "Filter by quota status (ACTIVE, SUSPENDED, EXHAUSTED)")
+            @RequestParam(required = false) String status,
+            @Parameter(description = "Zero-based page number") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by(Sort.Direction.DESC, "vehicle.registrationDate"));
+        return ResponseEntity.ok(quotaService.getAllQuotas(search, brtaCode, registrationCode, status, pageable)
+                .map(quotaMapper::toResponse));
     }
 
     @PutMapping("/quotas/{vehicleId}/adjust")
@@ -99,6 +108,23 @@ public class V1AdminQuotaController {
                 "Quota", "ALL",
                 null, Map.of("action", "bulk_reset"), null);
         return ResponseEntity.ok(Map.of("message", "Bulk quota reset completed"));
+    }
+
+    @DeleteMapping("/quotas/{vehicleId}/override")
+    @Operation(summary = "Remove manual quota override",
+            description = "Clears the individually_overridden flag so the quota participates in future bulk sync operations.")
+    public ResponseEntity<QuotaResponse> clearQuotaOverride(
+            @PathVariable UUID vehicleId, HttpServletRequest request) {
+        QuotaResponse quota = quotaMapper.toResponse(quotaService.clearQuotaOverride(vehicleId));
+        auditLogService.log(
+                (UUID) request.getAttribute("userId"),
+                (String) request.getAttribute("userName"),
+                AuditLog.AuditAction.QUOTA_ADJUSTMENT,
+                "Quota", quota.getId(),
+                Map.of("individuallyOverridden", true),
+                Map.of("individuallyOverridden", false),
+                "Manual quota override removed");
+        return ResponseEntity.ok(quota);
     }
 
     // ── System-wide Quota Config (geofence, cron, default limit) ─────────────

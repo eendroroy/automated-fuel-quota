@@ -8,6 +8,7 @@ import io.github.eendroroy.fuelquota.entity.PumpRepresentative;
 import io.github.eendroroy.fuelquota.service.AuditLogService;
 import io.github.eendroroy.fuelquota.service.PumpRepresentativeService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,10 +36,17 @@ public class V1AdminPumpRepController {
     private final AuditLogService auditLogService;
 
     @GetMapping("/pump-representatives")
-    @Operation(summary = "Get all pump representatives")
+    @Operation(summary = "Get all pump representatives",
+            description = "Returns a paginated list of pump representatives with optional search, status, and station filters")
     public ResponseEntity<Page<PumpRepresentativeResponse>> getAllPumpReps(
+            @Parameter(description = "Free-text search on name, email, or employee ID")
+            @RequestParam(required = false) String search,
+            @Parameter(description = "Status filter: ACTIVE | INACTIVE | SUSPENDED")
+            @RequestParam(required = false) String status,
+            @Parameter(description = "Filter by station UUID")
+            @RequestParam(required = false) UUID stationId,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(repService.getAllReps(pageable));
+        return ResponseEntity.ok(repService.getAllReps(search, status, stationId, pageable));
     }
 
     @GetMapping("/pump-representatives/{id}")

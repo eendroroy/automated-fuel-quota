@@ -64,6 +64,8 @@ public class AuditLogService {
     public Page<AuditLogResponse> getAuditLogs(String actionTypeStr,
                                                LocalDateTime startDate,
                                                LocalDateTime endDate,
+                                               String adminSearch,
+                                               String targetEntity,
                                                Pageable pageable) {
         AuditLog.AuditAction actionType = null;
         if (actionTypeStr != null && !actionTypeStr.isBlank()) {
@@ -88,6 +90,14 @@ public class AuditLogService {
             }
             if (finalEndDate != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("actionTimestamp"), finalEndDate));
+            }
+            if (adminSearch != null && !adminSearch.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("adminName")),
+                        "%" + adminSearch.toLowerCase() + "%"));
+            }
+            if (targetEntity != null && !targetEntity.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("targetEntity")),
+                        "%" + targetEntity.toLowerCase() + "%"));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };

@@ -2,8 +2,6 @@ package io.github.eendroroy.fuelquota.repository;
 
 import io.github.eendroroy.fuelquota.entity.Quota;
 import io.github.eendroroy.fuelquota.entity.Vehicle;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -36,10 +34,6 @@ public interface QuotaRepository extends JpaRepository<Quota, UUID>,
     @Query("SELECT AVG(q.usedLiters) FROM Quota q WHERE q.status = 'ACTIVE'")
     Double getAverageQuotaUsed();
 
-    @Query("SELECT q FROM Quota q JOIN q.vehicle v WHERE " +
-           "LOWER(v.registrationNumber) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "LOWER(v.ownerName) LIKE LOWER(CONCAT('%', :search, '%'))")
-    Page<Quota> findQuotasWithSearch(@Param("search") String search, Pageable pageable);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Quota q SET q.usedLiters = 0, " +
@@ -57,9 +51,10 @@ public interface QuotaRepository extends JpaRepository<Quota, UUID>,
     List<Object[]> getQuotaUsageByVehicleClass();
 
     /**
-     * Bulk-updates quota limit and period for all non-overridden, non-suspended vehicles
+     * Bulk-updates quota limit, period, and reset timestamp for all non-overridden, non-suspended vehicles
      * whose registration code is covered by a quota config set entry.
      * Uses a native JOIN across quota_config_set_codes and vehicles tables.
+     * The reset_timestamp is recalculated based on the new quota_period.
      *
      * @param now timestamp to set as updated_at
      * @return number of rows updated
@@ -70,6 +65,18 @@ public interface QuotaRepository extends JpaRepository<Quota, UUID>,
         SET weekly_limit_liters = config_data.limit_litres,
             quota_period = config_data.quota_period,
             remaining_liters = LEAST(q.remaining_liters, config_data.limit_litres),
+            reset_timestamp = CASE config_data.quota_period
+                WHEN 'DAILY'     THEN DATE_TRUNC('day', NOW()) + INTERVAL '1 day'
+                WHEN 'WEEKLY'    THEN DATE_TRUNC('day', NOW()) +
+                                      (CASE WHEN EXTRACT(DOW FROM NOW()) = 0
+                                            THEN INTERVAL '7 days'
+                                            ELSE (7 - EXTRACT(DOW FROM NOW())::int) * INTERVAL '1 day'
+                                       END)
+                WHEN 'MONTHLY'   THEN DATE_TRUNC('month', NOW()) + INTERVAL '1 month'
+                WHEN 'QUARTERLY' THEN DATE_TRUNC('month', NOW()) + INTERVAL '3 months'
+                WHEN 'YEARLY'    THEN DATE_TRUNC('year', NOW())  + INTERVAL '1 year'
+                ELSE q.reset_timestamp
+            END,
             updated_at = :now
         FROM (
             SELECT v.id AS vehicle_id, cs.limit_litres, cs.quota_period
@@ -85,11 +92,12 @@ public interface QuotaRepository extends JpaRepository<Quota, UUID>,
     int bulkSyncFromConfigSets(@Param("now") LocalDateTime now);
 
     /**
-     * Bulk-updates quota limit and period for all non-overridden, non-suspended vehicles
+     * Bulk-updates quota limit, period, and reset timestamp for all non-overridden, non-suspended vehicles
      * that are NOT covered by any quota config set (global default fallback).
      *
      * @param defaultLimit  global default fuel limit (litres)
      * @param defaultPeriod global default reset period (e.g. 'WEEKLY')
+     * @param nextResetTime precomputed next reset timestamp for the default period
      * @param now           timestamp to set as updated_at
      * @return number of rows updated
      */
@@ -99,6 +107,7 @@ public interface QuotaRepository extends JpaRepository<Quota, UUID>,
         SET weekly_limit_liters = :defaultLimit,
             quota_period = :defaultPeriod,
             remaining_liters = LEAST(q.remaining_liters, :defaultLimit),
+            reset_timestamp = :nextResetTime,
             updated_at = :now
         FROM vehicles v
         WHERE v.id = q.vehicle_id
@@ -112,5 +121,6 @@ public interface QuotaRepository extends JpaRepository<Quota, UUID>,
         """, nativeQuery = true)
     int bulkSyncDefault(@Param("defaultLimit") BigDecimal defaultLimit,
                         @Param("defaultPeriod") String defaultPeriod,
+                        @Param("nextResetTime") LocalDateTime nextResetTime,
                         @Param("now") LocalDateTime now);
 }

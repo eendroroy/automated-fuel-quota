@@ -10,14 +10,26 @@ import io.github.eendroroy.fuelquota.mapper.PumpRepresentativeMapper;
 import io.github.eendroroy.fuelquota.repository.FuelStationRepository;
 import io.github.eendroroy.fuelquota.repository.PumpRepresentativeRepository;
 
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
+/**
+ * Service for pump representative management.
+ *
+ * <p>All list/search queries are built via {@link Specification} to avoid the
+ * PostgreSQL {@code ? IS NULL} type-inference failure and to support flexible
+ * optional filtering.
+ */
 @Service
 @Transactional
 public class PumpRepresentativeService {
@@ -37,11 +49,55 @@ public class PumpRepresentativeService {
         this.pumpRepMapper = pumpRepMapper;
     }
 
+    /**
+     * Returns a paginated, filterable list of pump representatives.
+     *
+     * <p>Builds the WHERE clause via {@link Specification} so that null filter
+     * parameters are simply omitted from the query. The {@code station} association
+     * is eagerly fetched on data queries (JOIN FETCH) to avoid N+1 queries.
+     *
+     * @param search    optional free-text search on name, email, or employee ID
+     * @param statusStr optional status filter (ACTIVE | INACTIVE | SUSPENDED)
+     * @param stationId optional station UUID filter
+     * @param pageable  pagination / sort parameters
+     * @return paginated {@link PumpRepresentativeResponse} results
+     */
     @Transactional(readOnly = true)
-    public Page<PumpRepresentativeResponse> getAllReps(Pageable pageable) {
-        return repRepository.findAllWithStation(pageable)
-                .map(pumpRepMapper::toResponse);
+    public Page<PumpRepresentativeResponse> getAllReps(String search, String statusStr,
+                                                      UUID stationId, Pageable pageable) {
+        Specification<PumpRepresentative> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Eagerly fetch the station on the data query only (not the count query).
+            // ManyToOne FETCH with pagination is safe — does not cause in-memory pagination.
+            if (!Long.class.equals(query.getResultType())) {
+                root.fetch("station", JoinType.LEFT);
+            }
+
+            if (search != null && !search.isBlank()) {
+                String pattern = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("name")), pattern),
+                        cb.like(cb.lower(cb.coalesce(root.get("email"), "")), pattern),
+                        cb.like(cb.lower(root.get("employeeId")), pattern)
+                ));
+            }
+            if (statusStr != null && !statusStr.isBlank()) {
+                try {
+                    PumpRepresentative.RepStatus repStatus =
+                            PumpRepresentative.RepStatus.valueOf(statusStr.toUpperCase());
+                    predicates.add(cb.equal(root.get("status"), repStatus));
+                } catch (IllegalArgumentException ignored) { /* invalid status silently ignored */ }
+            }
+            if (stationId != null) {
+                predicates.add(cb.equal(root.get("station").get("id"), stationId));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return repRepository.findAll(spec, pageable).map(pumpRepMapper::toResponse);
     }
+
 
     @Transactional(readOnly = true)
     public PumpRepresentativeResponse getRepById(UUID id) {

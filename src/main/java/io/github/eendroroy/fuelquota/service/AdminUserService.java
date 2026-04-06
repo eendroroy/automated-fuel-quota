@@ -1,5 +1,6 @@
 package io.github.eendroroy.fuelquota.service;
 
+import io.github.eendroroy.fuelquota.dto.request.CreateAdminUserRequest;
 import io.github.eendroroy.fuelquota.dto.request.UserStatusUpdateRequest;
 import io.github.eendroroy.fuelquota.dto.response.AppUserResponse;
 import io.github.eendroroy.fuelquota.entity.AuditLog;
@@ -7,13 +8,19 @@ import io.github.eendroroy.fuelquota.entity.User;
 import io.github.eendroroy.fuelquota.exception.BadRequestException;
 import io.github.eendroroy.fuelquota.exception.ResourceNotFoundException;
 import io.github.eendroroy.fuelquota.repository.UserRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,25 +38,61 @@ public class AdminUserService {
 
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Returns a paginated, filterable list of CUSTOMER and ADMIN users.
      *
-     * @param page      zero-based page index
-     * @param size      number of records per page
-     * @param roleStr   optional role filter ("CUSTOMER" | "ADMIN")
-     * @param statusStr optional status filter ("ACTIVE" | "SUSPENDED" | "INACTIVE")
-     * @param search    optional free-text search on name, email, or mobile
+     * <p>Builds the WHERE clause via {@link Specification} so that null filter
+     * parameters are simply omitted from the query — avoids the PostgreSQL
+     * {@code ? IS NULL OR column = ?} type-inference failure.
+     *
+     * @param page           zero-based page index
+     * @param size           number of records per page
+     * @param roleStr        optional role filter ("CUSTOMER" | "ADMIN")
+     * @param statusStr      optional status filter ("ACTIVE" | "SUSPENDED" | "INACTIVE")
+     * @param search         optional free-text search on name, email, or mobile
+     * @param createdAtFrom  optional lower bound for registration date
+     * @param createdAtTo    optional upper bound for registration date
      * @return page of {@link AppUserResponse}
      */
-    public Page<AppUserResponse> getUsers(int page, int size, String roleStr, String statusStr, String search) {
-        User.UserRole role = (roleStr != null && !roleStr.isBlank()) ? parseRole(roleStr) : null;
+    public Page<AppUserResponse> getUsers(int page, int size, String roleStr, String statusStr,
+                                          String search, LocalDateTime createdAtFrom, LocalDateTime createdAtTo) {
+        User.UserRole role     = (roleStr   != null && !roleStr.isBlank())   ? parseRole(roleStr)     : null;
         User.UserStatus status = (statusStr != null && !statusStr.isBlank()) ? parseStatus(statusStr) : null;
-        String searchTerm = (search != null && !search.isBlank()) ? search.trim() : null;
+        String searchTerm      = (search    != null && !search.isBlank())    ? search.trim()          : null;
+
+        Specification<User> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Always restrict to CUSTOMER and ADMIN — exclude PUMP_REPRESENTATIVE
+            predicates.add(root.get("role").in(User.UserRole.CUSTOMER, User.UserRole.ADMIN));
+
+            if (role != null) {
+                predicates.add(cb.equal(root.get("role"), role));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (searchTerm != null) {
+                String pattern = "%" + searchTerm.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("name")), pattern),
+                        cb.like(cb.lower(cb.coalesce(root.get("email"), "")), pattern),
+                        cb.like(cb.lower(cb.coalesce(root.get("mobileNumber"), "")), pattern)
+                ));
+            }
+            if (createdAtFrom != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), createdAtFrom));
+            }
+            if (createdAtTo != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), createdAtTo));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<User> users = userRepository.searchUsers(role, status, searchTerm, pageable);
-        return users.map(this::toResponse);
+        return userRepository.findAll(spec, pageable).map(this::toResponse);
     }
 
     /**
@@ -68,7 +111,8 @@ public class AdminUserService {
     /**
      * Updates the account status of a user.
      *
-     * <p>PUMP_REPRESENTATIVE accounts cannot be managed through this endpoint.
+     * <p>An admin cannot suspend their own account.
+     * PUMP_REPRESENTATIVE accounts cannot be managed through this endpoint.
      * When an account is suspended the {@code enabled} flag is also set to
      * {@code false} so that existing JWT tokens are rejected.
      *
@@ -89,6 +133,12 @@ public class AdminUserService {
         }
 
         User.UserStatus newStatus = parseStatus(request.getStatus());
+
+        // Prevent admin from suspending themselves
+        if (newStatus == User.UserStatus.SUSPENDED && id.equals(adminId)) {
+            throw new BadRequestException("Admins cannot suspend their own account");
+        }
+
         User.UserStatus oldStatus = user.getStatus() != null ? user.getStatus() : User.UserStatus.ACTIVE;
 
         user.setStatus(newStatus);
@@ -112,6 +162,37 @@ public class AdminUserService {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Creates a new ADMIN user account.
+     *
+     * @param request    name, email, and password of the new admin
+     * @param adminId    UUID of the acting admin (for audit)
+     * @param adminName  display name of the acting admin (for audit)
+     * @return the created {@link AppUserResponse}
+     */
+    @Transactional
+    public AppUserResponse createAdminUser(CreateAdminUserRequest request, UUID adminId, String adminName) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("Email already in use");
+        }
+        User user = new User(
+                request.getEmail(),
+                passwordEncoder.encode(request.getPassword()),
+                request.getName(),
+                User.UserRole.ADMIN
+        );
+        user.setStatus(User.UserStatus.ACTIVE);
+        user = userRepository.save(user);
+        auditLogService.log(
+                adminId, adminName, AuditLog.AuditAction.USER_ACTIVATED,
+                "User", user.getId().toString(),
+                null,
+                Map.of("email", request.getEmail(), "name", request.getName(), "role", "ADMIN"),
+                "New admin user created"
+        );
+        return toResponse(user);
+    }
 
     private AppUserResponse toResponse(User user) {
         long vehicleCount = userRepository.countVehiclesByUserId(user.getId());
@@ -145,7 +226,4 @@ public class AdminUserService {
         }
     }
 }
-
-
-
 
