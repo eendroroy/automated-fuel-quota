@@ -1,8 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, Trash2, QrCode, Car, X, Droplets, Clock, UserPlus } from 'lucide-react'
+import { Plus, Trash2, QrCode, Car, X, Droplets, Clock, UserPlus, Eye, Pencil } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { getMyVehicles, addMyVehicle, removeMyVehicle, getQrTokenForVehicle, regenerateQrTokenForVehicle, getVehiclesAsDriver } from '@/api/vehicleApi'
+import {
+  getMyVehicles, addMyVehicle, removeMyVehicle,
+  getQrTokenForVehicle, regenerateQrTokenForVehicle,
+  getVehiclesAsDriver, updateVehicleSecondaryFuelTypes,
+} from '@/api/vehicleApi'
 import { getVehicleQuota } from '@/api/quotaApi'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
 import StatusBadge from '@/components/common/StatusBadge'
@@ -11,7 +15,7 @@ import Pagination from '@/components/common/Pagination'
 import RegistrationNumberInput from '@/components/common/RegistrationNumberInput'
 import DriverManagementModal from '@/components/customer/DriverManagementModal'
 import { downloadQrAsPng } from '@/utils/qrHelpers'
-import { formatDate, formatDateTime, formatLitres } from '@/utils/formatters'
+import { formatDate, formatLitres } from '@/utils/formatters'
 import toast from 'react-hot-toast'
 import QRCode from 'react-qr-code'
 import type { Vehicle, Quota, AddVehicleRequest, PagedResponse } from '@/types'
@@ -68,6 +72,7 @@ function VehicleQuotaSection({ vehicleId }: { vehicleId: string }) {
 }
 
 // ── QR Modal ──────────────────────────────────────────────────────────────────
+// Fixed: useEffect with selectedFuelType dependency + cleanup to prevent race conditions
 function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => void }) {
   const { t } = useTranslation()
   const [token, setToken] = useState<string | null>(null)
@@ -77,26 +82,22 @@ function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () =>
 
   const availableFuelTypes = [vehicle.fuelType, ...(vehicle.secondaryFuelTypes ?? [])]
 
-  const loadQr = useCallback((fuelType: string) => {
+  // Load QR whenever selectedFuelType changes; cleanup prevents stale responses
+  useEffect(() => {
+    let cancelled = false
     setLoading(true)
-    getQrTokenForVehicle(vehicle.id, fuelType !== vehicle.fuelType ? fuelType : undefined)
-      .then((r) => setToken(r.token))
-      .catch(() => toast.error(t('errors.qrLoadFailed')))
-      .finally(() => setLoading(false))
-  }, [vehicle.id, vehicle.fuelType, t])
-
-  useEffect(() => { loadQr(selectedFuelType) }, [vehicle.id])  // load on mount only
-
-  const handleFuelTypeChange = (ft: string) => {
-    setSelectedFuelType(ft)
     setToken(null)
-    loadQr(ft)
-  }
+    getQrTokenForVehicle(vehicle.id, selectedFuelType)
+      .then((r) => { if (!cancelled) setToken(r.token) })
+      .catch(() => { if (!cancelled) toast.error(t('errors.qrLoadFailed')) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [vehicle.id, selectedFuelType, t])
 
   const handleRegenerate = async () => {
     setRegenerating(true)
     try {
-      const r = await regenerateQrTokenForVehicle(vehicle.id, selectedFuelType !== vehicle.fuelType ? selectedFuelType : undefined)
+      const r = await regenerateQrTokenForVehicle(vehicle.id, selectedFuelType)
       setToken(r.token)
       toast.success(t('qrCode.qrRegenerated'))
     } catch {
@@ -124,7 +125,7 @@ function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () =>
           <StatusBadge status={vehicle.status} />
         </div>
 
-        {/* Fuel type selector */}
+        {/* Fuel type selector – shown whenever vehicle has secondary fuels */}
         {availableFuelTypes.length > 1 && (
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">{t('qrCode.selectFuelType')}</p>
@@ -132,11 +133,11 @@ function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () =>
               {availableFuelTypes.map((ft) => (
                 <button
                   key={ft}
-                  onClick={() => handleFuelTypeChange(ft)}
+                  onClick={() => setSelectedFuelType(ft)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                     selectedFuelType === ft
                       ? 'bg-brand-600 text-white border-brand-600'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600'
+                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-brand-400'
                   }`}
                 >
                   {ft} {ft === vehicle.fuelType && <span className="opacity-60">(primary)</span>}
@@ -171,6 +172,197 @@ function VehicleQrModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () =>
   )
 }
 
+// ── Vehicle Details Modal ──────────────────────────────────────────────────────
+function VehicleDetailsModal({ vehicle, onClose }: { vehicle: Vehicle; onClose: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <Modal isOpen onClose={onClose} title={t('vehicles.vehicleDetails')} size="md">
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex items-center gap-3 bg-brand-50 dark:bg-brand-900/20 rounded-xl p-3">
+          <div className="h-12 w-12 bg-brand-100 dark:bg-brand-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Car className="h-6 w-6 text-brand-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-gray-900 dark:text-white font-mono text-lg leading-tight">{vehicle.registrationNumber}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{vehicle.vehicleMake} · {vehicle.vehicleColor}</p>
+          </div>
+          <StatusBadge status={vehicle.status} />
+        </div>
+
+        {/* Details grid */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+          <div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">{t('vehicles.registrationDate')}</p>
+            <p className="font-medium text-gray-900 dark:text-white">{formatDate(vehicle.registrationDate)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">{t('vehicles.vehicleClass')}</p>
+            <p className="font-medium text-gray-900 dark:text-white">{vehicle.vehicleClass || '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">BRTA Code</p>
+            <p className="font-medium text-gray-900 dark:text-white">{vehicle.brtaOfficeCode}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Reg. Code</p>
+            <p className="font-medium text-gray-900 dark:text-white">{vehicle.vehicleRegistrationCode}</p>
+          </div>
+          {vehicle.engineDisplacement && (
+            <div>
+              <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">{t('vehicles.engineDisplacement')}</p>
+              <p className="font-medium text-gray-900 dark:text-white">{vehicle.engineDisplacement} CC</p>
+            </div>
+          )}
+        </div>
+
+        {/* Fuel types */}
+        <div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">{t('vehicles.fuelType')}</p>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 px-3 py-1 rounded-full text-sm font-medium border border-brand-200 dark:border-brand-700">
+              <Droplets className="h-3 w-3" /> {vehicle.fuelType}
+              <span className="text-xs opacity-60 font-normal">(primary)</span>
+            </span>
+            {(vehicle.secondaryFuelTypes ?? []).map((sf) => (
+              <span key={sf} className="inline-flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full text-sm border border-gray-200 dark:border-gray-600">
+                {sf}
+              </span>
+            ))}
+            {(!vehicle.secondaryFuelTypes || vehicle.secondaryFuelTypes.length === 0) && (
+              <span className="text-xs text-gray-400 italic">{t('vehicles.noSecondaryFuels')}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Owner info */}
+        <div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">{t('vehicles.owner')}</p>
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 space-y-0.5 text-sm">
+            <p className="font-medium text-gray-900 dark:text-white">{vehicle.ownerName}</p>
+            <p className="text-gray-500 dark:text-gray-400">{vehicle.ownerMobile}</p>
+            {vehicle.ownerEmail && <p className="text-gray-500 dark:text-gray-400">{vehicle.ownerEmail}</p>}
+          </div>
+        </div>
+
+        {/* Driver info */}
+        {vehicle.driverId && (
+          <div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">{t('vehicles.driver')}</p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-sm">
+              <p className="font-medium text-gray-900 dark:text-white">{vehicle.driverName}</p>
+              <p className="text-gray-500 dark:text-gray-400">{vehicle.driverMobile}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Quota */}
+        {vehicle.status === 'VERIFIED' && (
+          <div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Quota</p>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+              <VehicleQuotaSection vehicleId={vehicle.id} />
+            </div>
+          </div>
+        )}
+
+        <button onClick={onClose} className="btn-secondary w-full">{t('common.close')}</button>
+      </div>
+    </Modal>
+  )
+}
+
+// ── Edit Fuel Types Modal ──────────────────────────────────────────────────────
+function EditFuelTypesModal({
+  vehicle, onClose, onSuccess,
+}: {
+  vehicle: Vehicle
+  onClose: () => void
+  onSuccess: (updated: Vehicle) => void
+}) {
+  const { t } = useTranslation()
+  const [secondaryFuelTypes, setSecondaryFuelTypes] = useState<string[]>(vehicle.secondaryFuelTypes ?? [])
+  const [saving, setSaving] = useState(false)
+
+  const availableSecondary = FUEL_TYPES.filter((f) => f !== vehicle.fuelType)
+
+  const toggleFuel = (ft: string) => {
+    setSecondaryFuelTypes((prev) =>
+      prev.includes(ft) ? prev.filter((f) => f !== ft) : [...prev, ft]
+    )
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const updated = await updateVehicleSecondaryFuelTypes(vehicle.id, secondaryFuelTypes)
+      toast.success(t('vehicles.fuelTypesUpdated'))
+      onSuccess(updated)
+      onClose()
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(msg ?? t('errors.saveFailed'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal isOpen onClose={onClose} title={t('vehicles.editFuelTypesTitle')}>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+          <Car className="h-4 w-4 text-brand-600 flex-shrink-0" />
+          <div>
+            <p className="font-bold text-gray-900 dark:text-white font-mono text-sm">{vehicle.registrationNumber}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{vehicle.vehicleMake} · {vehicle.vehicleColor}</p>
+          </div>
+        </div>
+
+        {/* Primary fuel type (read-only) */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('vehicles.primaryFuelType')}</p>
+          <span className="inline-flex items-center gap-1.5 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 px-3 py-1.5 rounded-lg text-sm font-medium border border-brand-200 dark:border-brand-700">
+            <Droplets className="h-3.5 w-3.5" /> {vehicle.fuelType}
+          </span>
+        </div>
+
+        {/* Secondary fuel types toggle */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('vehicles.secondaryFuelTypes')}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">{t('vehicles.secondaryFuelTypesHint')}</p>
+          <div className="flex flex-wrap gap-2">
+            {availableSecondary.map((ft) => {
+              const selected = secondaryFuelTypes.includes(ft)
+              return (
+                <button
+                  key={ft}
+                  type="button"
+                  onClick={() => toggleFuel(ft)}
+                  className={`px-3 py-2 rounded-lg text-sm border transition-all ${
+                    selected
+                      ? 'bg-brand-100 dark:bg-brand-900/30 border-brand-400 text-brand-700 dark:text-brand-300'
+                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-brand-300'
+                  }`}
+                >
+                  {ft}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="flex gap-3 justify-end pt-2">
+          <button onClick={onClose} className="btn-secondary">{t('common.cancel')}</button>
+          <button onClick={handleSave} disabled={saving} className="btn-primary gap-2">
+            {saving ? <LoadingSpinner size="sm" /> : null} {t('common.save')}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+// ── Main Page ──────────────────────────────────────────────────────────────────
 export default function CustomerVehiclesPage() {
   const { t } = useTranslation()
   const [vehiclesData, setVehiclesData] = useState<PagedResponse<Vehicle> | null>(null)
@@ -180,6 +372,8 @@ export default function CustomerVehiclesPage() {
   const [removeTarget, setRemoveTarget] = useState<Vehicle | null>(null)
   const [qrTarget, setQrTarget] = useState<Vehicle | null>(null)
   const [driverTarget, setDriverTarget] = useState<Vehicle | null>(null)
+  const [detailTarget, setDetailTarget] = useState<Vehicle | null>(null)
+  const [editFuelTarget, setEditFuelTarget] = useState<Vehicle | null>(null)
   const [form, setForm] = useState<AddVehicleRequest>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
   const [removing, setRemoving] = useState(false)
@@ -259,6 +453,16 @@ export default function CustomerVehiclesPage() {
     }
   }
 
+  /** Update the in-memory vehicle list when fuel types are edited without a full reload */
+  const handleFuelTypesUpdated = (updated: Vehicle) => {
+    setVehiclesData((prev) =>
+      prev ? { ...prev, content: prev.content.map((v) => (v.id === updated.id ? updated : v)) } : prev
+    )
+    // Also update if it's the qr / driver target so re-opening shows fresh data
+    if (qrTarget?.id === updated.id) setQrTarget(updated)
+    if (driverTarget?.id === updated.id) setDriverTarget(updated)
+  }
+
   if (loading)
     return <div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" /></div>
 
@@ -270,7 +474,7 @@ export default function CustomerVehiclesPage() {
   const secondaryFuelOptions = FUEL_TYPES.filter((f) => f !== form.fuelType)
 
   return (
-    <div className="space-y-5 max-w-4xl mx-auto">
+    <div className="space-y-5 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -296,85 +500,109 @@ export default function CustomerVehiclesPage() {
         </div>
       )}
 
-      {/* Active / Unverified vehicles — compact grid */}
+      {/* Active / Unverified vehicles — list layout */}
       {active.length > 0 && (
         <div className="space-y-3">
-          <div className="grid sm:grid-cols-2 gap-3">
-            {active.map((v) => (
-              <div key={v.id} className={`card p-4 flex flex-col gap-3 transition-shadow hover:shadow-md ${
+          {active.map((v) => (
+            <div
+              key={v.id}
+              className={`card p-4 flex flex-col gap-3 transition-shadow hover:shadow-md ${
                 v.status === 'UNVERIFIED' ? 'border-red-200 dark:border-red-800' : 'border-gray-200 dark:border-gray-700'
-              }`}>
-                {/* Card header */}
-                <div className="flex items-start gap-2.5">
-                  <div className="h-9 w-9 bg-brand-50 dark:bg-brand-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Car className="h-4.5 w-4.5 text-brand-600" style={{ width: '18px', height: '18px' }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 dark:text-white font-mono text-sm leading-tight">{v.registrationNumber}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{v.vehicleMake} · {v.vehicleColor}</p>
-                  </div>
-                  <StatusBadge status={v.status} />
+              }`}
+            >
+              {/* Row: Icon + Registration + Status */}
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 bg-brand-50 dark:bg-brand-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Car className="h-5 w-5 text-brand-600" />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 dark:text-white font-mono leading-tight truncate">{v.registrationNumber}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{v.vehicleMake} · {v.vehicleColor}</p>
+                    </div>
+                    <StatusBadge status={v.status} />
+                  </div>
 
-                {/* Meta row */}
-                <div className="flex items-center gap-3 text-xs flex-wrap">
-                  <span className="flex items-center gap-1 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded-full font-medium">
-                    <Droplets className="h-3 w-3" /> {v.fuelType}
-                  </span>
-                  {v.secondaryFuelTypes?.map((sf) => (
-                    <span key={sf} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">
-                      {sf}
+                  {/* Fuel type tags + date */}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded-full text-xs font-medium">
+                      <Droplets className="h-3 w-3" /> {v.fuelType}
                     </span>
-                  ))}
-                  <span className="text-gray-400 ml-auto">{formatDate(v.registrationDate)}</span>
-                </div>
-
-                {/* Quota bar */}
-                {v.status === 'VERIFIED' && (
-                  <div className="border-t border-gray-100 dark:border-gray-700/50 pt-2">
-                    <VehicleQuotaSection vehicleId={v.id} />
+                    {v.secondaryFuelTypes?.map((sf) => (
+                      <span key={sf} className="inline-flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs">
+                        {sf}
+                      </span>
+                    ))}
+                    <span className="text-xs text-gray-400 ml-auto">{formatDate(v.registrationDate)}</span>
                   </div>
-                )}
-
-                {/* Driver info */}
-                {v.driverId && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700/50 pt-2">
-                    <span className="font-medium">{t('vehicles.driver')}:</span> {v.driverName} · {v.driverMobile}
-                  </div>
-                )}
-
-                {/* Unverified warning */}
-                {v.status === 'UNVERIFIED' && (
-                  <div className="flex items-start gap-2 text-xs text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 rounded-lg px-2.5 py-2">
-                    <span>⚠</span> {t('vehicles.unverifiedWarning')}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-1.5 border-t border-gray-100 dark:border-gray-700/50 pt-2 mt-auto">
-                  {v.status === 'VERIFIED' && (
-                    <>
-                      <button onClick={() => setQrTarget(v)} className="btn-primary flex-1 text-xs py-1.5 gap-1">
-                        <QrCode className="h-3.5 w-3.5" /> {t('vehicles.getQR')}
-                      </button>
-                      <button onClick={() => setDriverTarget(v)} className="btn-secondary text-xs py-1.5 px-2.5" title={t('vehicles.driverManagement')}>
-                        <UserPlus className="h-3.5 w-3.5" />
-                      </button>
-                    </>
-                  )}
-                  <Link to={`/transactions?vehicleId=${v.id}`} className="btn-secondary text-xs py-1.5 px-2.5">
-                    {t('vehicles.history')}
-                  </Link>
-                  <button
-                    onClick={() => setRemoveTarget(v)}
-                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg px-2 py-1.5 transition-colors ml-auto"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Quota bar */}
+              {v.status === 'VERIFIED' && (
+                <div className="border-t border-gray-100 dark:border-gray-700/50 pt-2">
+                  <VehicleQuotaSection vehicleId={v.id} />
+                </div>
+              )}
+
+              {/* Driver info */}
+              {v.driverId && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700/50 pt-2">
+                  <span className="font-medium">{t('vehicles.driver')}:</span> {v.driverName} · {v.driverMobile}
+                </div>
+              )}
+
+              {/* Unverified warning */}
+              {v.status === 'UNVERIFIED' && (
+                <div className="flex items-start gap-2 text-xs text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 rounded-lg px-2.5 py-2">
+                  <span>⚠</span> {t('vehicles.unverifiedWarning')}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-1.5 flex-wrap border-t border-gray-100 dark:border-gray-700/50 pt-2">
+                {v.status === 'VERIFIED' && (
+                  <button onClick={() => setQrTarget(v)} className="btn-primary text-xs py-1.5 px-2.5 gap-1">
+                    <QrCode className="h-3.5 w-3.5" /> {t('vehicles.getQR')}
+                  </button>
+                )}
+                <button
+                  onClick={() => setDetailTarget(v)}
+                  className="btn-secondary text-xs py-1.5 px-2.5 gap-1"
+                  title={t('vehicles.viewDetails')}
+                >
+                  <Eye className="h-3.5 w-3.5" /> {t('vehicles.viewDetails')}
+                </button>
+                <button
+                  onClick={() => setEditFuelTarget(v)}
+                  className="btn-secondary text-xs py-1.5 px-2.5 gap-1"
+                  title={t('vehicles.editFuelTypes')}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                {v.status === 'VERIFIED' && (
+                  <button
+                    onClick={() => setDriverTarget(v)}
+                    className="btn-secondary text-xs py-1.5 px-2.5"
+                    title={t('vehicles.driverManagement')}
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <Link to={`/transactions?vehicleId=${v.id}`} className="btn-secondary text-xs py-1.5 px-2.5">
+                  {t('vehicles.history')}
+                </Link>
+                <button
+                  onClick={() => setRemoveTarget(v)}
+                  className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg px-2 py-1.5 transition-colors ml-auto"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+          ))}
+
           {totalPages > 1 && (
             <Pagination
               page={page}
@@ -391,7 +619,7 @@ export default function CustomerVehiclesPage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
             {t('vehicles.deregistered')} ({deregistered.length})
           </p>
-          <div className="grid sm:grid-cols-2 gap-2">
+          <div className="space-y-2">
             {deregistered.map((v) => (
               <div key={v.id} className="card p-3 border border-gray-200 dark:border-gray-700 opacity-60 flex items-center gap-2.5">
                 <Car className="h-4 w-4 text-gray-400 flex-shrink-0" />
@@ -410,6 +638,8 @@ export default function CustomerVehiclesPage() {
           </div>
         </div>
       )}
+
+      {/* ── Modals ── */}
 
       {/* Add Vehicle Modal */}
       <Modal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} title={t('vehicles.addVehicleTitle')}>
@@ -443,7 +673,6 @@ export default function CustomerVehiclesPage() {
               <input className="input-field" type="date" value={form.registrationDate} onChange={set('registrationDate')} />
             </div>
           </div>
-          {/* Secondary fuel types */}
           <div>
             <label className="label">{t('vehicles.secondaryFuelTypes')} <span className="text-gray-400 font-normal text-xs">({t('common.optional')})</span></label>
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">{t('vehicles.secondaryFuelTypesHint')}</p>
@@ -518,12 +747,24 @@ export default function CustomerVehiclesPage() {
       {/* QR Modal */}
       {qrTarget && <VehicleQrModal vehicle={qrTarget} onClose={() => setQrTarget(null)} />}
 
+      {/* Vehicle Details Modal */}
+      {detailTarget && <VehicleDetailsModal vehicle={detailTarget} onClose={() => setDetailTarget(null)} />}
+
+      {/* Edit Fuel Types Modal */}
+      {editFuelTarget && (
+        <EditFuelTypesModal
+          vehicle={editFuelTarget}
+          onClose={() => setEditFuelTarget(null)}
+          onSuccess={handleFuelTypesUpdated}
+        />
+      )}
+
       {/* Vehicles Where User is Driver */}
       {vehiclesAsDriver.length > 0 && (
         <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
           <h2 className="text-base font-bold text-gray-900 dark:text-white mb-1">{t('vehicles.vehiclesIDrive')}</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t('vehicles.iDriveDesc')}</p>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="space-y-3">
             {vehiclesAsDriver.map((v) => (
               <div key={v.id} className="card p-3 border border-blue-200 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-900/10">
                 <div className="flex items-start gap-2.5 mb-2.5">

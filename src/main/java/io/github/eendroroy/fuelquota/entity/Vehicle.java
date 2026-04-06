@@ -15,6 +15,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -101,6 +103,18 @@ public class Vehicle implements Serializable {
     /** Primary fuel type (e.g. Petrol, Diesel, CNG, LPG). */
     @Column(name = "fuel_type", nullable = false, length = 30)
     private String fuelType;
+
+    /**
+     * Optional secondary fuel types the vehicle can use in addition to the primary
+     * (e.g. CNG for a Petrol car). Stored in a dedicated join table.
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "vehicle_secondary_fuel_types",
+            joinColumns = @JoinColumn(name = "vehicle_id")
+    )
+    @Column(name = "fuel_type", length = 30)
+    private List<String> secondaryFuelTypes = new ArrayList<>();
 
     /** Engine displacement in cubic centimetres (CC). Optional. */
     @Column(name = "engine_displacement")

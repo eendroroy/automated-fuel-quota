@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -198,6 +199,9 @@ public class CustomerService {
         vehicle.setStatus(Vehicle.VehicleStatus.VERIFIED);
         vehicle.setUser(user);
         if (request.getEngineDisplacement() != null) vehicle.setEngineDisplacement(request.getEngineDisplacement());
+        if (request.getSecondaryFuelTypes() != null && !request.getSecondaryFuelTypes().isEmpty()) {
+            vehicle.setSecondaryFuelTypes(request.getSecondaryFuelTypes());
+        }
         vehicle = vehicleRepository.save(vehicle);
 
         // Create quota immediately as ACTIVE
@@ -279,14 +283,22 @@ public class CustomerService {
                 .map(vehicleMapper::toResponse)
                 .orElseThrow(() -> new BadRequestException("No verified vehicle found. Cannot generate QR code."));
 
-        return buildQrResponse(vehicleResponse);
+        return buildQrResponse(vehicleResponse, null);
     }
 
     /**
      * Generates a QR token for a specific vehicle.
      * Can be called by the vehicle owner or an assigned driver.
+     * When {@code fuelType} is provided it must be the vehicle's primary or one of its
+     * secondary fuel types; the resolved type is embedded in the QR JWT so that the
+     * pump representative app can display the correct fuel type without ambiguity.
+     *
+     * @param userId    the requesting user's ID (owner or assigned driver)
+     * @param vehicleId the vehicle to generate the token for
+     * @param fuelType  optional fuel type override; {@code null} defaults to the primary
+     * @return a {@link QrTokenResponse} containing the signed token and metadata
      */
-    public QrTokenResponse generateQrTokenForVehicle(UUID userId, UUID vehicleId) {
+    public QrTokenResponse generateQrTokenForVehicle(UUID userId, UUID vehicleId, String fuelType) {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
 
@@ -301,12 +313,36 @@ public class CustomerService {
         if (vehicle.getStatus() != Vehicle.VehicleStatus.VERIFIED) {
             throw new BadRequestException("Vehicle is not verified. Cannot generate QR code.");
         }
-        return buildQrResponse(vehicleMapper.toResponse(vehicle));
+
+        // Validate the requested fuel type is allowed for this vehicle
+        if (fuelType != null && !fuelType.isBlank()) {
+            boolean isPrimary = fuelType.equals(vehicle.getFuelType());
+            boolean isSecondary = vehicle.getSecondaryFuelTypes() != null
+                    && vehicle.getSecondaryFuelTypes().contains(fuelType);
+            if (!isPrimary && !isSecondary) {
+                throw new BadRequestException(
+                        "Fuel type '" + fuelType + "' is not registered for this vehicle");
+            }
+        }
+
+        return buildQrResponse(vehicleMapper.toResponse(vehicle), fuelType);
     }
 
-    private QrTokenResponse buildQrResponse(VehicleResponse vehicleResponse) {
+    /**
+     * Backward-compatible overload — defaults to the vehicle's primary fuel type.
+     */
+    public QrTokenResponse generateQrTokenForVehicle(UUID userId, UUID vehicleId) {
+        return generateQrTokenForVehicle(userId, vehicleId, null);
+    }
+
+    private QrTokenResponse buildQrResponse(VehicleResponse vehicleResponse, String fuelType) {
         UUID vehicleId = UUID.fromString(vehicleResponse.getId());
-        String token = tokenProvider.generateQrToken(vehicleId, vehicleResponse.getRegistrationNumber());
+        // Use the provided fuelType, or fall back to the vehicle's primary fuel type
+        String effectiveFuelType = (fuelType != null && !fuelType.isBlank())
+                ? fuelType
+                : vehicleResponse.getFuelType();
+        String token = tokenProvider.generateQrToken(
+                vehicleId, vehicleResponse.getRegistrationNumber(), effectiveFuelType);
         long expirationMs = appProperties.getJwt().getQrExpirationMs();
         return QrTokenResponse.builder()
                 .token(token)
@@ -320,8 +356,48 @@ public class CustomerService {
         return generateQrToken(userId).getToken();
     }
 
+    /**
+     * Regenerates the QR token for a specific vehicle with an optional fuel type override.
+     *
+     * @param userId    the requesting user's ID
+     * @param vehicleId the target vehicle
+     * @param fuelType  optional fuel type override (must be primary or secondary)
+     * @return newly issued JWT token string
+     */
+    public String regenerateQrTokenForVehicle(UUID userId, UUID vehicleId, String fuelType) {
+        return generateQrTokenForVehicle(userId, vehicleId, fuelType).getToken();
+    }
+
+    /** Backward-compatible overload — regenerates with the primary fuel type. */
     public String regenerateQrTokenForVehicle(UUID userId, UUID vehicleId) {
-        return generateQrTokenForVehicle(userId, vehicleId).getToken();
+        return regenerateQrTokenForVehicle(userId, vehicleId, null);
+    }
+
+    // ── Secondary Fuel Types ──────────────────────────────────────────────────
+
+    /**
+     * Replaces the secondary fuel types of a vehicle owned by the authenticated user.
+     *
+     * @param userId             the vehicle owner's user ID
+     * @param vehicleId          the vehicle to update
+     * @param secondaryFuelTypes replacement list (empty list removes all secondary types)
+     * @return updated vehicle response
+     */
+    @Transactional
+    public VehicleResponse updateSecondaryFuelTypes(UUID userId, UUID vehicleId,
+                                                    List<String> secondaryFuelTypes) {
+        Vehicle vehicle = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+
+        if (!vehicle.getUser().getId().equals(userId)) {
+            throw new BadRequestException("Vehicle does not belong to this user");
+        }
+
+        vehicle.setSecondaryFuelTypes(
+                secondaryFuelTypes != null ? secondaryFuelTypes : new ArrayList<>());
+        vehicle = vehicleRepository.save(vehicle);
+        logger.info("Secondary fuel types updated for vehicle {} by user {}", vehicleId, userId);
+        return vehicleMapper.toResponse(vehicle);
     }
 
     // ── Transactions ──────────────────────────────────────────────────────────

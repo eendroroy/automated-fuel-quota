@@ -269,7 +269,13 @@
     "iDriveDesc": "You have been assigned as a driver for these vehicles. You can generate QR codes for refueling.",
     "unverifiedWarning": "BRTA verification failed. Contact support or wait for re-verification.",
     "noVehiclesYet": "No vehicles registered yet",
-    "noVehiclesYetDesc": "Add your first vehicle to start managing fuel quotas."
+    "noVehiclesYetDesc": "Add your first vehicle to start managing fuel quotas.",
+    "viewDetails": "Details",
+    "editFuelTypes": "Edit Fuel Types",
+    "editFuelTypesTitle": "Edit Fuel Types",
+    "fuelTypesUpdated": "Fuel types updated successfully",
+    "vehicleDetails": "Vehicle Details",
+    "noSecondaryFuels": "No secondary fuels assigned"
   },
   "qrCode": {
     "title": "My QR Code",

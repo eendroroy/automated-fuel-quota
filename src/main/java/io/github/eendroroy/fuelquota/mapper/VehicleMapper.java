@@ -37,6 +37,7 @@ public class VehicleMapper {
                 .vehicleColor(vehicle.getVehicleColor())
                 .vehicleClass(vehicle.getVehicleClass())
                 .fuelType(vehicle.getFuelType())
+                .secondaryFuelTypes(vehicle.getSecondaryFuelTypes())
                 .engineDisplacement(vehicle.getEngineDisplacement())
                 .registrationDate(vehicle.getRegistrationDate())
                 .status(vehicle.getStatus().name())

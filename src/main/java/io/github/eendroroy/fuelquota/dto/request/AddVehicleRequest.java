@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * Request payload for an authenticated customer to add a new vehicle to their account.
  *
@@ -76,6 +78,13 @@ public class AddVehicleRequest {
     @Size(max = 30, message = "Fuel type cannot exceed 30 characters")
     @Schema(description = "Type of fuel the vehicle uses", example = "Petrol", requiredMode = Schema.RequiredMode.REQUIRED)
     private String fuelType;
+
+    /**
+     * Optional secondary fuel types the vehicle can use in addition to the primary
+     * (e.g. CNG as an alternative for a Petrol vehicle).
+     */
+    @Schema(description = "Optional secondary fuel types (e.g. CNG for a Petrol vehicle)", example = "[\"CNG\"]")
+    private List<String> secondaryFuelTypes;
 
     /** Engine displacement in cubic centimetres (optional). */
     @Schema(description = "Engine displacement in CC (optional)", example = "1500")

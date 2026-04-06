@@ -43,18 +43,37 @@ public class JwtTokenProvider {
     }
 
     public String generateQrToken(UUID vehicleId, String registrationNumber) {
+        return generateQrToken(vehicleId, registrationNumber, null);
+    }
+
+    /**
+     * Generates a signed QR JWT token embedding the vehicle ID, registration number,
+     * the selected fuel type, and a random nonce to prevent replay attacks.
+     *
+     * @param vehicleId          the vehicle's UUID
+     * @param registrationNumber the vehicle's registration plate number
+     * @param fuelType           the fuel type the customer intends to refuel with
+     *                           ({@code null} or blank defaults to the vehicle's primary fuel type
+     *                           at the pump — the claim is simply omitted)
+     * @return a signed, compact JWT string
+     */
+    public String generateQrToken(UUID vehicleId, String registrationNumber, String fuelType) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + appProperties.getJwt().getQrExpirationMs());
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(vehicleId.toString())
                 .claim("type", "QR_TOKEN")
                 .claim("registrationNumber", registrationNumber)
                 .claim("nonce", UUID.randomUUID().toString())
                 .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(secretKey)
-                .compact();
+                .expiration(expiryDate);
+
+        if (fuelType != null && !fuelType.isBlank()) {
+            builder.claim("fuelType", fuelType);
+        }
+
+        return builder.signWith(secretKey).compact();
     }
 
     private Claims parseClaims(String token) {
@@ -92,6 +111,18 @@ public class JwtTokenProvider {
 
     public String getRegistrationNumberFromQrToken(String qrToken) {
         return parseClaims(qrToken).get("registrationNumber", String.class);
+    }
+
+    /**
+     * Extracts the fuel type claim embedded in a QR token.
+     * Returns {@code null} when the token was generated without an explicit fuel type
+     * (e.g. legacy tokens or tokens defaulting to the vehicle's primary fuel).
+     *
+     * @param qrToken a valid, non-expired QR JWT
+     * @return the fuel type string, or {@code null} if the claim is absent
+     */
+    public String getFuelTypeFromQrToken(String qrToken) {
+        return parseClaims(qrToken).get("fuelType", String.class);
     }
 
     public boolean validateToken(String token) {

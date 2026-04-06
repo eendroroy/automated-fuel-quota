@@ -11,6 +11,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Vehicle details returned to the authenticated customer or admin.
@@ -97,6 +98,13 @@ public class VehicleResponse implements Serializable {
     /** Fuel type the vehicle uses (e.g. Petrol, Diesel, CNG, LPG). */
     @Schema(description = "Fuel type", example = "Petrol")
     private String fuelType;
+
+    /**
+     * Optional secondary fuel types (e.g. CNG for a Petrol vehicle).
+     * Empty list when no secondary types are registered.
+     */
+    @Schema(description = "Secondary fuel types (optional alternative fuels)", example = "[\"CNG\"]")
+    private List<String> secondaryFuelTypes;
 
     /** Engine displacement in cubic centimetres (optional). */
     @Schema(description = "Engine displacement in CC", example = "1500")

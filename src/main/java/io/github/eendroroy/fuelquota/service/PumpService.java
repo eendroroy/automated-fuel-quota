@@ -108,9 +108,12 @@ public class PumpService {
             // Step 1: Validate QR token
             UUID vehicleId;
             String registrationNumber;
+            String qrFuelType = null;
             try {
                 vehicleId = tokenProvider.getVehicleIdFromQrToken(request.getQrToken());
                 registrationNumber = tokenProvider.getRegistrationNumberFromQrToken(request.getQrToken());
+                // Extract the customer's intended fuel type from the QR token (may be null for legacy tokens)
+                qrFuelType = tokenProvider.getFuelTypeFromQrToken(request.getQrToken());
             } catch (Exception e) {
                 logger.warn("Invalid QR token received: {}", e.getMessage());
                 return AuthorizationResponse.builder()
@@ -175,7 +178,9 @@ public class PumpService {
                     .vehicleColor(vehicle.getVehicleColor())
                     .ownerName(vehicle.getOwnerName())
                     .vehicleStatus(vehicle.getStatus().name())
-                    .fuelType(vehicle.getFuelType())
+                    // Use the fuel type the customer selected when generating the QR code;
+                    // fall back to the vehicle's primary fuel type for legacy tokens.
+                    .fuelType(qrFuelType != null ? qrFuelType : vehicle.getFuelType())
                     .build();
 
             logger.info("Authorization result for vehicle {}: {} - {} liters authorized",

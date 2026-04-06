@@ -3,6 +3,7 @@ package io.github.eendroroy.fuelquota.controller.customer.v1;
 import io.github.eendroroy.fuelquota.config.OpenApiConfig;
 import io.github.eendroroy.fuelquota.dto.request.AddVehicleRequest;
 import io.github.eendroroy.fuelquota.dto.request.AssignDriverRequest;
+import io.github.eendroroy.fuelquota.dto.request.UpdateFuelTypesRequest;
 import io.github.eendroroy.fuelquota.dto.response.*;
 import io.github.eendroroy.fuelquota.service.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -89,15 +90,36 @@ public class V1CustomerController {
     }
 
     @GetMapping("/vehicles/{vehicleId}/qr-code")
-    @Operation(summary = "Generate QR code for a specific vehicle")
-    public ResponseEntity<QrTokenResponse> getVehicleQrCode(@PathVariable UUID vehicleId, HttpServletRequest request) {
-        return ResponseEntity.ok(customerService.generateQrTokenForVehicle((UUID) request.getAttribute("userId"), vehicleId));
+    @Operation(summary = "Generate QR code for a specific vehicle",
+               description = "Optionally specify fuelType to embed it in the QR token. Must be the vehicle's primary or a registered secondary fuel type.")
+    public ResponseEntity<QrTokenResponse> getVehicleQrCode(
+            @PathVariable UUID vehicleId,
+            @RequestParam(required = false) String fuelType,
+            HttpServletRequest request) {
+        return ResponseEntity.ok(customerService.generateQrTokenForVehicle(
+                (UUID) request.getAttribute("userId"), vehicleId, fuelType));
     }
 
     @PostMapping("/vehicles/{vehicleId}/qr-code/regenerate")
-    @Operation(summary = "Regenerate QR code for a specific vehicle")
-    public ResponseEntity<Map<String, String>> regenerateVehicleQrCode(@PathVariable UUID vehicleId, HttpServletRequest request) {
-        return ResponseEntity.ok(Map.of("token", customerService.regenerateQrTokenForVehicle((UUID) request.getAttribute("userId"), vehicleId)));
+    @Operation(summary = "Regenerate QR code for a specific vehicle",
+               description = "Optionally specify fuelType to embed it in the regenerated QR token.")
+    public ResponseEntity<Map<String, String>> regenerateVehicleQrCode(
+            @PathVariable UUID vehicleId,
+            @RequestParam(required = false) String fuelType,
+            HttpServletRequest request) {
+        return ResponseEntity.ok(Map.of("token", customerService.regenerateQrTokenForVehicle(
+                (UUID) request.getAttribute("userId"), vehicleId, fuelType)));
+    }
+
+    @PutMapping("/vehicles/{vehicleId}/fuel-types")
+    @Operation(summary = "Update secondary fuel types for a vehicle",
+               description = "Replaces the list of secondary fuel types. Pass an empty list to remove all.")
+    public ResponseEntity<VehicleResponse> updateSecondaryFuelTypes(
+            @PathVariable UUID vehicleId,
+            @RequestBody UpdateFuelTypesRequest req,
+            HttpServletRequest request) {
+        return ResponseEntity.ok(customerService.updateSecondaryFuelTypes(
+                (UUID) request.getAttribute("userId"), vehicleId, req.getSecondaryFuelTypes()));
     }
 
     @GetMapping("/vehicles/{vehicleId}/transactions")

@@ -52,19 +52,24 @@ export default function CustomerQRCodePage() {
     setSelectedFuelType(v.fuelType)
   }, [selectedVehicleId, activeVehicles])
 
-  // Load QR token whenever selectedVehicleId or selectedFuelType changes
+  // Load QR token whenever selectedVehicleId or selectedFuelType changes.
+  // Cleanup flag prevents stale responses from overwriting newer ones (race condition fix).
   useEffect(() => {
     if (!selectedVehicleId || !selectedFuelType) return
+    let cancelled = false
     setLoading(true)
-    getQrTokenForVehicle(selectedVehicleId, selectedFuelType !== vehicle?.fuelType ? selectedFuelType : undefined)
+    setToken(null)
+    getQrTokenForVehicle(selectedVehicleId, selectedFuelType)
       .then((qr) => {
-        setToken(qr.token)
-        setLastUpdated(new Date().toISOString())
+        if (!cancelled) {
+          setToken(qr.token)
+          setLastUpdated(new Date().toISOString())
+        }
       })
-      .catch(() => toast.error(t('errors.qrLoadFailed')))
-      .finally(() => setLoading(false))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVehicleId, selectedFuelType])
+      .catch(() => { if (!cancelled) toast.error(t('errors.qrLoadFailed')) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [selectedVehicleId, selectedFuelType, t])
 
   const handleVehicleChange = (id: string) => {
     setSelectedVehicleId(id)
@@ -78,7 +83,7 @@ export default function CustomerQRCodePage() {
     try {
       const qr = await regenerateQrTokenForVehicle(
         selectedVehicleId,
-        selectedFuelType !== vehicle?.fuelType ? selectedFuelType : undefined
+        selectedFuelType
       )
       setToken(qr.token)
       setLastUpdated(new Date().toISOString())
@@ -174,7 +179,7 @@ export default function CustomerQRCodePage() {
                 <button
                   key={ft}
                   type="button"
-                  onClick={() => { setSelectedFuelType(ft); setToken(null) }}
+                  onClick={() => { if (selectedFuelType !== ft) setSelectedFuelType(ft) }}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
                     isSelected
                       ? 'bg-brand-600 text-white border-brand-600'
