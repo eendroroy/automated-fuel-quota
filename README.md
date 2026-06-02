@@ -1,5 +1,7 @@
 # Automated Fuel Quota System
 
+> **Note:** This is an experimental, work-in-progress project. The entire codebase is AI-generated — produced by GitHub Copilot agents from high-level conceptual requirements, with no manual coding involved. 
+
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Java 25](https://img.shields.io/badge/Java-25-orange)](https://www.oracle.com/java/)
 [![Spring Boot 4.0.5](https://img.shields.io/badge/Spring%20Boot-4.0.5-brightgreen)](https://spring.io/projects/spring-boot)
